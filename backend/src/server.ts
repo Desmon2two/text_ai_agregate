@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
-import cors from "cors"
+import cors from "cors";
 import express from "express";
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 const app = express();
 dotenv.config({ path: ".env", debug: true });
 const PORT = process.env.PORT || 3000;
@@ -18,7 +18,7 @@ app.use(
 		credentials: true,
 	}),
 );
-app.use(cookieParser())
+app.use(cookieParser());
 
 // MOUNTING ROUTERS
 app.use("/auth", authRoute);
