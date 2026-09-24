@@ -1,3 +1,6 @@
+
+import express from "express";
+
 const app = express();
 dotenv.config({ path: ".env", debug: true });
 const PORT = process.env.PORT || 3000;
