@@ -7,9 +7,12 @@ export type EventStateMachineTypes =
 	| { name: "RESPONSE_GET" }
 	| { name: "RESPONSE_VALIDATED" }
 	| { name: "COMPLETE" }
-	| { name: "RECOVERY_STARTED" }
+	| { name: "RECOVERY_STARTED"; metadata: { reason: string } }
 	| { name: "RECOVERY_ABANDONED"; metadata: { reason: string } }
 	| { name: "RECOVERY_COMPLETE"; metadata: { log: string } }
-	| { name: "FAILED"; failureStatus: string; failureMessage: string };
+	| {
+			name: "FAILED";
+			metadata: { failureStatus: string; failureMessage: string };
+	  };
 
 // Work on errors flow
