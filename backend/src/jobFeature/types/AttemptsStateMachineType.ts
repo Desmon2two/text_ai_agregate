@@ -1,4 +1,4 @@
-import { ApiError } from "./ApiErrorType";
+import { ApiError } from "../../types/ApiErrorType";
 
 export type AttemptsStateMachineTypes<T> =
 	| { state: "created" }

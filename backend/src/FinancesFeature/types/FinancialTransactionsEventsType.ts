@@ -1,5 +1,3 @@
-import { ApiError } from "./ApiErrorType";
-
 export type FinancialTransactionsEvents =
 	| { name: "RESERVED" }
 	| { name: "PURCHASE" }

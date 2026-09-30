@@ -1,0 +1,3 @@
+Notes about how frontend should look when i get to it:
+1. The user should be presented with 2 choices - to pick models by himself, or to use auto-model picker.
+Either way, there has to be manual click or auto cost estimation - at that point the plan for job is made and it's id is recorded.
