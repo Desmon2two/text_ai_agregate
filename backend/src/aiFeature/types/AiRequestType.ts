@@ -1,6 +1,6 @@
 export type AiRequest = {
-    provider: string;
-    model: string;
-    body: unknown;
-    files?: string[];
-}
+	provider: string;
+	model: string;
+	prompt: string;
+	files?: string[];
+};

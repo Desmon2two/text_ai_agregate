@@ -10,7 +10,10 @@ export type PlanJobOutput = {
 	interpretedIntent: string;
 };
 export type CommitJobInput = {
-	body: unknown;
+	body: {
+		prompt: string;
+		[key: string]: unknown;
+	};
 	files: string[];
 	provider: string;
 	model: string;

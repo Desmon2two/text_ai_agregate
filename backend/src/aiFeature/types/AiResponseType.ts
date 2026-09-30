@@ -1,8 +1,8 @@
 export type AiResponse = {
 	data: unknown;
 	usage?: {
-		inputTokens: number;
-		outputTokens: number;
+		inputTokens?: number;
+		outputTokens?: number;
 	};
-	providerOperationId?: string;
+	providerOperationId?: string | null;
 };

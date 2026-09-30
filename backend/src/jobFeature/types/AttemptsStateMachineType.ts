@@ -1,10 +1,10 @@
-import { ApiError } from "../../types/ApiErrorType";
+import type { AttemptError } from "../../errors/AttemptErrorType";
 
-export type AttemptsStateMachineTypes<T> =
+export type AttemptsStateMachine =
 	| { state: "created" }
 	| { state: "sending" }
 	| { state: "waiting" }
-	| { state: "received"; data: T }
-	| { state: "validated"; data: T }
-	| { state: "complete"; data: T }
-	| { state: "failed"; error: ApiError };
+	| { state: "received"; data: unknown }
+	| { state: "validated"; data: unknown }
+	| { state: "complete"; data: unknown }
+	| { state: "failed"; error: AttemptError };

@@ -1,3 +1,4 @@
+import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper";
 import { CommitJobInput, CommitJobOutput } from "./types/JobTypes";
 
 async function createJob({ body, files, provider, model, jobType }: CommitJobInput): Promise<CommitJobOutput> {
@@ -8,7 +9,7 @@ async function createJob({ body, files, provider, model, jobType }: CommitJobInp
 // Atomically create a job and return jobId
 
 	validateJobRequest();
-	const estimatedCost = costService.estimateCost();
+	const estimatedCost = finService.estimateCost();
 	const result = await jobService.createJob({
 		userId,
 		jobTypeId,
@@ -32,7 +33,16 @@ async function planJob({ userid, jobTypeId, body, files }) {
 	};
 }
 
-async function commitJob({ userId, jobTypeId, model, body, files }) {}
+async function commitJob(userId: string, { jobType, provider, model, body, files }: CommitJobInput): CommitJobOutput {
+	const isAllowed = userService.checkUser();
+	if (!isAllowed) throw new UnauthorizedError("User is not allowed");
+	const aiRequest = mapJobToAiRequest({jobType, provider, model, body, files});
+	const attempt = 
+	return {
+		jobId: ,
+		createdAt: ,
+	}
+}
 
 export default {
 	createJob,
