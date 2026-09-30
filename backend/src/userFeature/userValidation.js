@@ -1,6 +1,6 @@
 import { ValidationError } from "../errors/validationError.js";
 
-function validateUserPatch(username, displayName, profilePic, bio) {
+function validateUserDisplayedInfo(username, displayName, profilePic, bio) {
   if (!username && !displayName && !profilePic && !bio) throw new ValidationError("No user fields to validate");
   
   if (username !== undefined) {
@@ -32,7 +32,7 @@ function validateUserPatch(username, displayName, profilePic, bio) {
   }
   return;
 }
-function validateCredentialsPatch({ email, password }) {
+function validateUserCredentials({ email, password }) {
 if (!email && !password) {
   throw new ValidationError("No credential to validate")
 }
@@ -59,4 +59,4 @@ if (!email && !password) {
   }
   return;
 }
-export default { validateUserPatch, validateCredentialsPatch };
+export default { validateUserDisplayedInfo, validateUserCredentials };

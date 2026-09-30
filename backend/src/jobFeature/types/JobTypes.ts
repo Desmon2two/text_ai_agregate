@@ -3,7 +3,6 @@ export type PlanJobInput = {
 	files: string[];
 };
 export type PlanJobOutput = {
-	planId: string;
 	provider: string;
 	model: string;
 	advantages: string[];
@@ -11,7 +10,11 @@ export type PlanJobOutput = {
 	interpretedIntent: string;
 };
 export type CommitJobInput = {
-	planId: string;
+	body: unknown;
+	files: string[];
+	provider: string;
+	model: string;
+	jobType: string;
 };
 
 export type CommitJobOutput = {
