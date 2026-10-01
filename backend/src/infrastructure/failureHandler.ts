@@ -24,16 +24,16 @@ export default async function handleFailure(
 		return null;
 	}
 	const newAttempt = await attemptService.createAttempt({
-        jobId: attempt.jobId,
+		jobId: attempt.jobId,
 		provider: attempt.provider,
 		model: attempt.model,
 	});
-    await eventRepository.createEvent({
-        name: "RETRY_CREATED",
-        metadata: {
-            attemptId: newAttempt.attemptId,
-            previousAttemptId: attempt.attemptId,
-        },
-    });
+	await eventRepository.createEvent({
+		name: "RETRY_CREATED",
+		metadata: {
+			attemptId: newAttempt.attemptId,
+			previousAttemptId: attempt.attemptId,
+		},
+	});
 	return newAttempt.attemptId;
 }

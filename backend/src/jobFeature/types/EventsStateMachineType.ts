@@ -14,5 +14,3 @@ export type EventStateMachineTypes =
 			name: "FAILED";
 			metadata: { failureStatus: string; failureMessage: string };
 	  };
-
-// Work on errors flow

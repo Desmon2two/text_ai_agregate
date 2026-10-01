@@ -24,3 +24,9 @@ export type CommitJobOutput = {
 	jobId: string;
 	createdAt: Date;
 };
+
+export type completeJobType = {
+	jobId: string;
+	attemptId: string;
+	data: unknown;
+};

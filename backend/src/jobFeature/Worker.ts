@@ -10,6 +10,12 @@ async function processJob(jobId: string) {
 		provider: job.provider,
 		model: job.model,
 	});
+	executeAttempt(attempt.attemptId);
+	return
+}
+async function executeAttempt(attemptId: string) {
+	const attempt = attemptRepository.getAttempt(attemptId);
+	const job = await jobRepository.getJob(attempt.jobId);
 
 	try {
 		await attemptRepository.markSending(attempt.id);
@@ -19,12 +25,15 @@ async function processJob(jobId: string) {
 		await attemptRepository.markReceived(attempt.id, response);
 		await validateAiResponse(response)
 		await attemptRepository.markValidated(attempt.id, response)
-		await jobCompletionService.completeJob(jobId, attempt.id, response.data); // With attempt and job completion atomically
+		await jobCompletionService.completeJob(jobId, attempt.id, response.data);
 	} catch (error) {
 		const attemptError = mapErrorToAttemptError(error, attempt.retryable, attempt.provider, attempt.code);
 		await handleFailure(attempt, attemptError);
-
-		const success = await handleFailure(attempt, error)
 		}
 	
+}
+
+export default {
+	processJob,
+	executeAttempt,
 }

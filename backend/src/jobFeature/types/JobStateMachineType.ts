@@ -2,7 +2,7 @@ export type JobStateMachineTypes =
 	| { state: "created" }
 	| { state: "accepted" }
 	| { state: "queued" }
-	| { state: "recieved" }
+	| { state: "processing" }
 	| { state: "complete"; data: unknown }
 	| { state: "error"; error: Error };
 
