@@ -5,5 +5,8 @@
     "openai": "^7.27.0",
     "pg": "^8.23.1",
     "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
   }
 }

@@ -24,11 +24,11 @@ async function createAttempt({
   } catch (error) {
     await dbClient.query("ROLLBACK");
     throw error;
-  } finally {
-    await dbClient.end();
-  }
+  } 
 }
+async function completeAttempt(attemptId: string): Promise<string | null>{
 
+}
 async function failAttempt(attemptId: string): Promise<string | null> {
   const failedAttempt = await attemptRepository.findById(attemptId);
   if (!failedAttempt) throw new Error("Attempt not found");
@@ -38,7 +38,6 @@ async function failAttempt(attemptId: string): Promise<string | null> {
     let attempts = await attemptRepository.attemptsByJobId(dbClient, jobId);
     if (attempts >= process.env.MAX_ATTEMPTS) {
       await dbClient.query("COMMIT");
-      await dbClient.end();
       return null;
     }
     const retry = await createAttempt({
@@ -53,10 +52,10 @@ async function failAttempt(attemptId: string): Promise<string | null> {
   } catch (error) {
     await dbClient.query("ROLLBACK");
     throw error;
-  } finally {
-    await dbClient.end();
-  }
+  } 
 }
 export default {
   createAttempt,
+  completeAttempt,
+  failAttempt,
 };

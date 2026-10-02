@@ -1,7 +1,7 @@
-import { EventStateMachineTypes } from "./EventsStateMachineType";
+import { EventStateTypes } from "./EventsStateType";
 
 export type EventType = {
-	state: EventStateMachineTypes;
+	state: EventStateTypes;
 	attemptId: string;
 	createdAt?: Date;
 };

@@ -4,7 +4,6 @@ import express from "express";
 const app = express();
 dotenv.config({ path: ".env", debug: true });
 const PORT = process.env.PORT || 3000;
-import connectDatabase from "./database/connectDatabase.js";
 import authRoute from "./authFeature/authRouter.js";
 import videoRoute from "./videoFeature/videoRouter.js";
 import errorHandler from "./middlewears/errorMiddleware.js";
@@ -31,7 +30,7 @@ app.get("/", (req, res) => {
 app.use(errorHandler);
 
 // DATABASE THEN SERVER START
-connectDatabase()
+connectDB(dbClient)
 	.then(() => {
 		app.listen(PORT, () => {
 			console.log(`Server is running on port ${PORT}`);

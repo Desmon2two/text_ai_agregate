@@ -1,18 +1,42 @@
 import { AttemptError } from "../errors/AttemptErrorType";
 import { Attempt } from "./types/AttemptTypes";
-
-async function markCreated(dbClient, attempt: Attempt) {
-  await dbClient.query(
-    `INSERT INTO attempts(status, jobId, attemptNumber, provider, model) VALUES ("${attempt.status.state}", "${attempt.jobId}", "${attempt.attemptNumber}", "${attempt.provider}", "${attempt.model}")`,
-  );
+import {Client} from "pg"
+async function getAttempt(dbClient: Client, attemptId: string){
+try {
+    const result = await dbClient.query(
+      `SELECT * FROM attempts 
+      WHERE attempt_id = $1
+      `,
+      [attemptId]);
+  return result.rows[0]
+} catch (error) {
+  throw new Error("Could not get the attempt");
 }
-async function markSending(dbClient, attemptId) {}
-async function markWaiting(dbClient, attemptId, providerJobId) {}
-async function markReceived(dbClient, attemptId, data) {}
-async function markValidated(dbClient, attemptId, data) {}
-async function markComplete(dbClient, attemptId, data) {}
-async function markFailed(dbClient, attemptId, error: AttemptError) {}
+}
+async function markCreated(dbClient: Client, attempt: Attempt) {
+	const result = await dbClient.query(
+		`INSERT INTO attempts(status, job_id, attempt_number, provider, model) 
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *
+    `,
+		[
+			attempt.status.state,
+			attempt.jobId,
+			attempt.attemptNumber,
+			attempt.provider,
+			attempt.model,
+		],
+	);
+  return result.rows[0]
+}
+async function markSending(dbClient: Client, attemptId: string) {}
+async function markWaiting(dbClient: Client, attemptId: string, providerJobId: string) {}
+async function markReceived(dbClient: Client, attemptId: string, data: unknown) {}
+async function markValidated(dbClient: Client, attemptId: string, data: unknown) {}
+async function markComplete(dbClient: Client, attemptId: string, data: unknown) {}
+async function markFailed(dbClient: Client, attemptId: string, error: AttemptError) {}
 export default {
+  getAttempt,
   markCreated,
   markSending,
   markWaiting,

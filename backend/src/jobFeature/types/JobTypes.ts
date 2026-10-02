@@ -1,20 +1,23 @@
-export type PlanJobInput = {
-	body: unknown;
-	files: string[];
-};
-export type PlanJobOutput = {
-	provider: string;
-	model: string;
-	advantages: string[];
-	estimatedCost: number;
-	interpretedIntent: string;
-};
+import { Client } from "pg";
+
+// export type PlanJobInput = {
+// 	body: unknown;
+// 	files: string[];
+// };
+// export type PlanJobOutput = {
+// 	provider: string;
+// 	model: string;
+// 	advantages: string[];
+// 	estimatedCost: number;
+// 	interpretedIntent: string;
+// };
 export type CommitJobInput = {
+	dbClient: Client;
 	body: {
 		prompt: string;
 		[key: string]: unknown;
 	};
-	files: string[];
+	files?: string[];
 	provider: string;
 	model: string;
 	jobType: string;
@@ -26,6 +29,7 @@ export type CommitJobOutput = {
 };
 
 export type completeJobType = {
+	dbClient: Client;
 	jobId: string;
 	attemptId: string;
 	data: unknown;

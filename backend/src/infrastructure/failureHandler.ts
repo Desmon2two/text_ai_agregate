@@ -14,7 +14,7 @@ export default async function handleFailure(
     if (!error.retryable) {
       await jobRepository.markFailed(dbClient, attempt.jobId);
       await dbClient.query("COMMIT");
-      await dbClient.end();
+      await ;
       return null;
     }
     if (attempt.attemptNumber >= process.env.MAX_ATTEMPTS) {
@@ -30,7 +30,7 @@ export default async function handleFailure(
         reason: "MAX_ATTEMPTS_REACHED",
       });
       await dbClient.query("COMMIT");
-      await dbClient.end();
+      await ;
       return null;
     }
     const newAttempt = await attemptService.createAttempt({
@@ -52,7 +52,5 @@ export default async function handleFailure(
   } catch (error) {
     await dbClient.query("ROLLBACK");
     throw error;
-  } finally {
-    await dbClient.end();
   }
 }

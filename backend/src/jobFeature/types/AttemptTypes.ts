@@ -1,7 +1,10 @@
-import { AttemptsStateMachine } from "./AttemptsStateMachineType";
+import { AttemptsState } from "./AttemptsStateType";
+import {Client} from "pg"
 
 type Attempt = {
-  status: AttemptsStateMachine;
+  state: AttemptsState;
+  data?: unknown;
+  error?: unknown;
   jobId: string;
   attemptId: string;
   attemptNumber: number;
@@ -15,7 +18,7 @@ type Attempt = {
   lastHeartbeatAt?: Date;
 };
 type CreateAttemptInput = {
-  dbClient;
+  dbClient: Client;
   jobId: string;
   provider: string;
   model: string;
