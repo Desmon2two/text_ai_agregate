@@ -1,8 +1,8 @@
 export type AttemptsState =
-	| "created"
-	| "sending"
-	| "waiting"
-	| "received"
-	| "validated"
-	| "complete"
-	| "failed";
+	| "CREATED"
+	| "SENDING"
+	| "WAITING"
+	| "RECEIVED"
+	| "VALIDATED"
+	| "COMPLETE"
+	| "FAILED";

@@ -1,17 +1,39 @@
 import { Client } from "pg";
+import type { JobStateTypes } from "./JobStateType";
 
-// export type PlanJobInput = {
+// type PlanJobInput = {
 // 	body: unknown;
 // 	files: string[];
 // };
-// export type PlanJobOutput = {
+// type PlanJobOutput = {
 // 	provider: string;
 // 	model: string;
 // 	advantages: string[];
 // 	estimatedCost: number;
 // 	interpretedIntent: string;
 // };
-export type CommitJobInput = {
+type Job = {
+	userId: string;
+	jobId: string;
+	jobState: JobStateTypes;
+	jobType: string;
+	body: unknown;
+	files?: string[];
+	error?: unknown;
+	data?: unknown;
+	metadata?: unknown;
+	estimatedCost: number;
+	actualCost?: number;
+	createdAt: Date;
+}
+type CreateJob = {
+	dbClient: Client;
+	userId: string;
+	jobType: string;
+	body: unknown;
+	estimatedCost: number;
+};
+type CommitJobInput = {
 	dbClient: Client;
 	body: {
 		prompt: string;
@@ -23,14 +45,21 @@ export type CommitJobInput = {
 	jobType: string;
 };
 
-export type CommitJobOutput = {
+type CommitJobOutput = {
 	jobId: string;
 	createdAt: Date;
 };
 
-export type completeJobType = {
+type completeJobType = {
 	dbClient: Client;
 	jobId: string;
 	attemptId: string;
 	data: unknown;
 };
+export {
+	Job,
+	CreateJob,
+	CommitJobInput,
+	CommitJobOutput,
+	completeJobType
+}

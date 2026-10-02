@@ -1,7 +1,7 @@
 export type JobStateTypes =
-	| "created"
-	| "accepted"
-	| "queued"
-	| "processing"
-	| "complete"
-	| "failed";
+	| "CREATED"
+	| "ACCEPTED"
+	| "QUEUED"
+	| "PROCESSING"
+	| "COMPLETE"
+	| "FAILED";
