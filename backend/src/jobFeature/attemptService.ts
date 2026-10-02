@@ -1,36 +1,62 @@
+import { dbClient } from "../database/dbClient";
 import { Attempt, CreateAttemptInput } from "./types/AttemptTypes";
 
 async function createAttempt({
-	jobId,
-	provider,
-	model,
+  jobId,
+  provider,
+  model,
 }: CreateAttemptInput): Promise<Attempt> {
-	let attempts = await attemptRepository.attemptsByJobId(jobId);
-	if (attempts >= 2) throw new Error("Too many attempts for this job");
-	const attempt = await attemptRepository.create({
-		jobId,
-		attemptNumber: attempts + 1,
-		provider,
-		model,
-	});
-	return attempt;
+  await dbClient.query("BEGIN");
+  try {
+    let attempts = await attemptRepository.attemptsByJobId(jobId);
+    if (attempts >= process.env.MAX_ATTEMPTS) {
+      throw new Error("Too many attempts for this job");
+    }
+    const attempt = await attemptRepository.create({
+      dbClient,
+      jobId,
+      attemptNumber: attempts + 1,
+      provider,
+      model,
+    });
+    await dbClient.query("COMMIT");
+    return attempt;
+  } catch (error) {
+    await dbClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    await dbClient.end();
+  }
 }
 
 async function failAttempt(attemptId: string): Promise<string | null> {
-	const failedAttempt = await attemptRepository.findById(attemptId);
-	if (!failedAttempt) throw new Error("Attempt not found");
-	await attemptRepository.markFailed(attemptId);
-	let attempts = await attemptRepository.attemptsByJobId(jobId);
-	if (attempts >= MAX_ATTEMPTS) return null;
-	const retry = await createAttempt({
-		jobId: failedAttempt.jobId,
-		provider: failedAttempt.provider,
-		model: failedAttempt.model,
-	});
+  const failedAttempt = await attemptRepository.findById(attemptId);
+  if (!failedAttempt) throw new Error("Attempt not found");
+  await dbClient.query("BEGIN");
+  try {
+    await attemptRepository.markFailed(dbClient, attemptId);
+    let attempts = await attemptRepository.attemptsByJobId(dbClient, jobId);
+    if (attempts >= process.env.MAX_ATTEMPTS) {
+      await dbClient.query("COMMIT");
+      await dbClient.end();
+      return null;
+    }
+    const retry = await createAttempt({
+      dbClient,
+      jobId: failedAttempt.jobId,
+      provider: failedAttempt.provider,
+      model: failedAttempt.model,
+    });
 
-	return retry.attemptId;
+    await dbClient.query("COMMIT");
+    return retry.attemptId;
+  } catch (error) {
+    await dbClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    await dbClient.end();
+  }
 }
-
 export default {
-	createAttempt,
+  createAttempt,
 };

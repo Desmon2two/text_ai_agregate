@@ -1,39 +1,58 @@
+import { dbClient } from "../database/dbClient";
 import { AttemptError } from "../errors/AttemptErrorType";
 import attemptService from "../jobFeature/attemptService";
 import { Attempt } from "../jobFeature/types/AttemptTypes";
 
 export default async function handleFailure(
-	attempt: Attempt,
-	error: AttemptError,
+  dbClient,
+  attempt: Attempt,
+  error: AttemptError,
 ): Promise<string | null> {
-	await attemptRepository.markFailed(attempt.attemptId, error);
-	if (!error.retryable) {
-		await jobRepository.markFailed(attempt.jobId);
-		return null;
-	}
-	if (attempt.attemptNumber >= MAX_ATTEMPTS) {
-		await jobRepository.markFailed(attempt.jobId);
-		await eventRepository.createEvent({
-			name: "ATTEMPT_FAILED",
-			reason: "MAX_ATTEMPTS_REACHED",
-		});
-		await eventRepository.createEvent({
-			name: "JOB_FAILED",
-			reason: "MAX_ATTEMPTS_REACHED",
-		});
-		return null;
-	}
-	const newAttempt = await attemptService.createAttempt({
-		jobId: attempt.jobId,
-		provider: attempt.provider,
-		model: attempt.model,
-	});
-	await eventRepository.createEvent({
-		name: "RETRY_CREATED",
-		metadata: {
-			attemptId: newAttempt.attemptId,
-			previousAttemptId: attempt.attemptId,
-		},
-	});
-	return newAttempt.attemptId;
+  await dbClient.query("BEGIN");
+  try {
+    await attemptRepository.markFailed(dbClient, attempt.attemptId, error);
+    if (!error.retryable) {
+      await jobRepository.markFailed(dbClient, attempt.jobId);
+      await dbClient.query("COMMIT");
+      await dbClient.end();
+      return null;
+    }
+    if (attempt.attemptNumber >= process.env.MAX_ATTEMPTS) {
+      await jobRepository.markFailed(dbClient, attempt.jobId);
+      await eventRepository.createEvent({
+        dbClient,
+        name: "ATTEMPT_FAILED",
+        reason: "MAX_ATTEMPTS_REACHED",
+      });
+      await eventRepository.createEvent({
+        dbClient,
+        name: "JOB_FAILED",
+        reason: "MAX_ATTEMPTS_REACHED",
+      });
+      await dbClient.query("COMMIT");
+      await dbClient.end();
+      return null;
+    }
+    const newAttempt = await attemptService.createAttempt({
+      dbClient,
+      jobId: attempt.jobId,
+      provider: attempt.provider,
+      model: attempt.model,
+    });
+    await eventRepository.createEvent({
+      dbClient,
+      name: "RETRY_CREATED",
+      metadata: {
+        attemptId: newAttempt.attemptId,
+        previousAttemptId: attempt.attemptId,
+      },
+    });
+    await dbClient.query("COMMIT");
+    return newAttempt.attemptId;
+  } catch (error) {
+    await dbClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    await dbClient.end();
+  }
 }

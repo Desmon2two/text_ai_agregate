@@ -1,39 +1,58 @@
+import { dbClient } from "../database/dbClient";
 import handleFailure from "../infrastructure/failureHandler";
 import mapErrorToAttemptError from "../infrastructure/utils/errorToProviderErrorMapper";
 import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper";
 
 async function processJob(jobId: string) {
-	const job = await jobRepository.claim(jobId);
-
-	const attempt = await attemptRepository.createAttempt({
-		jobId,
-		provider: job.provider,
-		model: job.model,
-	});
-	executeAttempt(attempt.attemptId);
-	return
+  await dbClient.query("BEGIN");
+  try {
+    const job = await jobRepository.claim(dbClient, jobId);
+    const attempt = await attemptRepository.createAttempt({
+      dbClient, 
+      jobId,
+      provider: job.provider,
+      model: job.model,
+    });
+    executeAttempt(dbClient, attempt.attemptId);
+    await dbClient.query("COMMIT");
+  } catch (error) {
+    await dbClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    await dbClient.end();
+  }
 }
-async function executeAttempt(attemptId: string) {
-	const attempt = attemptRepository.getAttempt(attemptId);
-	const job = await jobRepository.getJob(attempt.jobId);
+async function executeAttempt(dbClient, attemptId: string) {
+  await dbClient.query("BEGIN");
+  const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
+  try {
+    const job = await jobRepository.getJob(dbClient, attempt.jobId);
 
-	try {
-		await attemptRepository.markSending(attempt.id);
-		const aiRequest = mapJobToAiRequest(job);
-		const response = await aiProvider(aiRequest);
-	
-		await attemptRepository.markReceived(attempt.id, response);
-		await validateAiResponse(response)
-		await attemptRepository.markValidated(attempt.id, response)
-		await jobCompletionService.completeJob(jobId, attempt.id, response.data);
-	} catch (error) {
-		const attemptError = mapErrorToAttemptError(error, attempt.retryable, attempt.provider, attempt.code);
-		await handleFailure(attempt, attemptError);
-		}
-	
+    await attemptRepository.markSending(dbClient, attempt.id);
+    const aiRequest = mapJobToAiRequest(job);
+    const response = await aiProvider(dbClient, aiRequest);
+
+    await attemptRepository.markReceived(dbClient, attempt.id, response);
+    await validateAiResponse(response);
+    await attemptRepository.markValidated(dbClient, attempt.id, response);
+    await jobCompletionService.completeJob(dbClient, job.jobId, attempt.id, response.data);
+    await dbClient.query("COMMIT");
+  } catch (error) {
+    const attemptError = mapErrorToAttemptError(
+      error,
+      attempt.retryable,
+      attempt.provider,
+      attempt.code,
+    );
+    await handleFailure(dbClient, attempt, attemptError);
+    await dbClient.query("ROLLBACK");
+    throw error;
+  } finally {
+    await dbClient.end();
+  }
 }
 
 export default {
-	processJob,
-	executeAttempt,
-}
+  processJob,
+  executeAttempt,
+};

@@ -4,6 +4,6 @@ export type JobStateMachineTypes =
 	| { state: "queued" }
 	| { state: "processing" }
 	| { state: "complete"; data: unknown }
-	| { state: "error"; error: Error };
+	| { state: "failed"; error: Error };
 
 // the retry policy shall be recorded separately

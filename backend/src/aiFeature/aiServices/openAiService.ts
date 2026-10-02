@@ -1,4 +1,3 @@
-import { AiProvider } from "../types/AiProviderType";
 import { AiRequest } from "../types/AiRequestType";
 import { ValidationError } from "../../errors/validationError";
 import OpenAi from "openai";
