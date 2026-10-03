@@ -1,4 +1,3 @@
-import { dbClient } from "../database/dbClient";
 import { AttemptError } from "../errors/AttemptErrorType";
 import attemptService from "../jobFeature/attemptService";
 import { Attempt } from "../jobFeature/types/AttemptTypes";
@@ -14,7 +13,6 @@ export default async function handleFailure(
     if (!error.retryable) {
       await jobRepository.markFailed(dbClient, attempt.jobId);
       await dbClient.query("COMMIT");
-      await ;
       return null;
     }
     if (attempt.attemptNumber >= process.env.MAX_ATTEMPTS) {
@@ -30,12 +28,12 @@ export default async function handleFailure(
         reason: "MAX_ATTEMPTS_REACHED",
       });
       await dbClient.query("COMMIT");
-      await ;
       return null;
     }
     const newAttempt = await attemptService.createAttempt({
       dbClient,
       jobId: attempt.jobId,
+      attemptNumber: attempt.attemptNumber,
       provider: attempt.provider,
       model: attempt.model,
     });

@@ -1,7 +1,9 @@
-import { EventStateTypes } from "./EventsStateType";
+import { EventNamesType } from "./EventsStateType";
 
 export type EventType = {
-	state: EventStateTypes;
-	attemptId: string;
+	name: EventNamesType;
+	attemptId?: string;
+	jobId?: string;
+	metadata?: unknown;
 	createdAt?: Date;
 };

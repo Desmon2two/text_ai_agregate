@@ -15,8 +15,8 @@ import type { JobStateTypes } from "./JobStateType";
 type Job = {
 	userId: string;
 	jobId: string;
-	jobState: JobStateTypes;
-	jobType: string;
+	state: JobStateTypes;
+	type: string;
 	body: unknown;
 	files?: string[];
 	error?: unknown;
@@ -29,7 +29,7 @@ type Job = {
 type CreateJob = {
 	dbClient: Client;
 	userId: string;
-	jobType: string;
+	type: string;
 	body: unknown;
 	estimatedCost: number;
 };
@@ -42,7 +42,7 @@ type CommitJobInput = {
 	files?: string[];
 	provider: string;
 	model: string;
-	jobType: string;
+	type: string;
 };
 
 type CommitJobOutput = {
