@@ -4,5 +4,5 @@ export type AttemptsState =
 	| "WAITING"
 	| "RECEIVED"
 	| "VALIDATED"
-	| "COMPLETE"
+	| "COMPLETED"
 	| "FAILED";

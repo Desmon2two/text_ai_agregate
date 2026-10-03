@@ -25,9 +25,6 @@ async function createJob({
     `,
     ["CREATED", type, body, userId, estimatedCost],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Job transition failed");
-  }
   return result.rows[0];
 }
 async function markAccepted(dbClient: Client, jobId: string) {
@@ -40,9 +37,6 @@ async function markAccepted(dbClient: Client, jobId: string) {
     `,
     [jobId, "CREATED", "ACCEPTED"],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Job transition failed");
-  }
   return result.rows[0];
 }
 async function markQueued(dbClient: Client, jobId: string) {
@@ -55,9 +49,6 @@ async function markQueued(dbClient: Client, jobId: string) {
     `,
     [jobId, "ACCEPTED", "QUEUED"],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Job transition failed");
-  }
   return result.rows[0];
 }
 async function markProcessing(dbClient: Client, jobId: string) {
@@ -70,24 +61,18 @@ async function markProcessing(dbClient: Client, jobId: string) {
     `,
     [jobId, "QUEUED", "PROCESSING"],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Job transition failed");
-  }
   return result.rows[0];
 }
-async function markComplete(dbClient: Client, jobId: string, data: unknown) {
+async function markCompleted(dbClient: Client, jobId: string, data: unknown, actualCost: number) {
   const result = await dbClient.query(
     `UPDATE jobs
-    SET state = $3, data = $4, updated_at = NOW(), completed_at = NOW()
+    SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
     `,
-    [jobId, "PROCESSING", "COMPLETE"],
+    [jobId, "PROCESSING", "COMPLETED", data, actualCost],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Job transition failed");
-  }
   return result.rows[0];
 }
 async function markFailed(dbClient: Client, jobId: string, error: unknown) {
@@ -100,9 +85,6 @@ async function markFailed(dbClient: Client, jobId: string, error: unknown) {
     `,
     [jobId, "FAILED", error],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Job transition failed");
-  }
   return result.rows[0];
 }
 export default {
@@ -111,6 +93,6 @@ export default {
   markAccepted,
   markQueued,
   markProcessing,
-  markComplete,
+  markCompleted,
   markFailed,
 };

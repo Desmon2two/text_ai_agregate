@@ -8,9 +8,6 @@ async function createJobAcceptedEvent(dbClient: Client, jobId: string) {
     `,
     [jobId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 
@@ -22,9 +19,6 @@ async function createWorkerStartedEvent(dbClient: Client, jobId: string) {
     `,
     [jobId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createAttemptCreatedEvent(dbClient: Client, attemptId: string, metadata: {[...]}) {
@@ -35,9 +29,6 @@ async function createAttemptCreatedEvent(dbClient: Client, attemptId: string, me
     `,
     [attemptId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createSendingRequestEvent(dbClient: Client, attemptId: string) {
@@ -48,9 +39,6 @@ async function createSendingRequestEvent(dbClient: Client, attemptId: string) {
     `,
     [attemptId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createWaitingForResponseEvent(
@@ -65,9 +53,6 @@ async function createWaitingForResponseEvent(
     `,
     [attemptId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createResponseReceivedEvent(dbClient: Client, attemptId: string) {
@@ -78,9 +63,6 @@ async function createResponseReceivedEvent(dbClient: Client, attemptId: string) 
     `,
     [attemptId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createResponseValidatedEvent(
@@ -94,9 +76,6 @@ async function createResponseValidatedEvent(
     `,
     [attemptId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createAttemptCompletedEvent(dbClient: Client, attemptId: string) {
@@ -107,9 +86,6 @@ async function createAttemptCompletedEvent(dbClient: Client, attemptId: string) 
     `,
     [attemptId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createJobCompletedEvent(
@@ -123,9 +99,6 @@ async function createJobCompletedEvent(
     `,
     [jobId],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createAttemptFailedEvent(
@@ -140,9 +113,6 @@ async function createAttemptFailedEvent(
     `,
     [attemptId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createJobFailedEvent(
@@ -157,9 +127,22 @@ async function createJobFailedEvent(
     `,
     [jobId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
+  return result.rows[0];
+}
+async function createRetryCreatedEvent(  
+  dbClient: Client,
+  jobId: string,
+  attemptId: string,
+  metadata: {previousAttemptId: string },
+)
+ {
+  const result = await dbClient.query(
+    `INSERT INTO events(name, job_id, attempt_id, metadata) 
+    VALUES ('RETRY_CREATED', $1, $2, $3)
+    RETURNING *
+    `,
+    [jobId, attemptId, metadata],
+  );
   return result.rows[0];
 }
 async function createRecoveryStartedEvent(
@@ -175,9 +158,6 @@ async function createRecoveryStartedEvent(
     `,
     [attemptId, jobId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createRecoveryAbandonedEvent(
@@ -193,9 +173,6 @@ async function createRecoveryAbandonedEvent(
     `,
     [attemptId, jobId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 async function createRecoveryCompletedEvent(
@@ -211,9 +188,6 @@ async function createRecoveryCompletedEvent(
     `,
     [attemptId, jobId, metadata],
   );
-  if (result.rows.length === 0) {
-    throw new Error("Event creation failed");
-  }
   return result.rows[0];
 }
 
@@ -229,6 +203,7 @@ export default {
   createJobCompletedEvent,
   createAttemptFailedEvent,
   createJobFailedEvent,
+  createRetryCreatedEvent,
   createRecoveryStartedEvent,
   createRecoveryAbandonedEvent,
   createRecoveryCompletedEvent,

@@ -1,50 +1,61 @@
+import { Client } from "pg";
 import { AttemptError } from "../errors/AttemptErrorType";
 import attemptService from "../jobFeature/attemptService";
-import { Attempt } from "../jobFeature/types/AttemptTypes";
+import nonSecretVariables from "../infrastructure/utils/nonSecretVariables";
+import attemptRepository from "../jobFeature/attemptRepository";
+import jobRepository from "../jobFeature/jobRepository";
+import eventRepository from "../jobFeature/eventRepository";
 
 export default async function handleFailure(
-  dbClient,
-  attempt: Attempt,
+  dbClient: Client,
+  attemptId: string,
   error: AttemptError,
-): Promise<string | null> {
-  await dbClient.query("BEGIN");
+): Promise<string | void> {
   try {
+    await dbClient.query("BEGIN");
+    const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
+    if (attempt === null) throw new Error("Attempt not found");
+    if (attempt.state === "COMPLETED" || attempt.state === "FAILED") {
+      throw new Error("Impossible state for hanlding failure");
+    }
     await attemptRepository.markFailed(dbClient, attempt.attemptId, error);
+    await eventRepository.createAttemptFailedEvent(
+      dbClient,
+      attempt.attemptId,
+      { error },
+    );
+
     if (!error.retryable) {
-      await jobRepository.markFailed(dbClient, attempt.jobId);
-      await dbClient.query("COMMIT");
-      return null;
-    }
-    if (attempt.attemptNumber >= process.env.MAX_ATTEMPTS) {
-      await jobRepository.markFailed(dbClient, attempt.jobId);
-      await eventRepository.createEvent({
-        dbClient,
-        name: "ATTEMPT_FAILED",
-        reason: "MAX_ATTEMPTS_REACHED",
+      await jobRepository.markFailed(dbClient, attempt.jobId, error);
+      await eventRepository.createJobFailedEvent(dbClient, attempt.jobId, {
+        error: "NOT_RETRYABLE",
       });
-      await eventRepository.createEvent({
-        dbClient,
-        name: "JOB_FAILED",
-        reason: "MAX_ATTEMPTS_REACHED",
-      });
-      await dbClient.query("COMMIT");
-      return null;
+      throw new Error("Not retryable");
     }
+
+    if (attempt.attemptNumber >= nonSecretVariables.MAX_ATTEMPTS) {
+      await jobRepository.markFailed(dbClient, attempt.jobId, error);
+      await eventRepository.createJobFailedEvent(dbClient, attempt.jobId, {
+        error: "MAX_ATTEMPTS_REACHED",
+      });
+      throw new Error("Max attempts reached");
+    }
+
     const newAttempt = await attemptService.createAttempt({
       dbClient,
       jobId: attempt.jobId,
-      attemptNumber: attempt.attemptNumber,
+      attemptNumber: attempt.attemptNumber + 1,
       provider: attempt.provider,
       model: attempt.model,
     });
-    await eventRepository.createEvent({
+    await eventRepository.createRetryCreatedEvent(
       dbClient,
-      name: "RETRY_CREATED",
-      metadata: {
-        attemptId: newAttempt.attemptId,
+      attempt.jobId,
+      newAttempt.attemptId,
+      {
         previousAttemptId: attempt.attemptId,
       },
-    });
+    );
     await dbClient.query("COMMIT");
     return newAttempt.attemptId;
   } catch (error) {

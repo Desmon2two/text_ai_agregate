@@ -2,6 +2,7 @@ import { dbClient } from "../database/dbClient";
 import { Attempt, CreateAttemptInput } from "./types/AttemptTypes";
 
 async function createAttempt({
+  dbClient,
   jobId,
   provider,
   model,

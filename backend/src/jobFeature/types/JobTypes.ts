@@ -55,6 +55,7 @@ type completeJobType = {
 	jobId: string;
 	attemptId: string;
 	data: unknown;
+	actualCost: number;
 };
 export {
 	Job,
