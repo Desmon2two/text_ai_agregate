@@ -16,6 +16,8 @@ type Attempt = {
   updatedAt: Date;
   completedAt?: Date;
   lastHeartbeatAt?: Date;
+  recovery_lease_until: Date;
+  recovery_worker_id: string;
 };
 type CreateAttemptInput = {
   dbClient: Client;
