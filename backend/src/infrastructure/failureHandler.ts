@@ -10,13 +10,13 @@ export default async function handleFailure(
   dbClient: Client,
   attemptId: string,
   error: AttemptError,
-): Promise<string | void> {
+): Promise<string | null> {
   try {
     await dbClient.query("BEGIN");
     const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
-    if (attempt === null) throw new Error("Attempt not found");
+    if (attempt === null) return null;
     if (attempt.state === "COMPLETED" || attempt.state === "FAILED") {
-      throw new Error("Impossible state for hanlding failure");
+      return null;
     }
     await attemptRepository.markFailed(dbClient, attempt.attemptId, error);
     await eventRepository.createAttemptFailedEvent(
@@ -44,7 +44,6 @@ export default async function handleFailure(
     const newAttempt = await attemptService.createAttempt({
       dbClient,
       jobId: attempt.jobId,
-      attemptNumber: attempt.attemptNumber + 1,
       provider: attempt.provider,
       model: attempt.model,
     });

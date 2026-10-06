@@ -25,8 +25,8 @@ async function processJobFromBeginning(dbClient: Client, jobId: string) {
       attempt.attemptId,
       { origin: "Standart Job Processing" },
     );
-    executeAttempt(dbClient, attempt.attemptId);
     await dbClient.query("COMMIT");
+    await executeAttempt(dbClient, attempt.attemptId);
   } catch (error) {
     await dbClient.query("ROLLBACK");
     throw error;
@@ -78,19 +78,52 @@ async function executeAttempt(dbClient: Client, attemptid: string) {
       throw new Error("No such job");
     }
 
-    await attemptRepository.markSending(dbClient, attemptId);
-    await eventRepository.createSendingRequestEvent(dbClient, attemptId);
+    try {
+      await attemptRepository.markSending(dbClient, attemptId);
+      await eventRepository.createSendingRequestEvent(dbClient, attemptId);
+      await dbClient.query("COMMIT");
+    } catch (error) {
+      await dbClient.query("ROLLBACK");
+    }
     const aiRequest = mapJobToAiRequest(job);
-    const response = await aiProvider(dbClient, aiRequest);
-
-    await attemptRepository.markReceived(dbClient, attemptId, response);
-    await eventRepository.createResponseReceivedEvent(dbClient, attemptId);
+    const providerJobId = await aiProvider.send(dbClient, aiRequest);
+    if (providerJobId !== null) {
+      try {
+        await dbClient.query("BEGIN");
+        await attemptRepository.markWaiting(
+          dbClient,
+          attemptId,
+          providerJobId,
+        );
+        await eventRepository.createWaitingForResponseEvent(
+          dbClient,
+          attemptId,
+          { providerJobId },
+        );
+        await dbClient.query("COMMIT");
+      } catch (error) {
+        await dbClient.query("ROLLBACK");
+      }
+    }
+    const response = await aiProvider.receive(dbClient, aiRequest);
+    try {
+      await dbClient.query("BEGIN");
+      await attemptRepository.markReceived(dbClient, attemptId, response);
+      await eventRepository.createResponseReceivedEvent(dbClient, attemptId);
+      await dbClient.query("COMMIT");
+    } catch (error) {
+      await dbClient.query("ROLLBACK");
+    }
     await validateAiResponse(response);
-    await attemptRepository.markValidated(dbClient, attemptId, response);
-    await eventRepository.createResponseValidatedEvent(dbClient, attemptId);
+    try {
+      await dbClient.query("BEGIN");
+      await attemptRepository.markValidated(dbClient, attemptId, response);
+      await eventRepository.createResponseValidatedEvent(dbClient, attemptId);
+      await dbClient.query("COMMIT");
+    } catch (error) {
+      await dbClient.query("ROLLBACK");
+    }
     await jobService.completeJob(dbClient, job.jobId, attemptId);
-    await eventRepository.createJobCompletedEvent(dbClient, jobId);
-    await dbClient.query("COMMIT");
   } catch (error) {
     const attemptError = mapErrorToAttemptError(
       error,
@@ -99,7 +132,6 @@ async function executeAttempt(dbClient: Client, attemptid: string) {
       error.code,
     );
     await handleFailure(dbClient, attemptId, attemptError);
-    await dbClient.query("ROLLBACK");
     throw error;
   }
 }
