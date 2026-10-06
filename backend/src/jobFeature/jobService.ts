@@ -4,6 +4,7 @@ import attemptRepository from "./attemptRepository";
 import jobRepository from "./jobRepository";
 import eventRepositoy from "./eventRepository"
 import eventRepository from "./eventRepository";
+import { Client } from "pg";
 
 
 async function createJob({ body, files, provider, model, jobType }: CommitJobInput): Promise<CommitJobOutput> {
@@ -53,30 +54,31 @@ async function commitJob(userId: string, { jobType, provider, model, body, files
 }
 
 
-async function completeJob({
-	dbClient,
-	jobId,
-	attemptId,
-	data,
-	actualCost,
-}: completeJobType): Promise<void> {
+async function completeJob(
+	dbClient: Client,
+	jobId: string,
+	attemptId: string,
+): Promise<void> {
 	
 	const job = await jobRepository.getJob(dbClient, jobId);
-	if (job.state !== "processing")
+	if (job === null) throw new Error("No such job for completeJob")
+	if (job.state !== "PROCESSING")
 		throw new Error("Job is not in processing state");
 	
 	const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
-	if (attempt.state !== "validated")
+	if (attempt === null) throw new Error("No such attempt for completeJob")
+	if (attempt.state !== "VALIDATED")
 		throw new Error("Attempt is not in validated state");
-	if (typeof data === "undefined" || data === null) 
+	if (typeof attempt.data === "undefined" || attempt.data === null) 
 		throw new Error("Data is absent")
 	
 	
 	await dbClient.query("BEGIN");
 	try {
-		const attemptResult = await attemptRepository.markCompleted(dbClient, attemptId, data)
+		const attemptResult = await attemptRepository.markCompleted(dbClient, attemptId, attempt.data)
 		if (attemptResult.rowCount.length === 0) throw Error("Complete job operation failed at mark attempt completed")
-			const jobResult = await jobRepository.markCompleted(dbClient, jobId, data, actualCost)
+			const actualCost = await finService.calculateActualCost(attemptId)
+			const jobResult = await jobRepository.markCompleted(dbClient, jobId, attempt.data, actualCost)
 		if (jobResult.rowCount.length === 0) throw Error("Complete job operation failed at mark job completed")
 		await eventRepository.createAttemptCompletedEvent(dbClient, attemptId)
 		await eventRepository.createJobCompletedEvent(dbClient, jobId)

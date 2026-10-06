@@ -16,7 +16,7 @@ async function createAttempt({
   attemptNumber,
   provider,
   model,
-}: CreateAttemptInput) {
+}: CreateAttemptInput): Promise<Attempt | null> {
   const result = await dbClient.query(
     `INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
     VALUES ($1, $2, $3, $4, $5)

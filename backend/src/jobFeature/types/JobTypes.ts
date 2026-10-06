@@ -22,6 +22,8 @@ type Job = {
 	error?: unknown;
 	data?: unknown;
 	metadata?: unknown;
+	recoveryWorkerId: string;
+	recoveryLeaseUntil: Date;
 	estimatedCost: number;
 	actualCost?: number;
 	createdAt: Date;
@@ -54,8 +56,6 @@ type completeJobType = {
 	dbClient: Client;
 	jobId: string;
 	attemptId: string;
-	data: unknown;
-	actualCost: number;
 };
 export {
 	Job,

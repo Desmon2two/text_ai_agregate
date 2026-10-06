@@ -1,6 +1,7 @@
 import { Client } from "pg";
-import { CreateJob } from "./types/JobTypes";
-async function getJob(dbClient: Client, jobId: string) {
+import { CreateJob, Job } from "./types/JobTypes";
+import { Attempt } from "./types/AttemptTypes";
+async function getJob(dbClient: Client, jobId: string): Promise<Job | null> {
   const result = await dbClient.query(
     `
     SELECT * FROM jobs 
@@ -9,6 +10,17 @@ async function getJob(dbClient: Client, jobId: string) {
     [jobId],
   );
   return result.rows[0];
+}
+async function getAttemptsPerJob(dbClient: Client, jobId: string): Promise<Attempt[] | null> {
+  const result = await dbClient.query(
+    `
+    SELECT * FROM attempts 
+    WHERE job_id = $1
+    ORDER BY attempt_number DESC
+    `,
+    [jobId],
+  );
+  return result.rows;
 }
 async function createJob({
   dbClient,
@@ -89,6 +101,7 @@ async function markFailed(dbClient: Client, jobId: string, error: unknown) {
 }
 export default {
   getJob,
+  getAttemptsPerJob,
   createJob,
   markAccepted,
   markQueued,

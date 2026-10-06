@@ -10,19 +10,19 @@ type Attempt = {
   model: string;
   data?: unknown;
   error?: unknown;
+  retryable?: false;
   providerOperationId?: string;
   createdAt: Date;
   startedAt?: Date;
   updatedAt: Date;
   completedAt?: Date;
   lastHeartbeatAt?: Date;
-  recovery_lease_until: Date;
-  recovery_worker_id: string;
+  recoveryLeaseUntil: Date;
+  recoveryWorkerId: string;
 };
 type CreateAttemptInput = {
   dbClient: Client;
   jobId: string;
-  attemptNumber: number;
   provider: string;
   model: string;
 };

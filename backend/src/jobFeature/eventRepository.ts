@@ -10,6 +10,29 @@ async function createJobAcceptedEvent(dbClient: Client, jobId: string) {
   );
   return result.rows[0];
 }
+async function createJobProcessingEvent(dbClient: Client, jobId: string) {
+  const result = await dbClient.query(
+    `INSERT INTO events(name, job_id) 
+    VALUES ('JOB_PROCESSING', $1)
+    RETURNING *
+    `,
+    [jobId],
+  );
+  return result.rows[0];
+}
+async function createJobProcessedFromIntermediateStateEvent(
+  dbClient: Client,
+  jobId: string,
+) {
+  const result = await dbClient.query(
+    `INSERT INTO events(name, job_id) 
+    VALUES ('JOB_PROCESSING_FROM_INTERMEDIATE_STATE', $1)
+    RETURNING *
+    `,
+    [jobId],
+  );
+  return result.rows[0];
+}
 
 async function createWorkerStartedEvent(dbClient: Client, jobId: string) {
   const result = await dbClient.query(
@@ -21,7 +44,11 @@ async function createWorkerStartedEvent(dbClient: Client, jobId: string) {
   );
   return result.rows[0];
 }
-async function createAttemptCreatedEvent(dbClient: Client, attemptId: string, metadata: {[...]}) {
+async function createAttemptCreatedEvent(
+  dbClient: Client,
+  attemptId: string,
+  metadata: { origin: string },
+) {
   const result = await dbClient.query(
     `INSERT INTO events(name, attempt_id, metadata) 
     VALUES ('ATTEMPT_CREATED', $1, $2)
@@ -55,7 +82,10 @@ async function createWaitingForResponseEvent(
   );
   return result.rows[0];
 }
-async function createResponseReceivedEvent(dbClient: Client, attemptId: string) {
+async function createResponseReceivedEvent(
+  dbClient: Client,
+  attemptId: string,
+) {
   const result = await dbClient.query(
     `INSERT INTO events(name, attempt_id) 
     VALUES ('RESPONSE_RECEIVED', $1)
@@ -78,7 +108,10 @@ async function createResponseValidatedEvent(
   );
   return result.rows[0];
 }
-async function createAttemptCompletedEvent(dbClient: Client, attemptId: string) {
+async function createAttemptCompletedEvent(
+  dbClient: Client,
+  attemptId: string,
+) {
   const result = await dbClient.query(
     `INSERT INTO events(name, attempt_id) 
     VALUES ('ATTEMPT_COMPLETED', $1)
@@ -88,10 +121,7 @@ async function createAttemptCompletedEvent(dbClient: Client, attemptId: string) 
   );
   return result.rows[0];
 }
-async function createJobCompletedEvent(
-  dbClient: Client,
-  jobId: string,
-) {
+async function createJobCompletedEvent(dbClient: Client, jobId: string) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
     VALUES ('JOB_COMPLETED', $1)
@@ -118,7 +148,7 @@ async function createAttemptFailedEvent(
 async function createJobFailedEvent(
   dbClient: Client,
   jobId: string,
-  metadata: {error: unknown },
+  metadata: { error: unknown },
 ) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id, metadata) 
@@ -129,13 +159,12 @@ async function createJobFailedEvent(
   );
   return result.rows[0];
 }
-async function createRetryCreatedEvent(  
+async function createRetryCreatedEvent(
   dbClient: Client,
   jobId: string,
   attemptId: string,
-  metadata: {previousAttemptId: string },
-)
- {
+  metadata: { previousAttemptId: string },
+) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id, attempt_id, metadata) 
     VALUES ('RETRY_CREATED', $1, $2, $3)
@@ -147,52 +176,54 @@ async function createRetryCreatedEvent(
 }
 async function createRecoveryStartedEvent(
   dbClient: Client,
-  attemptId: string,
   jobId: string,
-  metadata: { reason: string},
+  metadata: { reason: string },
+  attemptId?: string,
 ) {
   const result = await dbClient.query(
     `INSERT INTO events(name, attempt_id, job_id, metadata) 
     VALUES ('RECOVERY_STARTED', $1, $2, $3)
     RETURNING *
     `,
-    [attemptId, jobId, metadata],
+    [attemptId || null, jobId, metadata],
   );
   return result.rows[0];
 }
 async function createRecoveryAbandonedEvent(
   dbClient: Client,
-  attemptId: string,
   jobId: string,
-  metadata: { reason: string},
+  metadata: { reason: string },
+  attemptId?: string,
 ) {
   const result = await dbClient.query(
     `INSERT INTO events(name, attempt_id, job_id, metadata) 
     VALUES ('RECOVERY_ABANDONED', $1, $2, $3)
     RETURNING *
     `,
-    [attemptId, jobId, metadata],
+    [attemptId || null, jobId, metadata],
   );
   return result.rows[0];
 }
 async function createRecoveryCompletedEvent(
   dbClient: Client,
-  attemptId: string,
   jobId: string,
-  metadata: { reason: string},
+  metadata: { reason: string },
+  attemptId?: string,
 ) {
   const result = await dbClient.query(
     `INSERT INTO events(name, attempt_id, job_id, metadata) 
     VALUES ('RECOVERY_COMPLETED', $1, $2, $3)
     RETURNING *
     `,
-    [attemptId, jobId, metadata],
+    [attemptId || null, jobId, metadata],
   );
   return result.rows[0];
 }
 
 export default {
   createJobAcceptedEvent,
+  createJobProcessingEvent,
+  createJobProcessedFromIntermediateStateEvent,
   createWorkerStartedEvent,
   createAttemptCreatedEvent,
   createSendingRequestEvent,
