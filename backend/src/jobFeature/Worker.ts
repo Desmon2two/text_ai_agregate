@@ -85,6 +85,7 @@ async function executeAttempt(dbClient: Client, attemptid: string) {
     } catch (error) {
       await dbClient.query("ROLLBACK");
     }
+    
     const aiRequest = mapJobToAiRequest(job);
     const providerJobId = await aiProvider.send(dbClient, aiRequest);
     if (providerJobId !== null) {
