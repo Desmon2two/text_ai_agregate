@@ -1,6 +1,8 @@
 import { AttemptsState } from "./AttemptsStateType";
 import {Client} from "pg"
-
+/* 
+The db tables are a source of truth for jobs, attempts, and events
+*/
 type Attempt = {
   jobId: string;
   attemptId: string;

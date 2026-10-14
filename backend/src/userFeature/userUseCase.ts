@@ -1,4 +1,4 @@
-import userService from "../userFeature/userService.js";
+import userService from "./userService.js";
 import passwordService from "../authFeature/passwordService.js";
 import authService from "../authFeature/authService.js";
 import atomicTransaction from "../infrastructure/database/mongoDB/atomicTransaction.js";
@@ -7,7 +7,7 @@ import { NotFoundError } from "../errors/notFoundError.js";
 import { ForbiddenError } from "../errors/forbiddenError.js";
 import { UnauthorizedError } from "../errors/unauthorizedError.js";
 import { ValidationError } from "../errors/validationError.js";
-import userValidation from "../userFeature/userValidation.js";
+import userValidation from "./userValidation.js";
 
 async function registerUser(email, password, username) {
   userValidation.validateCredentialsPatch({ email, password });

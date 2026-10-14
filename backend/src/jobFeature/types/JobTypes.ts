@@ -1,17 +1,10 @@
 import { Client } from "pg";
 import type { JobStateTypes } from "./JobStateType";
 
-// type PlanJobInput = {
-// 	body: unknown;
-// 	files: string[];
-// };
-// type PlanJobOutput = {
-// 	provider: string;
-// 	model: string;
-// 	advantages: string[];
-// 	estimatedCost: number;
-// 	interpretedIntent: string;
-// };
+
+/* 
+The db tables are a source of truth for jobs, attempts, and events
+*/
 type Job = {
 	userId: string;
 	jobId: string;
