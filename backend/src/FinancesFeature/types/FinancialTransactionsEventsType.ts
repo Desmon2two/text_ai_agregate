@@ -1,8 +1,7 @@
 export type FinancialTransactionsEvents =
-	| { name: "RESERVED" }
-	| { name: "PURCHASE" }
-	| { name: "REFUND" }
-	| { name: "ADMIN_ADJUSTMENT" }
-	| { name: "JOB_COMPLETE" };
+  | "ESTIMATED_DEDUCTION"
+  | "REFUND"
+  | "ADMIN_ADJUSTMENT"
+  | "ACTUAL_DEDUCTION_ON_COMPLETE_JOB";
 
 // the retry policy shall be recorded separately

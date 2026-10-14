@@ -1,5 +1,5 @@
 import { AttemptsState } from "./AttemptsStateType";
-import {Client} from "pg"
+import { Client } from "pg";
 /* 
 The db tables are a source of truth for jobs, attempts, and events
 */
@@ -25,6 +25,7 @@ type Attempt = {
 type CreateAttemptInput = {
   dbClient: Client;
   jobId: string;
+  attemptNumber: number;
   provider: string;
   model: string;
 };

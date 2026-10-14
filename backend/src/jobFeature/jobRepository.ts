@@ -23,12 +23,12 @@ async function getAttemptsPerJob(dbClient: Client, jobId: string): Promise<Attem
   return result.rows;
 }
 async function createJob({
-  dbClient,
+dbClient,
   type,
   body,
   userId,
   estimatedCost,
-}: CreateJob) {
+}: CreateJob): Promise<Job> {
   const result = await dbClient.query(
     `
     INSERT INTO jobs (state, type, body, user_id, estimated_cost)

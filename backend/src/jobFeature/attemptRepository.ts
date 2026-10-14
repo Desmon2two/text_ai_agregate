@@ -1,7 +1,10 @@
 import { AttemptError } from "../errors/AttemptErrorType";
 import { Attempt, CreateAttemptInput } from "./types/AttemptTypes";
 import { Client } from "pg";
-async function getAttempt(dbClient: Client, attemptId: string): Promise<Attempt | null> {
+async function getAttempt(
+  dbClient: Client,
+  attemptId: string,
+): Promise<Attempt | null> {
   const result = await dbClient.query(
     `SELECT * FROM attempts
       WHERE attempt_id = $1

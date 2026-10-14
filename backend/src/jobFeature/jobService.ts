@@ -1,32 +1,38 @@
 import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper";
-import { CommitJobInput, CommitJobOutput, completeJobType } from "./types/JobTypes";
+import { CommitJobOutput } from "./types/JobTypes";
 import attemptRepository from "./attemptRepository";
 import jobRepository from "./jobRepository";
-import eventRepositoy from "./eventRepository"
 import eventRepository from "./eventRepository";
 import { Client } from "pg";
 
 
-async function createJob({ body, files, provider, model, jobType }: CommitJobInput): Promise<CommitJobOutput> {
-	// authorization checks - check if user is subscribed, is his credits allow the operaton
-	// is the provider and model is in our supported list? Is the model enabled?
-// We check the plan that user gave us, validate it (check critical fields)
-// Calculate or verify cost
-// Atomically create a job and return jobId
-
-	validateJobRequest();
-	const estimatedCost = finService.estimateCost();
-	const result = await jobService.createJob({
-		userId,
-		jobTypeId,
-		body,
-		files,
-	});
-	return {
-		jobId: result.jobId,
-		createdAt: result.createdAt,
-	};
-}
+async function createJob(dbClient: Client, type: string, estimatedCost: number, userId: string, {provider, model}, body: {prompt: string, [keys?: any]}, filesUrl?: string): Promise<CommitJobOutput> {
+	try {
+		await dbClient.query("BEGIN")
+		const job = await jobRepository.createJob({
+			dbClient,
+			type,
+			body,
+			userId,
+			estimatedCost,
+		});
+		if (job === null) throw new Error("Error during job creation");
+		const attempt = await attemptRepository.createAttempt({dbClient, jobId: job.jobId, attemptNumber: 1, provider, model})
+		if (attempt === null) throw new Error("Error during attempt creation");
+		await eventRepository.createAttemptCreatedEvent(dbClient, attempt.attemptId, {origin: "Initial basic creation"})
+		await eventRepository.createJobAcceptedEvent(dbClient, job.jobId);
+		await dbClient.query("COMMIT")
+		await queueService.enqueue(job.jobId)
+		
+		return {
+			jobId: job.jobId,
+			createdAt: job.createdAt,
+		};
+	
+} catch (error) {
+	await dbClient.query("ROLLBACK")
+	throw new Error(error.message)
+}}
 
 
 
@@ -42,7 +48,7 @@ async function planJob({ userid, jobTypeId, body, files }) {
 	};
 }
 
-async function commitJob(userId: string, { jobType, provider, model, body, files }: CommitJobInput): CommitJobOutput {
+async function commitJob(userId: string, jobType, provider, model, body, files): CommitJobOutput {
 	const isAllowed = userService.checkUser();
 	if (!isAllowed) throw new UnauthorizedError("User is not allowed");
 	const aiRequest = mapJobToAiRequest({jobType, provider, model, body, files});

@@ -38,7 +38,7 @@ class NotFoundError extends ApplicationError {
   }
 }
 
-export default {
+export {
   ApplicationError,
   ForbiddenError,
   ValidationError,
