@@ -1,4 +1,19 @@
 {
+  "name": "text_ai",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Desmon2two/text_ai_agregate.git"
+  },
+  "license": "ISC",
+  "author": "Desmon2",
+  "type": "commonjs",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node ./src/server.js",
+    "test": "jest --verbose"
+  },
   "dependencies": {
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
@@ -7,6 +22,8 @@
     "typescript": "^7.0.2"
   },
   "devDependencies": {
-    "@types/pg": "^8.23.1"
+    "@types/jest": "^30.0.0",
+    "@types/pg": "^8.23.1",
+    "jest": "^30.5.2"
   }
 }
