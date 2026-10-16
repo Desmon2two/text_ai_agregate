@@ -1,0 +1,1 @@
+{"version":3,"file":"AiProviderErrorType.d.ts","sourceRoot":"","sources":["AiProviderErrorType.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,eAAe,GAAG;IAC7B,QAAQ,EAAE,MAAM,CAAC;IACjB,OAAO,EAAE,MAAM,CAAC;IAChB,SAAS,EAAE,OAAO,CAAC;IACnB,IAAI,CAAC,EAAE,MAAM,CAAC;CACd,CAAC"}

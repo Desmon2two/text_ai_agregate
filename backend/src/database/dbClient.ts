@@ -1,19 +1,35 @@
-import dbConfig from "./dbConfig";
+import { dbConfigConstructor } from "./dbConfig.js";
+import pg from "pg";
+import fs from "fs";
 
-const fs = require("fs");
-const pg = require("pg");
-const url = require("url");
+async function connectDB(
+  user: string,
+  password: string,
+  host: string,
+  port: number,
+  database: string,
+) {
+  const dbConfig = dbConfigConstructor(user, password, host, port, database, {
+    rejectUnauthorized: true,
+    ca: fs.readFileSync("./ca.pem").toString(),
+  });
+  const client = new pg.Client(dbConfig);
+  try {
+    const dbClient = client.connect(function (err) {
+      if (err) throw err;
+      client.query("SELECT VERSION()", [], function (err, result) {
+        if (err) throw err;
 
-
-
-export const dbClient = new pg.Client(dbConfig);
-async function connectDB(dbClient){
-    try {
-        await dbClient.connect();
+        console.log(result.rows[0].version);
         console.log("Connected to the database");
-        
-    } catch (error) {
-        throw new Error("Failed to connect to the database");
-    }
-};
-export default {dbClient, connectDB}
+        client.end(function (err) {
+          if (err) throw err;
+        });
+      });
+    });
+    return dbClient;
+  } catch (error) {
+    throw error;
+  }
+}
+export { connectDB };

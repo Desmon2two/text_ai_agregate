@@ -1,39 +1,33 @@
-				
+import dotenv from "dotenv";
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first");
+
+import { connectDB } from "./database/dbClient.js";
 import express from "express";
 
 const app = express();
 dotenv.config({ path: ".env", debug: true });
 const PORT = process.env.PORT || 3000;
-import authRoute from "./authFeature/authRouter.js";
-import videoRoute from "./videoFeature/videoRouter.js";
-import errorHandler from "./middlewears/errorMiddleware.js";
 
 // MIDDLEWARE
 app.use(express.json());
-app.use(
-	cors({
-		origin: process.env.ALLOWED_URL,
-		credentials: true,
-	}),
-);
-app.use(cookieParser());
 
 // MOUNTING ROUTERS
-app.use("/auth", authRoute);
-app.use("/videos", videoRoute);
-
-app.get("/", (req, res) => {
-	res.send("Everything works, right?");
-});
 
 // ERROR HANDLER
-app.use(errorHandler);
 
 // DATABASE THEN SERVER START
-connectDB(dbClient)
-	.then(() => {
-		app.listen(PORT, () => {
-			console.log(`Server is running on port ${PORT}`);
-		});
-	})
-	.catch((error) => console.error(error));
+
+const dbClient = await connectDB(
+  process.env.PGUSER,
+  process.env.PGPASSWORD,
+  process.env.PGHOST,
+  process.env.PGPORT,
+  process.env.PGDATABASE,
+)
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch((error) => console.error(error));

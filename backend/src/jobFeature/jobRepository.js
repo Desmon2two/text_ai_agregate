@@ -1,0 +1,82 @@
+import { Client } from "pg";
+import { CreateJob, Job } from "./types/JobTypes";
+import { Attempt } from "./types/AttemptTypes";
+async function getJob(dbClient, jobId) {
+    const result = await dbClient.query(`
+    SELECT * FROM jobs 
+    WHERE job_id = $1
+    `, [jobId]);
+    return result.rows[0];
+}
+async function getAttemptsPerJob(dbClient, jobId) {
+    const result = await dbClient.query(`
+    SELECT * FROM attempts 
+    WHERE job_id = $1
+    ORDER BY attempt_number DESC
+    `, [jobId]);
+    return result.rows;
+}
+async function createJob({ dbClient, type, body, userId, estimatedCost, }) {
+    const result = await dbClient.query(`
+    INSERT INTO jobs (state, type, body, user_id, estimated_cost)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *
+    `, ["CREATED", type, body, userId, estimatedCost]);
+    return result.rows[0];
+}
+async function markAccepted(dbClient, jobId) {
+    const result = await dbClient.query(`UPDATE jobs
+    SET state = $3, updated_at = NOW()
+    WHERE job_id = $1
+    AND state = $2
+    RETURNING *
+    `, [jobId, "CREATED", "ACCEPTED"]);
+    return result.rows[0];
+}
+async function markQueued(dbClient, jobId) {
+    const result = await dbClient.query(`UPDATE jobs
+    SET state = $3, updated_at = NOW()
+    WHERE job_id = $1
+    AND state = $2
+    RETURNING *
+    `, [jobId, "ACCEPTED", "QUEUED"]);
+    return result.rows[0];
+}
+async function markProcessing(dbClient, jobId) {
+    const result = await dbClient.query(`UPDATE jobs
+    SET state = $3, updated_at = NOW()
+    WHERE job_id = $1
+    AND state = $2
+    RETURNING *
+    `, [jobId, "QUEUED", "PROCESSING"]);
+    return result.rows[0];
+}
+async function markCompleted(dbClient, jobId, data, actualCost) {
+    const result = await dbClient.query(`UPDATE jobs
+    SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
+    WHERE job_id = $1
+    AND state = $2
+    RETURNING *
+    `, [jobId, "PROCESSING", "COMPLETED", data, actualCost]);
+    return result.rows[0];
+}
+async function markFailed(dbClient, jobId, error) {
+    const result = await dbClient.query(`UPDATE jobs
+    SET state = $2, error = $3, updated_at = NOW()
+    WHERE job_id = $1
+    AND state = ('CREATED', 'ACCEPTED', 'QUEUED', 'PROCESSING')
+    RETURNING *
+    `, [jobId, "FAILED", error]);
+    return result.rows[0];
+}
+export default {
+    getJob,
+    getAttemptsPerJob,
+    createJob,
+    markAccepted,
+    markQueued,
+    markProcessing,
+    markCompleted,
+    markFailed,
+};
+//# sourceMappingURL=jobRepository.js.map
