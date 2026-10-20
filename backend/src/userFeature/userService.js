@@ -28,4 +28,3 @@ export default {
     deleteById,
     patchOne,
 };
-//# sourceMappingURL=userService.js.map

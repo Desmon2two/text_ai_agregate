@@ -8,4 +8,3 @@ export default function mapJobToAiRequest(jobRequest) {
         files: jobRequest.files
     };
 }
-//# sourceMappingURL=JobToAiRequestMapper.js.map

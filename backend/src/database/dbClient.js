@@ -25,4 +25,3 @@ async function connectDB(user, password, host, port, database) {
     return client;
 }
 export { connectDB };
-//# sourceMappingURL=dbClient.js.map

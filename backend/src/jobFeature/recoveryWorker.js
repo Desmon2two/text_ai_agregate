@@ -7,4 +7,3 @@ async function claimRecovery(dbClient, recoveryWorkerId, attemptId, leasedUntil)
 export default {
     claimRecovery
 };
-//# sourceMappingURL=recoveryWorker.js.map

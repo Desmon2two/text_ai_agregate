@@ -66,4 +66,3 @@ export default {
     deleteById,
     patchUser,
 };
-//# sourceMappingURL=userModel.js.map

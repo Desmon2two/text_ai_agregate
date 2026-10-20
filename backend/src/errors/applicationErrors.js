@@ -27,4 +27,3 @@ class NotFoundError extends ApplicationError {
     }
 }
 export { ApplicationError, ForbiddenError, ValidationError, UnauthorizedError, NotFoundError, };
-//# sourceMappingURL=applicationErrors.js.map

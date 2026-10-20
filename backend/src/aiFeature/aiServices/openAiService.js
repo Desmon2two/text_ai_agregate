@@ -22,4 +22,3 @@ async function openAiProvider(request) {
 export default {
     openAiProvider,
 };
-//# sourceMappingURL=openAiService.js.map

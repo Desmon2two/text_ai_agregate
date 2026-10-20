@@ -1,5 +1,15 @@
-const MAX_ATTEMPTS = 2;
-export default {
-    MAX_ATTEMPTS,
+const nonSecretVariables = {
+    MAX_ATTEMPTS: 2,
+    getMaxAttempts() {
+        return this.MAX_ATTEMPTS;
+    },
 };
-//# sourceMappingURL=nonSecretVariables.js.map
+Object.defineProperty(nonSecretVariables, "MAX_ATTEMPTS", {
+    value: "secret",
+    writable: false,
+    enumerable: false,
+    configurable: false,
+});
+export default {
+    nonSecretVariables,
+};

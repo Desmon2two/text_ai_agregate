@@ -62,4 +62,3 @@ export default {
     completeAttempt,
     failAttempt,
 };
-//# sourceMappingURL=attemptService.js.map

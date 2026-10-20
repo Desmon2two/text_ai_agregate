@@ -9,4 +9,3 @@ function dbConfigConstructor(user, password, host, port, database, ssl) {
     };
 }
 export { dbConfigConstructor };
-//# sourceMappingURL=dbConfig.js.map

@@ -49,4 +49,3 @@ function validateUserCredentials({ email, password }) {
     return;
 }
 export default { validateUserDisplayedInfo, validateUserCredentials };
-//# sourceMappingURL=userValidation.js.map

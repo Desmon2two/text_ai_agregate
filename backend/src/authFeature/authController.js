@@ -128,4 +128,3 @@ export default {
     patchUserPassword,
     patchUserEmail,
 };
-//# sourceMappingURL=authController.js.map
