@@ -10,8 +10,8 @@ type Job = {
     error?: unknown;
     data?: unknown;
     metadata?: unknown;
-    recoveryWorkerId: string;
-    recoveryLeaseUntil: Date;
+    recoveryWorkerId?: string;
+    recoveryLeaseUntil?: Date;
     estimatedCost: number;
     actualCost?: number;
     createdAt: Date;

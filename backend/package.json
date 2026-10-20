@@ -12,11 +12,12 @@
   "main": "./src/server.js",
   "scripts": {
     "dev": "tsc & node ./src/server.js",
-    "test": "tsc & node ./src/server.js; jest --notify --verbose"
+    "test": "tsc & node --experimental-vm-modules node_modules/jest/bin/jest.js --detectOpenHandles"
   },
   "dependencies": {
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "node-notifier": "^10.0.1",
     "openai": "^7.27.0",
     "pg": "^8.23.1",
     "typescript": "^7.0.2"

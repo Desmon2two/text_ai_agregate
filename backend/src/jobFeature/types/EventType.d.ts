@@ -1,5 +1,6 @@
 import { EventNamesType } from "./EventsStateType";
 export type EventType = {
+    eventId: string;
     name: EventNamesType;
     attemptId?: string;
     jobId?: string;

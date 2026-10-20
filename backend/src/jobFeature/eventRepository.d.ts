@@ -32,6 +32,9 @@ declare function createRecoveryAbandonedEvent(dbClient: Client, jobId: string, m
 declare function createRecoveryCompletedEvent(dbClient: Client, jobId: string, metadata: {
     reason: string;
 }, attemptId?: string): Promise<any>;
+declare function deleteEvent(dbClient: Client, eventId: string, metadata: {
+    reason: string;
+}): Promise<number | null>;
 declare const _default: {
     createJobAcceptedEvent: typeof createJobAcceptedEvent;
     createJobProcessingEvent: typeof createJobProcessingEvent;
@@ -50,6 +53,7 @@ declare const _default: {
     createRecoveryStartedEvent: typeof createRecoveryStartedEvent;
     createRecoveryAbandonedEvent: typeof createRecoveryAbandonedEvent;
     createRecoveryCompletedEvent: typeof createRecoveryCompletedEvent;
+    deleteEvent: typeof deleteEvent;
 };
 export default _default;
 //# sourceMappingURL=eventRepository.d.ts.map

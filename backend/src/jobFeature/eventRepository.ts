@@ -219,6 +219,19 @@ async function createRecoveryCompletedEvent(
   );
   return result.rows[0];
 }
+async function deleteEvent(
+  dbClient: Client,
+  eventId: string,
+  metadata: { reason: string },
+): Promise<number | null> {
+  const result = await dbClient.query(
+    `DELETE FROM events WHERE event_id = $1`, [eventId]
+  );
+  if (result.rows[0] === 0) return null;
+  return result.rows[0];
+}
+
+
 
 export default {
   createJobAcceptedEvent,
@@ -238,4 +251,5 @@ export default {
   createRecoveryStartedEvent,
   createRecoveryAbandonedEvent,
   createRecoveryCompletedEvent,
+  deleteEvent,
 };
