@@ -6,17 +6,12 @@ beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  try {
-    await jobRepository.deleteJob(dbClient, jobId);
-    console.log("Test job was deleted");
-  } finally {
     await teardownTestDB(dbClient);
-  }
 });
 
 let jobId: string;
 
-describe("Testing users, job, attempt, and events creation and deletion", () => {
+describe("Testing job creation and deletion", () => {
   it(" Should create jobs", async () => {
     const job = {
       dbClient,
@@ -29,4 +24,8 @@ describe("Testing users, job, attempt, and events creation and deletion", () => 
     jobId = result.job_id;
     expect(result).not.toBeNull();
   });
+  it("should delete jobs", async()=>{
+    const res = await jobRepository.deleteJob(dbClient, jobId)
+    expect(res.rowCount).toBe(1)
+  })
 });

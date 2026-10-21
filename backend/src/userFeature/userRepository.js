@@ -9,6 +9,6 @@ async function createUser(dbClient, email, password) {
 async function deleteUser(dbClient, userId) {
     const result = await dbClient.query(`DELETE FROM users WHERE user_id = $1
     `, [userId]);
-    return result.rows[0];
+    return result;
 }
 export default { createUser, deleteUser };

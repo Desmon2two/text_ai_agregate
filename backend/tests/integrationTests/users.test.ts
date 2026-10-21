@@ -5,13 +5,7 @@ beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  try {
-    await userRepository.deleteUser(dbClient, userId);
-    console.log("Test user was deleted");
-  } finally {
-
-    await teardownTestDB(dbClient);
-  }
+  await teardownTestDB(dbClient);
 });
 let userId: string;
 describe("Testing users creation and deletion", () => {
@@ -24,5 +18,9 @@ describe("Testing users creation and deletion", () => {
     userId = user?.user_id;
     expect(user?.email).toBe("uniqueEmail@gmail.com");
     expect(user?.password).toBe("uniquePassword");
+  });
+  it("Should delete users", async () => {
+    const res = await userRepository.deleteUser(dbClient, userId);
+    expect(res.rowCount).toBe(1);
   });
 });

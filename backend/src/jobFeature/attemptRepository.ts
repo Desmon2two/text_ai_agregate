@@ -1,3 +1,4 @@
+import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 import type { AttemptError } from "../errors/AttemptErrorType.js";
 import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
 import type { Client } from "pg";
@@ -15,7 +16,7 @@ async function getAttempt(
 }
 async function createAttempt({
   dbClient,
-  jobId,
+  job_id,
   attemptNumber,
   provider,
   model,
@@ -25,20 +26,20 @@ async function createAttempt({
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `,
-    ["CREATED", jobId, attemptNumber, provider, model],
+    ["CREATED", job_id, attemptNumber, provider, model],
   );
   return result.rows[0];
 }
 async function deleteAttempt(
   dbClient: Client,
-  attemptId: string,
-): Promise<void> {
+  attempt_id: string,
+): Promise<PostgreSQLResponse> {
   const result = await dbClient.query(
     `DELETE FROM attempts WHERE attempt_id = $1
     `,
-    [attemptId],
+    [attempt_id],
   );
-  return result.rows[0];
+  return result;
 }
 async function markSending(dbClient: Client, attemptId: string) {
   const result = await dbClient.query(

@@ -1,6 +1,7 @@
 import type { Client } from "pg";
 import type { CreateJob, Job } from "./types/JobTypes.js";
 import type { Attempt } from "./types/AttemptTypes.js";
+import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 async function getJob(dbClient: Client, jobId: string): Promise<Job | null> {
   const result = await dbClient.query(
     `
@@ -42,14 +43,17 @@ async function createJob({
   );
   return result.rows[0];
 }
-async function deleteJob(dbClient: Client, jobId: string): Promise<void> {
+async function deleteJob(
+  dbClient: Client,
+  jobId: string,
+): Promise<PostgreSQLResponse> {
   const result = await dbClient.query(
     `
     DELETE FROM jobs WHERE job_id = $1
     `,
     [jobId],
   );
-  return;
+  return result;
 }
 async function markAccepted(dbClient: Client, jobId: string) {
   const result = await dbClient.query(

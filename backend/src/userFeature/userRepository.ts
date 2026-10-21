@@ -1,5 +1,6 @@
 import { Client } from "pg";
 import type { User } from "./types/userType.js";
+import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 
 async function createUser(
   dbClient: Client,
@@ -15,13 +16,16 @@ async function createUser(
   );
   return result.rows[0];
 }
-async function deleteUser(dbClient: Client, userId: string): Promise<void> {
+async function deleteUser(
+  dbClient: Client,
+  userId: string,
+): Promise<PostgreSQLResponse> {
   const result = await dbClient.query(
     `DELETE FROM users WHERE user_id = $1
     `,
     [userId],
   );
-  return result.rows[0];
+  return result;
 }
 
 export default { createUser, deleteUser };

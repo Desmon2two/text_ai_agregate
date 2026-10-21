@@ -4,8 +4,8 @@ import { Client } from "pg";
 The db tables are a source of truth for jobs, attempts, and events
 */
 type Attempt = {
-  jobId: string;
-  attemptId: string;
+  job_id: string;
+  attempt_id: string;
   attemptNumber: number;
   state: AttemptsState;
   provider: string;
@@ -24,7 +24,7 @@ type Attempt = {
 };
 type CreateAttemptInput = {
   dbClient: Client;
-  jobId: string;
+  job_id: string;
   attemptNumber: number;
   provider: string;
   model: string;

@@ -25,7 +25,7 @@ async function deleteJob(dbClient, jobId) {
     const result = await dbClient.query(`
     DELETE FROM jobs WHERE job_id = $1
     `, [jobId]);
-    return;
+    return result;
 }
 async function markAccepted(dbClient, jobId) {
     const result = await dbClient.query(`UPDATE jobs

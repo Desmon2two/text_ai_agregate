@@ -4,17 +4,17 @@ async function getAttempt(dbClient, attemptId) {
       `, [attemptId]);
     return result.rows[0];
 }
-async function createAttempt({ dbClient, jobId, attemptNumber, provider, model, }) {
+async function createAttempt({ dbClient, job_id, attemptNumber, provider, model, }) {
     const result = await dbClient.query(`INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
-    `, ["CREATED", jobId, attemptNumber, provider, model]);
+    `, ["CREATED", job_id, attemptNumber, provider, model]);
     return result.rows[0];
 }
-async function deleteAttempt(dbClient, attemptId) {
+async function deleteAttempt(dbClient, attempt_id) {
     const result = await dbClient.query(`DELETE FROM attempts WHERE attempt_id = $1
-    `, [attemptId]);
-    return result.rows[0];
+    `, [attempt_id]);
+    return result;
 }
 async function markSending(dbClient, attemptId) {
     const result = await dbClient.query(`UPDATE attempts

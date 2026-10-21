@@ -1,4 +1,5 @@
 import { Client } from "pg";
+import type { PostgreSQLResponse } from "../database/types/databaseResultTypes";
 
 async function createJobAcceptedEvent(dbClient: Client, jobId: string) {
   const result = await dbClient.query(
@@ -222,15 +223,13 @@ async function createRecoveryCompletedEvent(
 async function deleteEvent(
   dbClient: Client,
   eventId: string,
-): Promise<number | null> {
+): Promise<PostgreSQLResponse> {
   const result = await dbClient.query(
-    `DELETE FROM events WHERE event_id = $1`, [eventId]
+    `DELETE FROM events WHERE event_id = $1`,
+    [eventId],
   );
-  if (result.rows[0] === 0) return null;
-  return result.rows[0];
+  return result;
 }
-
-
 
 export default {
   createJobAcceptedEvent,
