@@ -1,4 +1,4 @@
-import { AttemptError } from "../../errors/AttemptErrorType.js";
+import type { AttemptError } from "../../errors/AttemptErrorType.js";
 
 export default function mapErrorToAttemptError(
 	error: Error,

@@ -37,4 +37,4 @@ type completeJobType = {
   jobId: string;
   attemptId: string;
 };
-export { Job, CreateJob, CommitJobOutput, completeJobType };
+export type { Job, CreateJob, CommitJobOutput, completeJobType };

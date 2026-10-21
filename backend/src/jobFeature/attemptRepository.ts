@@ -1,6 +1,6 @@
-import { AttemptError } from "../errors/AttemptErrorType.js";
-import { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
-import { Client } from "pg";
+import type { AttemptError } from "../errors/AttemptErrorType.js";
+import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
+import type { Client } from "pg";
 async function getAttempt(
   dbClient: Client,
   attemptId: string,

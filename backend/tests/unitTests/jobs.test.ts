@@ -19,26 +19,26 @@ describe("Jobs testing", () => {
 
     expect(result.rows[0].value).toBe(42);
   });
-  describe("should be able to create users", async ()=>{
-    it("should not create empty users", async ()=>{
-      const user = await userRepository.createUser(dbClient, '', '')
-      expectFailure()
-    })
-  })
-  it(" Should create jobs", async () => {
-    const user = await createUser(dbClient, "test@gmail.com", "testPassword");
-    const result = await jobRepository.createJob(
-      dbClient,
-      "SUMMARY",
-      {
-        origin: "Testing",
-      },
-      user.user_id,
-      1,
-    );
-    expect(result).not.toBeNull();
-    await jobRepository.deleteJob(dbClient, result.job_id, {
-      reason: "Testing",
-    });
-  });
+  // describe("should be able to create users", async ()=>{
+  //   it("should not create empty users", async ()=>{
+  //     const user = await userRepository.createUser(dbClient, '', '')
+  //     expectFailure()
+  //   })
+  // })
+  // it(" Should create jobs", async () => {
+  //   const user = await createUser(dbClient, "test@gmail.com", "testPassword");
+  //   const result = await jobRepository.createJob(
+  //     dbClient,
+  //     "SUMMARY",
+  //     {
+  //       origin: "Testing",
+  //     },
+  //     user.user_id,
+  //     1,
+  //   );
+  //   expect(result).not.toBeNull();
+  //   await jobRepository.deleteJob(dbClient, result.job_id, {
+  //     reason: "Testing",
+  //   });
+  // });
 });

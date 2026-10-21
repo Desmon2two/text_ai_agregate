@@ -1,10 +1,10 @@
-import { Client } from "pg";
-import { Attempt } from "./types/AttemptTypes.js";
+import type { Client } from "pg";
+import type { Attempt } from "./types/AttemptTypes.js";
 import jobRepository from "./jobRepository.js";
 import attemptRepository from "./attemptRepository.js";
 import nonSecretVariables from "../infrastructure/utils/nonSecretVariables.js";
 import eventRepository from "./eventRepository.js";
-import { AttemptError } from "../errors/AttemptErrorType.js";
+import type { AttemptError } from "../errors/AttemptErrorType.js";
 
 async function createAttempt(
   dbClient: Client,
@@ -14,7 +14,7 @@ async function createAttempt(
 ): Promise<Attempt> {
   await dbClient.query("BEGIN");
   try {
-    let attempts = await jobRepository.getAttemptsPerJob(dbClient , jobId);
+    const attempts = await jobRepository.getAttemptsPerJob(dbClient , jobId);
     if(attempts === null) throw new Error("Attempts null")
       const attemptNumber = attempts[0].attemptNumber
     if (attemptNumber >= nonSecretVariables.getMaxAttempts()) {

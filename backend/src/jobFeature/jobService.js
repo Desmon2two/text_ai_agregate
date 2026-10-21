@@ -1,5 +1,4 @@
 import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper.js";
-import { CommitJobOutput } from "./types/JobTypes.js";
 import attemptRepository from "./attemptRepository.js";
 import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";

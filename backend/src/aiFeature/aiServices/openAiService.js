@@ -1,7 +1,5 @@
-import { AiRequest } from "../types/AiRequestType.js";
 import { ValidationError } from "../../errors/validationError.js";
 import OpenAi from "openai";
-import { AiResponse } from "../types/AiResponseType.js";
 const client = new OpenAi();
 async function openAiProvider(request) {
     if (!request.model)

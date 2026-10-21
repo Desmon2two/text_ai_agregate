@@ -18,6 +18,7 @@ app.use(express.json());
 
 // DATABASE THEN SERVER START
 let dbClient;
+let shutdown;
 try {
   const client = await connectDB(
     process.env.PGUSER,
@@ -26,22 +27,23 @@ try {
     process.env.PGPORT,
     process.env.PGDATABASE,
   );
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
+  async function shutDown() {
+    await new Promise((resolve, reject) => {
+      server.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    await dbClient.end();
+  }
+  shutdown = shutDown;
   dbClient = client;
 } catch (error) {
   await shutdown();
   console.error(error);
-}
-async function shutdown() {
-  await new Promise((resolve, reject) => {
-    app.close((err) => {
-      if (err) reject(err);
-      else resolve();
-    });
-  });
-  await dbClient.end();
 }
 
 export { dbClient, shutdown };

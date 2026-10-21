@@ -1,6 +1,6 @@
-import { Client } from "pg";
-import { CreateJob, Job } from "./types/JobTypes.js";
-import { Attempt } from "./types/AttemptTypes.js";
+import type { Client } from "pg";
+import type { CreateJob, Job } from "./types/JobTypes.js";
+import type { Attempt } from "./types/AttemptTypes.js";
 async function getJob(dbClient: Client, jobId: string): Promise<Job | null> {
   const result = await dbClient.query(
     `
@@ -11,7 +11,10 @@ async function getJob(dbClient: Client, jobId: string): Promise<Job | null> {
   );
   return result.rows[0];
 }
-async function getAttemptsPerJob(dbClient: Client, jobId: string): Promise<Attempt[] | null> {
+async function getAttemptsPerJob(
+  dbClient: Client,
+  jobId: string,
+): Promise<Attempt[] | null> {
   const result = await dbClient.query(
     `
     SELECT * FROM attempts 
@@ -23,7 +26,7 @@ async function getAttemptsPerJob(dbClient: Client, jobId: string): Promise<Attem
   return result.rows;
 }
 async function createJob({
-dbClient,
+  dbClient,
   type,
   body,
   userId,
@@ -75,7 +78,12 @@ async function markProcessing(dbClient: Client, jobId: string) {
   );
   return result.rows[0];
 }
-async function markCompleted(dbClient: Client, jobId: string, data: unknown, actualCost: number) {
+async function markCompleted(
+  dbClient: Client,
+  jobId: string,
+  data: unknown,
+  actualCost: number,
+) {
   const result = await dbClient.query(
     `UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()

@@ -1,6 +1,3 @@
-import { Client } from "pg";
-import { Attempt } from "./types/AttemptTypes.js";
-import { Job } from "./types/JobTypes.js";
 async function scanAttemptsForRecovery(dbClient) {
     const result = await dbClient.query(`
     SELECT * FROM attempts

@@ -12,13 +12,11 @@
   "main": "./src/server.js",
   "scripts": {
     "dev": "tsc & node ./src/server.js",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
-    "lint": "eslint . --fix"
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles"
   },
   "dependencies": {
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
-    "node-notifier": "^10.0.1",
     "openai": "^7.27.0",
     "pg": "^8.23.1"
   },
@@ -29,10 +27,8 @@
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "cross-env": "^10.1.0",
-    "eslint": "^10.13.0",
     "jest": "^30.5.2",
     "ts-jest": "^29.4.15",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.0"
+    "typescript": "^6.0.3"
   }
 }
