@@ -1,10 +1,10 @@
 import { Client } from "pg";
-import { AttemptError } from "../errors/AttemptErrorType";
-import attemptService from "../jobFeature/attemptService";
-import nonSecretVariables from "../infrastructure/utils/nonSecretVariables";
-import attemptRepository from "../jobFeature/attemptRepository";
-import jobRepository from "../jobFeature/jobRepository";
-import eventRepository from "../jobFeature/eventRepository";
+import { AttemptError } from "../errors/AttemptErrorType.js";
+import attemptService from "../jobFeature/attemptService.js";
+import nonSecretVariables from "../infrastructure/utils/nonSecretVariables.js";
+import attemptRepository from "../jobFeature/attemptRepository.js";
+import jobRepository from "../jobFeature/jobRepository.js";
+import eventRepository from "../jobFeature/eventRepository.js";
 
 export default async function handleFailure(
   dbClient: Client,

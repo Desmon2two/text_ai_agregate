@@ -1,9 +1,8 @@
-import dbClient from "../database/dbClient";
-import { NotFoundError } from "../errors/applicationErrors";
-import jobService from "../jobFeature/jobService";
-import userService from "../userFeature/userService";
+import { NotFoundError } from "../errors/applicationErrors.js";
+import jobService from "../jobFeature/jobService.js";
+import userService from "../userFeature/userService.js";
 
-async function processJob(userId: string, body: unknown) {
+async function processJob(dbClient: Client, userId: string, body: unknown) {
   await validateJobInput(body);
   const user = await userService.findById(userId);
   if (!user) throw new NotFoundError("User not found");

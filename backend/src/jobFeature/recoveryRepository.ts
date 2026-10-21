@@ -1,6 +1,6 @@
 import { Client } from "pg";
-import { Attempt } from "./types/AttemptTypes";
-import { Job } from "./types/JobTypes";
+import { Attempt } from "./types/AttemptTypes.js";
+import { Job } from "./types/JobTypes.js";
 
 async function scanAttemptsForRecovery(
   dbClient: Client,

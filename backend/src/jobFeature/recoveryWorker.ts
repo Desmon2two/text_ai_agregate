@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import recoveryRepository from "./recoveryRepository";
+import recoveryRepository from "./recoveryRepository.js";
 
 async function claimRecovery(dbClient: Client, recoveryWorkerId: string, attemptId: string, leasedUntil: Date){
    const result =  recoveryRepository.claimRecovery(dbClient, attemptId, recoveryWorkerId, leasedUntil);

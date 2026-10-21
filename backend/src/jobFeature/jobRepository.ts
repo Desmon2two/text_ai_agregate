@@ -1,6 +1,6 @@
 import { Client } from "pg";
-import { CreateJob, Job } from "./types/JobTypes";
-import { Attempt } from "./types/AttemptTypes";
+import { CreateJob, Job } from "./types/JobTypes.js";
+import { Attempt } from "./types/AttemptTypes.js";
 async function getJob(dbClient: Client, jobId: string): Promise<Job | null> {
   const result = await dbClient.query(
     `

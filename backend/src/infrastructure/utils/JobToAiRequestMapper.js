@@ -1,5 +1,5 @@
-import { AiRequest } from "../../aiFeature/types/AiRequestType";
-import { CommitJobInput } from "../../jobFeature/types/JobTypes";
+import { AiRequest } from "../../aiFeature/types/AiRequestType.js";
+import { CommitJobInput } from "../../jobFeature/types/JobTypes.js";
 export default function mapJobToAiRequest(jobRequest) {
     return {
         provider: jobRequest.provider,

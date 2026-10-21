@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { User } from "./types/userType";
+import { User } from "./types/userType.js";
 async function createUser(dbClient, email, password) {
     const result = await dbClient.query(`INSERT INTO users(email, password) 
     VALUES ($1, $2)

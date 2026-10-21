@@ -1,4 +1,4 @@
-import { AttemptsState } from "./AttemptsStateType";
+import type { AttemptsState } from "./AttemptsStateType.js";
 import { Client } from "pg";
 /* 
 The db tables are a source of truth for jobs, attempts, and events
@@ -29,4 +29,4 @@ type CreateAttemptInput = {
   provider: string;
   model: string;
 };
-export { Attempt, CreateAttemptInput };
+export type { Attempt, CreateAttemptInput };

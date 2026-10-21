@@ -15,7 +15,6 @@ async function connectDB(user, password, host, port, database) {
                 if (err)
                     throw err;
                 console.log(result.rows[0].version);
-                console.log("Connected to the database");
             });
         });
     }

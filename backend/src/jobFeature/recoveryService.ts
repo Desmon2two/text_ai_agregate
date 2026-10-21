@@ -1,9 +1,9 @@
 import { Client } from "pg";
-import recoveryRepository from "./recoveryRepository";
-import jobService from "./jobService";
-import handleFailure from "../infrastructure/failureHandler";
-import eventRepository from "./eventRepository";
-import worker from "./worker";
+import recoveryRepository from "./recoveryRepository.js";
+import jobService from "./jobService.js";
+import handleFailure from "../infrastructure/failureHandler.js";
+import eventRepository from "./eventRepository.js";
+import worker from "./worker.js";
 
 async function recoverAttempts(dbClient: Client, recoveryWorkerId: string) {
   const recoverableAttempts =

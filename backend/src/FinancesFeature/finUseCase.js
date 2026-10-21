@@ -1,4 +1,4 @@
-import finService from "./finService";
+import finService from "./finService.js";
 async function estimateCost() {
     const result = finService.estimateCost();
     return result;

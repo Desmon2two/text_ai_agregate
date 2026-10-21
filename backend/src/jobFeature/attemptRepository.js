@@ -1,5 +1,5 @@
-import { AttemptError } from "../errors/AttemptErrorType";
-import { Attempt, CreateAttemptInput } from "./types/AttemptTypes";
+import { AttemptError } from "../errors/AttemptErrorType.js";
+import { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
 import { Client } from "pg";
 async function getAttempt(dbClient, attemptId) {
     const result = await dbClient.query(`SELECT * FROM attempts

@@ -21,7 +21,6 @@ async function connectDB(
         if (err) throw err;
 
         console.log(result.rows[0].version);
-        console.log("Connected to the database");
       });
     });
   } catch (error) {

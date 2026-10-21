@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { User } from "./types/userType";
+import { User } from "./types/userType.js";
 
 async function createUser(
   dbClient: Client,

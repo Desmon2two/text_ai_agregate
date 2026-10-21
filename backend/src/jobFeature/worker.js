@@ -1,13 +1,12 @@
 import { Client } from "pg";
-import handleFailure from "../infrastructure/failureHandler";
-import mapErrorToAttemptError from "../infrastructure/utils/errorToProviderErrorMapper";
-import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper";
-import jobRepository from "./jobRepository";
-import attemptRepository from "./attemptRepository";
-import attemptService from "./attemptService";
-import eventRepository from "./eventRepository";
-import jobService from "./jobService";
-import { JobStateTypes } from "./types/JobStateType";
+import handleFailure from "../infrastructure/failureHandler.js";
+import mapErrorToAttemptError from "../infrastructure/utils/errorToProviderErrorMapper.js";
+import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper.js";
+import jobRepository from "./jobRepository.js";
+import attemptRepository from "./attemptRepository.js";
+import attemptService from "./attemptService.js";
+import eventRepository from "./eventRepository.js";
+import jobService from "./jobService.js";
 async function processJobFromBeginning(dbClient, jobId) {
     try {
         await dbClient.query("BEGIN");

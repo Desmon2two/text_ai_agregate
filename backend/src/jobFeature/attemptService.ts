@@ -1,28 +1,29 @@
 import { Client } from "pg";
-import { dbClient } from "../database/dbClient";
-import { Attempt, CreateAttemptInput } from "./types/AttemptTypes";
-import jobRepository from "./jobRepository";
-import attemptRepository from "./attemptRepository";
-import nonSecretVariables from "../infrastructure/utils/nonSecretVariables";
-import eventRepository from "./eventRepository";
-import { AttemptError } from "../errors/AttemptErrorType";
+import { Attempt } from "./types/AttemptTypes.js";
+import jobRepository from "./jobRepository.js";
+import attemptRepository from "./attemptRepository.js";
+import nonSecretVariables from "../infrastructure/utils/nonSecretVariables.js";
+import eventRepository from "./eventRepository.js";
+import { AttemptError } from "../errors/AttemptErrorType.js";
 
-async function createAttempt({
-  dbClient,
-  jobId,
-  provider,
-  model,
-}: CreateAttemptInput): Promise<Attempt> {
+async function createAttempt(
+  dbClient: Client,
+  jobId: string,
+  provider: string,
+  model: string,
+): Promise<Attempt> {
   await dbClient.query("BEGIN");
   try {
     let attempts = await jobRepository.getAttemptsPerJob(dbClient , jobId);
-    if (attempts >= nonSecretVariables.MAX_ATTEMPTS) {
+    if(attempts === null) throw new Error("Attempts null")
+      const attemptNumber = attempts[0].attemptNumber
+    if (attemptNumber >= nonSecretVariables.getMaxAttempts()) {
       throw new Error("Too many attempts for this job");
     }
     const attempt = await attemptRepository.createAttempt({
       dbClient,
       jobId,
-      attemptNumber: attempts + 1,
+      attemptNumber: attemptNumber + 1,
       provider,
       model,
     });

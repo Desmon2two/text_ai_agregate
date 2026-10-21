@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import type { JobStateTypes } from "./JobStateType";
+import type { JobStateTypes } from "./JobStateType.js";
 
 /* 
 The db tables are a source of truth for jobs, attempts, and events
