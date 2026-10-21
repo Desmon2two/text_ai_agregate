@@ -29,6 +29,17 @@ async function createAttempt({
   );
   return result.rows[0];
 }
+async function deleteAttempt(
+  dbClient: Client,
+  attemptId: string,
+): Promise<void> {
+  const result = await dbClient.query(
+    `DELETE FROM attempts WHERE attempt_id = $1
+    `,
+    [attemptId],
+  );
+  return result.rows[0];
+}
 async function markSending(dbClient: Client, attemptId: string) {
   const result = await dbClient.query(
     `UPDATE attempts
@@ -123,6 +134,7 @@ async function markFailed(
 }
 export default {
   getAttempt,
+  deleteAttempt,
   createAttempt,
   markSending,
   markWaiting,

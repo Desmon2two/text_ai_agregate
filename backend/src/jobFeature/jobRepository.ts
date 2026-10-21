@@ -31,7 +31,7 @@ async function createJob({
   body,
   userId,
   estimatedCost,
-}: CreateJob): Promise<Job> {
+}: CreateJob): Promise<Job | null> {
   const result = await dbClient.query(
     `
     INSERT INTO jobs (state, type, body, user_id, estimated_cost)
@@ -41,6 +41,15 @@ async function createJob({
     ["CREATED", type, body, userId, estimatedCost],
   );
   return result.rows[0];
+}
+async function deleteJob(dbClient: Client, jobId: string): Promise<void> {
+  const result = await dbClient.query(
+    `
+    DELETE FROM jobs WHERE job_id = $1
+    `,
+    [jobId],
+  );
+  return;
 }
 async function markAccepted(dbClient: Client, jobId: string) {
   const result = await dbClient.query(
@@ -109,6 +118,7 @@ async function markFailed(dbClient: Client, jobId: string, error: unknown) {
 }
 export default {
   getJob,
+  deleteJob,
   getAttemptsPerJob,
   createJob,
   markAccepted,

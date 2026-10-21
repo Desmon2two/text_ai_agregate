@@ -118,7 +118,7 @@ async function createRecoveryCompletedEvent(dbClient, jobId, metadata, attemptId
     `, [attemptId || null, jobId, metadata]);
     return result.rows[0];
 }
-async function deleteEvent(dbClient, eventId, metadata) {
+async function deleteEvent(dbClient, eventId) {
     const result = await dbClient.query(`DELETE FROM events WHERE event_id = $1`, [eventId]);
     if (result.rows[0] === 0)
         return null;

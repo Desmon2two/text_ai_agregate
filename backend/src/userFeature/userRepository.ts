@@ -15,5 +15,13 @@ async function createUser(
   );
   return result.rows[0];
 }
+async function deleteUser(dbClient: Client, userId: string): Promise<void> {
+  const result = await dbClient.query(
+    `DELETE FROM users WHERE user_id = $1
+    `,
+    [userId],
+  );
+  return result.rows[0];
+}
 
-export { createUser };
+export default { createUser, deleteUser };

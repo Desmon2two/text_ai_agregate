@@ -1,8 +1,14 @@
-import { ValidationError } from "../errors/validationError.js";
+import { ValidationError } from "../errors/applicationErrors.js";
 
-function validateUserDisplayedInfo(username, displayName, profilePic, bio) {
-  if (!username && !displayName && !profilePic && !bio) throw new ValidationError("No user fields to validate");
-  
+export function validateUserDisplayedInfo(
+  username: string,
+  displayName: string,
+  profilePic: string,
+  bio: string,
+) {
+  if (!username && !displayName && !profilePic && !bio)
+    throw new ValidationError("No user fields to validate");
+
   if (username !== undefined) {
     if (
       typeof username !== "string" ||
@@ -20,10 +26,7 @@ function validateUserDisplayedInfo(username, displayName, profilePic, bio) {
       throw new ValidationError("Invalid displayName");
   }
   if (profilePic !== undefined) {
-    if (
-      typeof profilePic !== "string" ||
-      profilePic.length < 1
-    )
+    if (typeof profilePic !== "string" || profilePic.length < 1)
       throw new ValidationError("Invalid profile picture");
   }
   if (bio !== undefined) {
@@ -32,10 +35,10 @@ function validateUserDisplayedInfo(username, displayName, profilePic, bio) {
   }
   return;
 }
-function validateUserCredentials({ email, password }) {
-if (!email && !password) {
-  throw new ValidationError("No credential to validate")
-}
+export function validateUserCredentials(email: string, password: string) {
+  if (!email && !password) {
+    throw new ValidationError("No credential to validate");
+  }
   if (email !== undefined) {
     if (
       typeof email !== "string" ||
@@ -59,4 +62,3 @@ if (!email && !password) {
   }
   return;
 }
-export default { validateUserDisplayedInfo, validateUserCredentials };

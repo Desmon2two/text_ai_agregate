@@ -11,6 +11,11 @@ async function createAttempt({ dbClient, jobId, attemptNumber, provider, model, 
     `, ["CREATED", jobId, attemptNumber, provider, model]);
     return result.rows[0];
 }
+async function deleteAttempt(dbClient, attemptId) {
+    const result = await dbClient.query(`DELETE FROM attempts WHERE attempt_id = $1
+    `, [attemptId]);
+    return result.rows[0];
+}
 async function markSending(dbClient, attemptId) {
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, updated_at = NOW()
@@ -67,6 +72,7 @@ async function markFailed(dbClient, attemptId, error) {
 }
 export default {
     getAttempt,
+    deleteAttempt,
     createAttempt,
     markSending,
     markWaiting,

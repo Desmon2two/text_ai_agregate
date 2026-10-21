@@ -222,7 +222,6 @@ async function createRecoveryCompletedEvent(
 async function deleteEvent(
   dbClient: Client,
   eventId: string,
-  metadata: { reason: string },
 ): Promise<number | null> {
   const result = await dbClient.query(
     `DELETE FROM events WHERE event_id = $1`, [eventId]

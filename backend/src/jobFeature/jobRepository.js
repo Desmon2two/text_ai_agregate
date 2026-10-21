@@ -21,6 +21,12 @@ async function createJob({ dbClient, type, body, userId, estimatedCost, }) {
     `, ["CREATED", type, body, userId, estimatedCost]);
     return result.rows[0];
 }
+async function deleteJob(dbClient, jobId) {
+    const result = await dbClient.query(`
+    DELETE FROM jobs WHERE job_id = $1
+    `, [jobId]);
+    return;
+}
 async function markAccepted(dbClient, jobId) {
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, updated_at = NOW()
@@ -68,6 +74,7 @@ async function markFailed(dbClient, jobId, error) {
 }
 export default {
     getJob,
+    deleteJob,
     getAttemptsPerJob,
     createJob,
     markAccepted,

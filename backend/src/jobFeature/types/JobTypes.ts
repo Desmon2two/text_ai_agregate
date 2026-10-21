@@ -5,8 +5,8 @@ import type { JobStateTypes } from "./JobStateType.js";
 The db tables are a source of truth for jobs, attempts, and events
 */
 type Job = {
-  userId: string;
-  jobId: string;
+  user_id: string;
+  job_id: string;
   state: JobStateTypes;
   type: string;
   body: unknown;
