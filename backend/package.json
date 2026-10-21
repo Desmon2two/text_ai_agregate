@@ -12,7 +12,11 @@
   "main": "./src/server.js",
   "scripts": {
     "dev": "tsc & node ./src/server.js",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.config.ts --watchAll=false --runInBand"
+    "test:all": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testAll.config.ts --watchAll=false --runInBand",
+    "test:integration": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testIntegration.config.ts --watchAll=false --runInBand",
+    "test:service": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testServiceLevel.config.ts --watchAll=false --runInBand",
+    "test:unit": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testUnitLevel.config.ts --watchAll=false --runInBand",
+    "test:useCase": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testUseCaseLevel.config.ts --watchAll=false --runInBand"
   },
   "dependencies": {
     "dotenv": "^18.0.5",
