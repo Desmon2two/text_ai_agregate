@@ -1,8 +1,8 @@
-async function getJob(dbClient, jobId) {
+async function getJob(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM jobs 
     WHERE job_id = $1
-    `, [jobId]);
+    `, [job_id]);
     return result.rows[0];
 }
 async function getAttemptsPerJob(dbClient, jobId) {

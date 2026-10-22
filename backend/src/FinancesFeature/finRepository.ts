@@ -4,7 +4,7 @@ async function getCostOfModel(dbClient: Client, model: string) {
   ]);
   return result.rows[0];
 }
-async function getCreditsOfUser(dbClient: Client, user_id: string) {
+async function getCreditsOfUser(dbClient: Client, user_id: string): Promise<number | null> {
   const result = await dbClient.query(
     `SELECT credits FROM users WHERE user_id = $1`,
     [user_id],

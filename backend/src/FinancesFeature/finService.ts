@@ -8,6 +8,9 @@ async function estimateCost(
   jobType: string,
   model: string,
 ) {
+  if (!prompt || !jobType || !model) {
+    throw new Error("Invalid input: should not be null or undefined or empty");
+  }
   const { inputTokens, outputTokens } = estimateInputAndOutputTokens(
     prompt,
     jobType,
@@ -20,6 +23,4 @@ async function estimateCost(
   return { fullPrice, inputPrice, outputPrice };
 }
 
-export default {
-  estimateCost,
-};
+export { estimateCost };

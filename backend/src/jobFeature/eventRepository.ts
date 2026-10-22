@@ -1,47 +1,56 @@
 import { Client } from "pg";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes";
-
-async function createJobAcceptedEvent(dbClient: Client, jobId: string) {
+async function getEventById(dbClient: Client, event_id: string) {
+  const res = await dbClient.query(
+    `
+  SELECT * FROM events
+  WHERE event_id = $1
+  `,
+    [event_id],
+  );
+  return res.rows[0];
+}
+async function createJobAcceptedEvent(dbClient: Client, job_id: string) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
     VALUES ('JOB_ACCEPTED', $1)
     RETURNING *
     `,
-    [jobId],
+    [job_id],
   );
   return result.rows[0];
 }
-async function createJobProcessingEvent(dbClient: Client, jobId: string) {
+async function createJobProcessingEvent(dbClient: Client, job_id: string) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
     VALUES ('JOB_PROCESSING', $1)
     RETURNING *
     `,
-    [jobId],
+    [job_id],
   );
   return result.rows[0];
 }
 async function createJobProcessedFromIntermediateStateEvent(
   dbClient: Client,
-  jobId: string,
+  job_id: string,
 ) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
     VALUES ('JOB_PROCESSING_FROM_INTERMEDIATE_STATE', $1)
     RETURNING *
     `,
-    [jobId],
+    [job_id],
   );
   return result.rows[0];
 }
 
-async function createWorkerStartedEvent(dbClient: Client, jobId: string) {
+async function createWorkerStartedEvent(dbClient: Client, job_id: string) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
     VALUES ('WORKER_STARTED', $1)
     RETURNING *
     `,
-    [jobId],
+    [job_id],
   );
   return result.rows[0];
 }
@@ -122,13 +131,13 @@ async function createAttemptCompletedEvent(
   );
   return result.rows[0];
 }
-async function createJobCompletedEvent(dbClient: Client, jobId: string) {
+async function createJobCompletedEvent(dbClient: Client, job_id: string) {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
     VALUES ('JOB_COMPLETED', $1)
     RETURNING *
     `,
-    [jobId],
+    [job_id],
   );
   return result.rows[0];
 }
@@ -148,7 +157,7 @@ async function createAttemptFailedEvent(
 }
 async function createJobFailedEvent(
   dbClient: Client,
-  jobId: string,
+  job_id: string,
   metadata: { error: unknown },
 ) {
   const result = await dbClient.query(
@@ -156,13 +165,13 @@ async function createJobFailedEvent(
     VALUES ('JOB_FAILED', $1, $2)
     RETURNING *
     `,
-    [jobId, metadata],
+    [job_id, metadata],
   );
   return result.rows[0];
 }
 async function createRetryCreatedEvent(
   dbClient: Client,
-  jobId: string,
+  job_id: string,
   attemptId: string,
   metadata: { previousAttemptId: string },
 ) {
@@ -171,13 +180,13 @@ async function createRetryCreatedEvent(
     VALUES ('RETRY_CREATED', $1, $2, $3)
     RETURNING *
     `,
-    [jobId, attemptId, metadata],
+    [job_id, attemptId, metadata],
   );
   return result.rows[0];
 }
 async function createRecoveryStartedEvent(
   dbClient: Client,
-  jobId: string,
+  job_id: string,
   metadata: { reason: string },
   attemptId?: string,
 ) {
@@ -186,13 +195,13 @@ async function createRecoveryStartedEvent(
     VALUES ('RECOVERY_STARTED', $1, $2, $3)
     RETURNING *
     `,
-    [attemptId || null, jobId, metadata],
+    [attemptId || null, job_id, metadata],
   );
   return result.rows[0];
 }
 async function createRecoveryAbandonedEvent(
   dbClient: Client,
-  jobId: string,
+  job_id: string,
   metadata: { reason: string },
   attemptId?: string,
 ) {
@@ -201,7 +210,7 @@ async function createRecoveryAbandonedEvent(
     VALUES ('RECOVERY_ABANDONED', $1, $2, $3)
     RETURNING *
     `,
-    [attemptId || null, jobId, metadata],
+    [attemptId || null, job_id, metadata],
   );
   return result.rows[0];
 }
@@ -235,7 +244,7 @@ async function createCreditsDeductedEvent(
 }
 async function createRecoveryCompletedEvent(
   dbClient: Client,
-  jobId: string,
+  job_id: string,
   metadata: { reason: string },
   attemptId?: string,
 ) {
@@ -244,7 +253,7 @@ async function createRecoveryCompletedEvent(
     VALUES ('RECOVERY_COMPLETED', $1, $2, $3)
     RETURNING *
     `,
-    [attemptId || null, jobId, metadata],
+    [attemptId || null, job_id, metadata],
   );
   return result.rows[0];
 }
@@ -260,6 +269,7 @@ async function deleteEvent(
 }
 
 export default {
+  getEventById,
   createJobAcceptedEvent,
   createJobProcessingEvent,
   createJobProcessedFromIntermediateStateEvent,
