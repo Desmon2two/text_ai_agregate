@@ -10,7 +10,7 @@
     "target": "es2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "types": ["node", "jest"],
+    "types": ["node"],
     "esModuleInterop": true,
     // For nodejs:
     "lib": ["esnext"],

@@ -1,4 +1,3 @@
-
 const OLLAMA_URL = "http://127.0.0.1:11434/api/chat";
 const MODEL = "gemma3:1b";
 
@@ -26,12 +25,14 @@ async function acceptJob(prompt: string) {
 
   if (!response.ok) {
     throw new Error(
-      `Ollama returned HTTP ${response.status}: ${await response.text()}`
+      `Ollama returned HTTP ${response.status}: ${await response.text()}`,
     );
   }
 
   const data = await response.json();
+  console.log("Input tokens:", data.prompt_eval_count);
+  console.log("Output tokens:", data.eval_count);
   return data.message.content;
 }
 
-export default {acceptJob}
+export default { acceptJob };

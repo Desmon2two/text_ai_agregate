@@ -2,13 +2,13 @@ import type { Client } from "pg";
 import type { CreateJob, Job } from "./types/JobTypes.js";
 import type { Attempt } from "./types/AttemptTypes.js";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
-async function getJob(dbClient: Client, jobId: string): Promise<Job | null> {
+async function getJob(dbClient: Client, job_id: string): Promise<Job | null> {
   const result = await dbClient.query(
     `
     SELECT * FROM jobs 
     WHERE job_id = $1
     `,
-    [jobId],
+    [job_id],
   );
   return result.rows[0];
 }

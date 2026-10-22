@@ -14,11 +14,11 @@ type Job = {
   error?: unknown;
   data?: unknown;
   metadata?: unknown;
-  recoveryWorkerId?: string;
-  recoveryLeaseUntil?: Date;
-  estimatedCost: number;
-  actualCost?: number;
-  createdAt: Date;
+  recovery_workerId?: string;
+  recovery_lease_until?: Date;
+  estimated_cost: number;
+  actual_cost?: number;
+  created_at: Date;
 };
 type CreateJob = {
   dbClient: Client;

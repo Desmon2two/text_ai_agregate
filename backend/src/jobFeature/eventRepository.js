@@ -111,6 +111,20 @@ async function createRecoveryAbandonedEvent(dbClient, jobId, metadata, attemptId
     `, [attemptId || null, jobId, metadata]);
     return result.rows[0];
 }
+async function createCreditsAddedEvent(dbClient, user_id, metadata) {
+    const result = await dbClient.query(`INSERT INTO events(name, user_id, metadata) 
+    VALUES ('CREDITS_ADDED', $1, $2)
+    RETURNING *
+    `, [user_id, metadata]);
+    return result.rows[0];
+}
+async function createCreditsDeductedEvent(dbClient, user_id, metadata) {
+    const result = await dbClient.query(`INSERT INTO events(name, user_id, metadata) 
+    VALUES ('CREDITS_DEDUCTED', $1, $2)
+    RETURNING *
+    `, [user_id, metadata]);
+    return result.rows[0];
+}
 async function createRecoveryCompletedEvent(dbClient, jobId, metadata, attemptId) {
     const result = await dbClient.query(`INSERT INTO events(name, attempt_id, job_id, metadata) 
     VALUES ('RECOVERY_COMPLETED', $1, $2, $3)
@@ -141,4 +155,6 @@ export default {
     createRecoveryAbandonedEvent,
     createRecoveryCompletedEvent,
     deleteEvent,
+    createCreditsAddedEvent,
+    createCreditsDeductedEvent,
 };

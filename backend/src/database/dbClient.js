@@ -8,19 +8,14 @@ async function connectDB(user, password, host, port, database) {
     });
     const client = new pg.Client(dbConfig);
     try {
-        client.connect(function (err) {
-            if (err)
-                throw err;
-            client.query("SELECT VERSION()", [], function (err, result) {
-                if (err)
-                    throw err;
-                console.log(result.rows[0].version);
-            });
-        });
+        await client.connect();
+        const result = await client.query("SELECT VERSION()");
+        console.log(result.rows[0].version);
+        return client;
     }
     catch (error) {
+        console.log("error during connection to db");
         throw error;
     }
-    return client;
 }
 export { connectDB };

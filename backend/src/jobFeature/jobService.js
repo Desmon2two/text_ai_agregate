@@ -47,11 +47,6 @@ async function commitJob(userId, jobType, provider, model, body, files) {
     if (!isAllowed)
         throw new UnauthorizedError("User is not allowed");
     const aiRequest = mapJobToAiRequest({ jobType, provider, model, body, files });
-    const attempt = ;
-    return {
-        jobId: ,
-        createdAt: ,
-    };
 }
 async function completeJob(dbClient, jobId, attemptId) {
     const job = await jobRepository.getJob(dbClient, jobId);

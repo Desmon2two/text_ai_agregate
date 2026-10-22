@@ -14,6 +14,8 @@ export async function setupTestDB(): Promise<DBClient> {
 }
 
 export async function teardownTestDB(dbClient: DBClient): Promise<void> {
-  await dbClient.end();
+  if(!dbClient.ended){
+    await dbClient.end();
+  }
   console.log("Connection to DB terminated");
 }
