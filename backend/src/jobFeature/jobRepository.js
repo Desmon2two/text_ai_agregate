@@ -1,3 +1,4 @@
+import { JobStateTypes } from "./types/JobStateType.js";
 async function getJobById(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM jobs 
@@ -7,83 +8,89 @@ async function getJobById(dbClient, job_id) {
         return null;
     return result.rows[0];
 }
-async function getAttemptsPerJob(dbClient, jobId) {
+async function getAttemptsPerJob(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM attempts 
     WHERE job_id = $1
     ORDER BY attempt_number DESC
-    `, [jobId]);
+    `, [job_id]);
+    if (result.rows.length === 0)
+        return null;
     return result.rows;
 }
-async function createJob({ dbClient, type, body, userId, estimatedCost, }) {
+async function createJob(dbClient, user_id, type, body, estimated_cost) {
     const result = await dbClient.query(`
     INSERT INTO jobs (state, type, body, user_id, estimated_cost)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
-    `, ["CREATED", type, body, userId, estimatedCost]);
+    `, ["CREATED", type, body, user_id, estimated_cost]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function deleteJob(dbClient, jobId) {
+async function deleteJob(dbClient, job_id) {
     const result = await dbClient.query(`
     DELETE FROM jobs WHERE job_id = $1
-    `, [jobId]);
+    `, [job_id]);
     if (!result)
         return null;
     return result;
 }
-async function markAccepted(dbClient, jobId) {
+async function markAccepted(dbClient, job_id) {
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [jobId, "CREATED", "ACCEPTED"]);
+    `, [job_id, "CREATED", "ACCEPTED"]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markQueued(dbClient, jobId) {
+async function markQueued(dbClient, job_id) {
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [jobId, "ACCEPTED", "QUEUED"]);
+    `, [job_id, "ACCEPTED", "QUEUED"]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markProcessing(dbClient, jobId) {
+async function markProcessing(dbClient, job_id) {
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [jobId, "QUEUED", "PROCESSING"]);
+    `, [job_id, "QUEUED", "PROCESSING"]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markCompleted(dbClient, jobId, data, actualCost) {
+async function markCompleted(dbClient, job_id, data, actual_cost) {
+    if (!data || data === null)
+        throw new Error("Data can't be empty");
+    if (!actual_cost || actual_cost === null)
+        throw new Error("Actual cost can't be empty");
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [jobId, "PROCESSING", "COMPLETED", data, actualCost]);
+    `, [job_id, "PROCESSING", "COMPLETED", data, actual_cost]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markFailed(dbClient, jobId, error) {
+async function markFailed(dbClient, job_id, error) {
     const result = await dbClient.query(`UPDATE jobs
     SET state = $2, error = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = ('CREATED', 'ACCEPTED', 'QUEUED', 'PROCESSING')
     RETURNING *
-    `, [jobId, "FAILED", error]);
+    `, [job_id, "FAILED", error]);
     if (!result.rows[0])
         return null;
     return result.rows[0];

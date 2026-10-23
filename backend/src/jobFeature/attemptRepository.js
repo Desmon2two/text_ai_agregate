@@ -1,16 +1,16 @@
-async function getAttempt(dbClient, attemptId) {
+async function getAttempt(dbClient, attempt_id) {
     const result = await dbClient.query(`SELECT * FROM attempts
       WHERE attempt_id = $1
-      `, [attemptId]);
+      `, [attempt_id]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function createAttempt({ dbClient, job_id, attemptNumber, provider, model, }) {
+async function createAttempt(dbClient, job_id, attempt_number, provider, model) {
     const result = await dbClient.query(`INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
-    `, ["CREATED", job_id, attemptNumber, provider, model]);
+    `, ["CREATED", job_id, attempt_number, provider, model]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -20,68 +20,72 @@ async function deleteAttempt(dbClient, attempt_id) {
     `, [attempt_id]);
     return result;
 }
-async function markSending(dbClient, attemptId) {
+async function markSending(dbClient, attempt_id) {
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, updated_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attemptId, "CREATED", "SENDING"]);
+    `, [attempt_id, "CREATED", "SENDING"]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markWaiting(dbClient, attemptId, providerJobId) {
+async function markWaiting(dbClient, attempt_id, providerJobId) {
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, provider_job_id = $4, updated_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attemptId, "SENDING", "WAITING", providerJobId || null]);
+    `, [attempt_id, "SENDING", "WAITING", providerJobId || null]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markReceived(dbClient, attemptId, data) {
+async function markReceived(dbClient, attempt_id, data) {
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attemptId, "WAITING", "RECEIVED", data]);
+    `, [attempt_id, "WAITING", "RECEIVED", data]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markValidated(dbClient, attemptId, data) {
+async function markValidated(dbClient, attempt_id, data) {
+    if (data === null || !data)
+        throw new Error("Data can't be null while validating attempt");
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attemptId, "RECEIVED", "VALIDATED", data]);
+    `, [attempt_id, "RECEIVED", "VALIDATED", data]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markCompleted(dbClient, attemptId, data) {
+async function markCompleted(dbClient, attempt_id, data) {
+    if (data === null || !data)
+        throw new Error("Data can't be null while completing attempt");
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW(), completed_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attemptId, "VALIDATED", "COMPLETED", data]);
+    `, [attempt_id, "VALIDATED", "COMPLETED", data]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markFailed(dbClient, attemptId, error) {
+async function markFailed(dbClient, attempt_id, error) {
     const result = await dbClient.query(`UPDATE attempts
     SET state = $2, error = $3, updated_at = NOW()
     WHERE attempt_id = $1
     AND state IN ('CREATED', 'SENDING', 'WAITING', 'RECEIVED', 'VALIDATED')
     RETURNING *
-    `, [attemptId, "FAILED", error]);
+    `, [attempt_id, "FAILED", error]);
     if (!result.rows[0])
         return null;
     return result.rows[0];

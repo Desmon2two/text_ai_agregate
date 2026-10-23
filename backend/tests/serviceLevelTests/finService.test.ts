@@ -14,7 +14,7 @@ describe("Testing financial service level functionality", () => {
     const result = await finService.estimateCost(
       dbClient,
       prompt,
-      "question",
+      "QUESTION",
       "gpt-5",
     );
     console.log(result);

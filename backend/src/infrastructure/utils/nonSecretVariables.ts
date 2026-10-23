@@ -7,11 +7,11 @@ const nonSecretVariables = {
   },
   getOutputTokensMultiplier(jobType: string) {
     const multipliers = {
-      classification: 1.5,
-      summary: 4,
-      question: 8,
-      code: 15,
-      largeReport: 20,
+      CLASSIFICATION: 1.5,
+      SUMMARY: 4,
+      QUESTION: 8,
+      CODE: 15,
+      LARGE_REPORT: 20,
     };
     return multipliers[jobType] ?? this.OUTPUT_TOKENS_MULTIPLIER;
   },

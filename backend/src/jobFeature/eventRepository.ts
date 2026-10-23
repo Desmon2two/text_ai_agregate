@@ -279,11 +279,11 @@ async function createRecoveryCompletedEvent(
 }
 async function deleteEvent(
   dbClient: Client,
-  eventId: string,
+  event_id: string,
 ): Promise<PostgreSQLResponse> {
   const result = await dbClient.query(
     `DELETE FROM events WHERE event_id = $1`,
-    [eventId],
+    [event_id],
   );
   return result;
 }

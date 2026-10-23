@@ -1,6 +1,7 @@
 import finRepository from "../../src/FinancesFeature/finRepository.js";
 import finUseCase from "../../src/FinancesFeature/finUseCase.js";
 import eventRepository from "../../src/jobFeature/eventRepository.js";
+import { createTestJob } from "../helpers/factoryFunctions.js";
 import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
@@ -17,8 +18,7 @@ afterEach(async () => {
 });
 
 describe("Testing financial use case", () => {
-  const incomplete_test_job_id = "344a3733-1f79-407b-a70c-b90781688b50";
-  const complete_test_job_id = "";
+  const {job_id} = createTestJob();
   const test_user_id = "c9593f4e-142f-4bff-9c45-5fabb90f45f9";
   it("Should not accept invalid inputs", async () => {
     await expect(
@@ -44,7 +44,7 @@ describe("Testing financial use case", () => {
       ),
     ).rejects.toThrow();
     await expect(
-      finUseCase.changeCreditsOnJobCompletion(dbClient, incomplete_test_job_id),
+      finUseCase.changeCreditsOnJobCompletion(dbClient, job_id),
     ).rejects.toThrow("Can't process incomplete job");
   });
   it("Should calculate the difference", async () => {

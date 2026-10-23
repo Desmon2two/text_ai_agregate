@@ -1,4 +1,5 @@
 import jobRepository from "../../src/jobFeature/jobRepository.js";
+import { createTestJob } from "../helpers/factoryFunctions.js";
 
 import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
@@ -8,39 +9,35 @@ beforeAll(async () => {
 afterAll(async () => {
   await teardownTestDB(dbClient);
 }, 15000);
-
-let jobId: string;
+beforeEach(async () => {
+  await dbClient.query("BEGIN");
+});
+afterEach(async () => {
+  await dbClient.query("ROLLBACK");
+});
 
 describe("Testing jobs repository", () => {
   it(" Should create jobs", async () => {
-    const job = {
-      dbClient,
-      type: "SUMMARY",
-      body: { origin: "testing" },
-      userId: "c9593f4e-142f-4bff-9c45-5fabb90f45f9",
-      estimatedCost: 1,
-    };
-    const result = await jobRepository.createJob(job);
-    jobId = result.job_id;
-    expect(result).not.toBeNull();
-  });
-  it("should support external atomic wrapper", async () => {
-    const job = {
-      dbClient,
-      type: "SUMMARY",
-      body: { origin: "testing" },
-      userId: "c9593f4e-142f-4bff-9c45-5fabb90f45f9",
-      estimatedCost: 1,
-    };
-    await dbClient.query("BEGIN");
-    const resJob = await jobRepository.createJob(job);
-    await dbClient.query("ROLLBACK");
-    const result = await jobRepository.getJobById(dbClient, resJob.job_id);
-    expect(result).toBeNull();
+    const {user_id, type, body, estimated_cost} = createTestJob()
+    const result = await jobRepository.createJob(dbClient, user_id, type, body, estimated_cost);
+    expect(result?.estimated_cost).toBe(estimated_cost);
   });
   it("should delete jobs", async () => {
-    const res = await jobRepository.deleteJob(dbClient, jobId);
+    const {job_id} = createTestJob()
+    const res = await jobRepository.deleteJob(dbClient, job_id);
     expect(res.rowCount).toBe(1);
   });
-  it("Should not allow invalid state transitions", async () => {});
+  it("Should not allow transition to complete without data", async () => {
+    const job = createTestJob({state: 'PROCESSING'})
+    expect(
+      await jobRepository.markCompleted(dbClient, job.job_id, null, null)
+    ).rejects.toThrow()
+  });
+  it("Should not allow invalid state transitions", async () => {
+    const job = createTestJob({state: "COMPLETED"})
+    const testJob = await jobRepository.createJob(dbClient, job.user_id, job.type, job.body, job.estimated_cost)
+    expect(
+      await jobRepository.markCompleted(dbClient, testJob.job_id, job.data, job.actual_cost)
+    ).rejects.toThrow()
+  });
 });

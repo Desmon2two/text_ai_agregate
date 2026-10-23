@@ -1,36 +1,36 @@
-import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper.js";
 import attemptRepository from "./attemptRepository.js";
 import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";
 import { Client } from "pg";
-async function createJob(dbClient, type, estimatedCost, userId, { provider, model }, body, filesUrl) {
+import { mapTokensToActualCost } from "../FinancesFeature/finService.js";
+async function createJob(dbClient, type, estimated_cost, user_id, provider, model, body, filesUrl) {
     try {
         await dbClient.query("BEGIN");
         const job = await jobRepository.createJob({
             dbClient,
             type,
             body,
-            userId,
-            estimatedCost,
+            user_id,
+            estimated_cost,
         });
         if (job === null)
-            throw new Error("Error during job creation");
+            throw new Error("Job was not created");
         const attempt = await attemptRepository.createAttempt({
             dbClient,
-            jobId: job.jobId,
-            attemptNumber: 1,
+            job_id: job.job_id,
+            attempt_number: 1,
             provider,
             model,
         });
         if (attempt === null)
-            throw new Error("Error during attempt creation");
-        await eventRepository.createAttemptCreatedEvent(dbClient, attempt.attemptId, { origin: "Initial basic creation" });
-        await eventRepository.createJobAcceptedEvent(dbClient, job.jobId);
+            throw new Error("Attempt was not created");
+        await eventRepository.createAttemptCreatedEvent(dbClient, attempt.attempt_id, { origin: "Regular job creation" });
+        await eventRepository.createJobAcceptedEvent(dbClient, job.job_id);
         await dbClient.query("COMMIT");
-        await queueService.enqueue(job.jobId);
+        await queueService.enqueue(job.job_id);
         return {
-            jobId: job.jobId,
-            createdAt: job.createdAt,
+            job_id: job.job_id,
+            created_at: job.created_at,
         };
     }
     catch (error) {
@@ -38,52 +38,30 @@ async function createJob(dbClient, type, estimatedCost, userId, { provider, mode
         throw new Error(error.message);
     }
 }
-async function planJob({ userid, jobTypeId, body, files }) {
-    return {
-        jobType,
-        provider,
-        model,
-        estimatedCost,
-        interpretedIntent,
-        executionConfiguration,
-    };
-}
-async function commitJob(userId, jobType, provider, model, body, files) {
-    const isAllowed = userService.checkUser();
-    if (!isAllowed)
-        throw new UnauthorizedError("User is not allowed");
-    const aiRequest = mapJobToAiRequest({
-        jobType,
-        provider,
-        model,
-        body,
-        files,
-    });
-}
-async function completeJob(dbClient, jobId, attemptId) {
-    const job = await jobRepository.getJobById(dbClient, jobId);
+async function completeJob(dbClient, job_id, attempt_id) {
+    const job = await jobRepository.getJobById(dbClient, job_id);
     if (job === null)
         throw new Error("No such job for completeJob");
     if (job.state !== "PROCESSING")
         throw new Error("Job is not in processing state");
-    const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
+    const attempt = await attemptRepository.getAttempt(dbClient, attempt_id);
     if (attempt === null)
-        throw new Error("No such attempt for completeJob");
+        throw new Error("No attempt for completeJob");
     if (attempt.state !== "VALIDATED")
         throw new Error("Attempt is not in validated state");
-    if (typeof attempt.data === "undefined" || attempt.data === null)
+    if (typeof attempt.data === "undefined" || attempt.data === null || !attempt.data)
         throw new Error("Data is absent");
     await dbClient.query("BEGIN");
     try {
-        const attemptResult = await attemptRepository.markCompleted(dbClient, attemptId, attempt.data);
-        if (attemptResult.rowCount.length === 0)
+        const attemptResult = await attemptRepository.markCompleted(dbClient, attempt_id, attempt.data);
+        if (attemptResult === null)
             throw Error("Complete job operation failed at mark attempt completed");
-        const actualCost = await finService.calculateActualCost(attemptId);
-        const jobResult = await jobRepository.markCompleted(dbClient, jobId, attempt.data, actualCost);
-        if (jobResult.rowCount.length === 0)
+        const { fullPrice } = await mapTokensToActualCost(dbClient, attempt.model, attempt.data.tokens.input_tokens, attempt.data.tokens.output_tokens);
+        const jobResult = await jobRepository.markCompleted(dbClient, job_id, attempt.data.received_data, fullPrice);
+        if (jobResult === null)
             throw Error("Complete job operation failed at mark job completed");
-        await eventRepository.createAttemptCompletedEvent(dbClient, attemptId);
-        await eventRepository.createJobCompletedEvent(dbClient, jobId);
+        await eventRepository.createAttemptCompletedEvent(dbClient, attempt_id);
+        await eventRepository.createJobCompletedEvent(dbClient, job_id);
         await dbClient.query("COMMIT");
     }
     catch (error) {
@@ -94,6 +72,5 @@ async function completeJob(dbClient, jobId, attemptId) {
 }
 export default {
     createJob,
-    planJob,
     completeJob,
 };

@@ -3,5 +3,5 @@ export type User = {
   email: string;
   password: string;
   credits: number;
-  created_at: Date;
+  created_at?: Date;
 };

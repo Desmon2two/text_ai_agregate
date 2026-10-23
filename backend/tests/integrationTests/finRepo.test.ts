@@ -8,7 +8,12 @@ beforeAll(async () => {
 afterAll(async () => {
   await teardownTestDB(dbClient);
 });
-
+beforeEach(async () => {
+  await dbClient.query("BEGIN");
+});
+afterEach(async () => {
+  await dbClient.query("ROLLBACK");
+});
 describe("Testing financial repository", () => {
   const user_id = "c9593f4e-142f-4bff-9c45-5fabb90f45f9";
   it("Should correctly fetch data from database", async () => {

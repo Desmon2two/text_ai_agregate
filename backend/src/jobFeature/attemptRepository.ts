@@ -15,13 +15,13 @@ async function getAttempt(
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
-async function createAttempt({
-  dbClient,
-  job_id,
-  attempt_number,
-  provider,
-  model,
-}: CreateAttemptInput): Promise<Attempt | null> {
+async function createAttempt(
+  dbClient: Client,
+  job_id: string,
+  attempt_number: number,
+  provider: string,
+  model: string,
+): Promise<Attempt | null> {
   const result = await dbClient.query(
     `INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
     VALUES ($1, $2, $3, $4, $5)
@@ -95,6 +95,8 @@ async function markValidated(
   attempt_id: string,
   data: unknown,
 ) {
+  if (data === null || !data)
+    throw new Error("Data can't be null while validating attempt");
   const result = await dbClient.query(
     `UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW()
@@ -112,6 +114,8 @@ async function markCompleted(
   attempt_id: string,
   data: unknown,
 ): Promise<Attempt | null> {
+  if (data === null || !data)
+    throw new Error("Data can't be null while completing attempt");
   const result = await dbClient.query(
     `UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW(), completed_at = NOW()

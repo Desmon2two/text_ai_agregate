@@ -8,7 +8,12 @@ beforeAll(async () => {
 afterAll(async () => {
   await teardownTestDB(dbClient);
 });
-
+beforeEach(async () => {
+  await dbClient.query("BEGIN");
+});
+afterEach(async () => {
+  await dbClient.query("ROLLBACK");
+});
 describe("Testing estimation on cost of job", () => {
   it("Should not accept invalid values", async () => {
     const invalidPrompt0 = "";
@@ -48,12 +53,12 @@ describe("Testing estimation on cost of job", () => {
   });
   it("estimated cost should depend on length of prompt, context, and model", async () => {
     const prompt1 = "Null";
-    const jobType1 = "summary";
+    const jobType1 = "SUMMARY";
     const model1 = "gemma3b";
     const res1 = await estimateCost(dbClient, prompt1, jobType1, model1);
     const prompt2 =
       "Some significantly longer prompt - like this one. What can you tell me about SQLite? Is it good? How much can you tell me?";
-    const jobType2 = "code";
+    const jobType2 = "CODE";
     const model2 = "gpt-5";
     const res2 = await estimateCost(dbClient, prompt2, jobType2, model2);
     expect(res2.fullPrice).toBeGreaterThan(res1.fullPrice);

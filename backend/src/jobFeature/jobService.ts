@@ -10,7 +10,7 @@ async function createJob(
   type: string,
   estimated_cost: number,
   user_id: string,
- provider: string, model: string,,
+ provider: string, model: string,
   body: { prompt: string; [keys?: any] },
   filesUrl?: string,
 ): Promise<CreateJobOutput> {

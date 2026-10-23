@@ -2,6 +2,7 @@ import type { Client } from "pg";
 import type { CreateJob, Job } from "./types/JobTypes.js";
 import type { Attempt } from "./types/AttemptTypes.js";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
+import { JobStateTypes } from "./types/JobStateType.js";
 async function getJobById(
   dbClient: Client,
   job_id: string,
@@ -28,23 +29,23 @@ async function getAttemptsPerJob(
     `,
     [job_id],
   );
-  if(result.rows.length === 0) return null
+  if (result.rows.length === 0) return null;
   return result.rows;
 }
-async function createJob({
-  dbClient,
-  type,
-  body,
-  userId,
-  estimatedCost,
-}: CreateJob): Promise<Job | null> {
+async function createJob(
+  dbClient: Client,
+  user_id: string,
+  type: JobStateTypes,
+  body: unknown,
+  estimated_cost: number,
+): Promise<Job | null> {
   const result = await dbClient.query(
     `
     INSERT INTO jobs (state, type, body, user_id, estimated_cost)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `,
-    ["CREATED", type, body, userId, estimatedCost],
+    ["CREATED", type, body, user_id, estimated_cost],
   );
   if (!result.rows[0]) return null;
   return result.rows[0];
@@ -116,6 +117,9 @@ async function markCompleted(
   data: unknown,
   actual_cost: number,
 ): Promise<Job | null> {
+  if (!data || data === null) throw new Error("Data can't be empty");
+  if (!actual_cost || actual_cost === null)
+    throw new Error("Actual cost can't be empty");
   const result = await dbClient.query(
     `UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
