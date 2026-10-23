@@ -5,10 +5,9 @@ import handleFailure from "../infrastructure/failureHandler.js";
 import eventRepository from "./eventRepository.js";
 import worker from "./worker.js";
 
-async function recoverAttempts(dbClient: Client, recoveryWorkerId: string) {
+async function recoverAttempts(dbClient: Client, recovery_worker_id: string) {
   const recoverableAttempts =
     await recoveryRepository.scanAttemptsForRecovery(dbClient);
-
   if (recoverableAttempts === null) return null;
 
   for (let index = 0; index < recoverableAttempts.length; index++) {
@@ -16,8 +15,8 @@ async function recoverAttempts(dbClient: Client, recoveryWorkerId: string) {
     await dbClient.query("BEGIN");
     const claimedAttempt = await recoveryRepository.claimAttemptForRecovery(
       dbClient,
-      attempt.attemptId,
-      recoveryWorkerId,
+      attempt.attempt_id,
+      recovery_worker_id,
       new Date(Date.now() + 5000),
     );
 
@@ -34,16 +33,16 @@ async function recoverAttempts(dbClient: Client, recoveryWorkerId: string) {
       ) {
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
-          claimedAttempt.attemptId,
+          claimedAttempt.attempt_id,
           { reason: "Timed out attempt state" },
         );
-        await handleFailure(dbClient, claimedAttempt.attemptId, {
+        await handleFailure(dbClient, claimedAttempt.attempt_id, {
           message: "Timed out by recovery",
           retryable: false,
         });
         await eventRepository.createRecoveryCompletedEvent(
           dbClient,
-          claimedAttempt.attemptId,
+          claimedAttempt.attempt_id,
           {
             reason:
               "Attempt + job critically failed according to recovery ambiguity policy",
@@ -53,52 +52,52 @@ async function recoverAttempts(dbClient: Client, recoveryWorkerId: string) {
       if (claimedAttempt.state === "VALIDATED") {
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
-          claimedAttempt.attemptId,
+          claimedAttempt.attempt_id,
           { reason: "Stale attempt state" },
         );
         await jobService.completeJob(
           dbClient,
-          claimedAttempt.attemptId,
-          claimedAttempt.jobId,
+          claimedAttempt.attempt_id,
+          claimedAttempt.job_id,
         );
         await eventRepository.createRecoveryCompletedEvent(
           dbClient,
-          claimedAttempt.attemptId,
+          claimedAttempt.attempt_id,
           { reason: "Manually completed the attempt" },
         );
       }
       if (claimedAttempt.state === "CREATED") {
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
-          claimedAttempt.attemptId,
+          claimedAttempt.attempt_id,
           { reason: "Stale attempt state" },
         );
         await worker.processJobFromIntermediateState(
           dbClient,
-          claimedAttempt.jobId,
+          claimedAttempt.job_id,
         );
         await eventRepository.createRecoveryCompletedEvent(
           dbClient,
-          claimedAttempt.attemptId,
+          claimedAttempt.attempt_id,
           { reason: "?" },
         );
       }
     } catch (error) {
       await eventRepository.createRecoveryAbandonedEvent(
         dbClient,
-        claimedAttempt.attemptId,
+        claimedAttempt.attempt_id,
         { reason: "Error during attempt recovery" },
       );
     } finally {
       await recoveryRepository.releaseAttemptRecovery(
         dbClient,
-        attempt.attemptId,
-        recoveryWorkerId,
+        attempt.attempt_id,
+        recovery_worker_id,
       );
     }
   }
 }
-async function recoverJobs(dbClient: Client, recoveryWorkerId: string) {
+async function recoverJobs(dbClient: Client, recovery_worker_id: string) {
   const recoverableJobs =
     await recoveryRepository.scanJobsForRecovery(dbClient);
   if (recoverableJobs === null) {
@@ -109,8 +108,8 @@ async function recoverJobs(dbClient: Client, recoveryWorkerId: string) {
     await dbClient.query("BEGIN");
     const claimedJob = await recoveryRepository.claimJobForRecovery(
       dbClient,
-      job.jobId,
-      recoveryWorkerId,
+      job.job_id,
+      recovery_worker_id,
       new Date(Date.now() + 5000),
     );
     if (claimedJob === null) {
@@ -122,43 +121,43 @@ async function recoverJobs(dbClient: Client, recoveryWorkerId: string) {
       if (claimedJob.state === "QUEUED") {
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
-          claimedJob.jobId,
+          claimedJob.job_id,
           { reason: "Stale job state" },
         );
-        await queueService.requeue(dbClient, claimedJob.jobId);
+        await queueService.requeue(dbClient, claimedJob.job_id);
         await eventRepository.createRecoveryCompletedEvent(
           dbClient,
-          claimedJob.jobId,
+          claimedJob.job_id,
           { reason: "Requeued job" },
         );
       }
       if (claimedJob.state === "ACCEPTED") {
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
-          claimedJob.jobId,
+          claimedJob.job_id,
           { reason: "Stale job state" },
         );
         await worker.processJobFromIntermediateState(
           dbClient,
-          claimedJob.jobId,
+          claimedJob.job_id,
         );
         await eventRepository.createRecoveryCompletedEvent(
           dbClient,
-          claimedJob.jobId,
+          claimedJob.job_id,
           { reason: "Requeued job" },
         );
       }
     } catch (error) {
       await eventRepository.createRecoveryAbandonedEvent(
         dbClient,
-        claimedJob.jobId,
+        claimedJob.job_id,
         { reason: "Error during job recovery" },
       );
     } finally {
       await recoveryRepository.releaseJobRecovery(
         dbClient,
-        claimedJob.jobId,
-        recoveryWorkerId,
+        claimedJob.job_id,
+        recovery_worker_id,
       );
     }
   }

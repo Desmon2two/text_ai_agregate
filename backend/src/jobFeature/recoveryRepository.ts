@@ -38,6 +38,7 @@ async function claimAttemptForRecovery(
     `,
     [attemptId, recoveryWorkerId, leaseUntil],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function claimJobForRecovery(
@@ -57,13 +58,14 @@ async function claimJobForRecovery(
     `,
     [jobId, recoveryWorkerId, recoveryLeaseUntil],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function releaseAttemptRecovery(
   dbClient: Client,
   attemptId: string,
   recoveryWorkerId: string,
-) {
+): Promise<Attempt | null> {
   const result = await dbClient.query(
     `
     UPDATE attempts
@@ -75,13 +77,14 @@ async function releaseAttemptRecovery(
     `,
     [attemptId, recoveryWorkerId],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function releaseJobRecovery(
   dbClient: Client,
   jobId: string,
   recoveryWorkerId: string,
-) {
+): Promise<Job | null> {
   const result = await dbClient.query(
     `
     UPDATE jobs
@@ -93,6 +96,7 @@ async function releaseJobRecovery(
     `,
     [jobId, recoveryWorkerId],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 

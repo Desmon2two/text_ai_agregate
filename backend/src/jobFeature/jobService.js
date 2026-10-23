@@ -15,7 +15,13 @@ async function createJob(dbClient, type, estimatedCost, userId, { provider, mode
         });
         if (job === null)
             throw new Error("Error during job creation");
-        const attempt = await attemptRepository.createAttempt({ dbClient, jobId: job.jobId, attemptNumber: 1, provider, model });
+        const attempt = await attemptRepository.createAttempt({
+            dbClient,
+            jobId: job.jobId,
+            attemptNumber: 1,
+            provider,
+            model,
+        });
         if (attempt === null)
             throw new Error("Error during attempt creation");
         await eventRepository.createAttemptCreatedEvent(dbClient, attempt.attemptId, { origin: "Initial basic creation" });
@@ -46,10 +52,16 @@ async function commitJob(userId, jobType, provider, model, body, files) {
     const isAllowed = userService.checkUser();
     if (!isAllowed)
         throw new UnauthorizedError("User is not allowed");
-    const aiRequest = mapJobToAiRequest({ jobType, provider, model, body, files });
+    const aiRequest = mapJobToAiRequest({
+        jobType,
+        provider,
+        model,
+        body,
+        files,
+    });
 }
 async function completeJob(dbClient, jobId, attemptId) {
-    const job = await jobRepository.getJob(dbClient, jobId);
+    const job = await jobRepository.getJobById(dbClient, jobId);
     if (job === null)
         throw new Error("No such job for completeJob");
     if (job.state !== "PROCESSING")
@@ -83,5 +95,5 @@ async function completeJob(dbClient, jobId, attemptId) {
 export default {
     createJob,
     planJob,
-    completeJob
+    completeJob,
 };

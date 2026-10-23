@@ -2,11 +2,13 @@ async function getCostOfModel(dbClient, model) {
     const result = await dbClient.query(`SELECT * FROM models WHERE model = $1`, [
         model,
     ]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function getCreditsOfUser(dbClient, user_id) {
     const result = await dbClient.query(`SELECT credits FROM users WHERE user_id = $1`, [user_id]);
-    return result.rows[0];
+    return result.rows[0].credits;
 }
 async function addCredits(dbClient, user_id, amount) {
     const result = await dbClient.query(`
@@ -15,7 +17,7 @@ async function addCredits(dbClient, user_id, amount) {
     WHERE user_id = $1
     RETURNING credits
     `, [user_id, amount]);
-    return result.rows[0];
+    return result.rows[0].credits;
 }
 async function deductCredits(dbClient, user_id, amount) {
     const result = await dbClient.query(`
@@ -24,7 +26,7 @@ async function deductCredits(dbClient, user_id, amount) {
     WHERE user_id = $1
     RETURNING credits
     `, [user_id, amount]);
-    return result.rows[0];
+    return result.rows[0].credits;
 }
 export default {
     getCostOfModel,

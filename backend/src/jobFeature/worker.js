@@ -28,7 +28,7 @@ async function processJobFromBeginning(dbClient, jobId) {
     }
 }
 async function processJobFromIntermediateState(dbClient, jobId) {
-    const job = await jobRepository.getJob(dbClient, jobId);
+    const job = await jobRepository.getJobById(dbClient, jobId);
     if (job === null) {
         throw new Error("No such job to process from intermediate state");
     }
@@ -60,7 +60,7 @@ async function executeAttempt(dbClient, attemptid) {
     const { attemptId, jobId, retryable, provider } = attempt;
     try {
         await dbClient.query("BEGIN");
-        const job = await jobRepository.getJob(dbClient, jobId);
+        const job = await jobRepository.getJobById(dbClient, jobId);
         if (job === null) {
             throw new Error("No such job");
         }

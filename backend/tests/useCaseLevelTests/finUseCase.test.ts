@@ -9,6 +9,12 @@ beforeAll(async () => {
 afterAll(async () => {
   await teardownTestDB(dbClient);
 }, 15000);
+beforeEach(async () => {
+  await dbClient.query("BEGIN");
+});
+afterEach(async () => {
+  await dbClient.query("ROLLBACK");
+});
 
 describe("Testing financial use case", () => {
   const incomplete_test_job_id = "344a3733-1f79-407b-a70c-b90781688b50";
@@ -81,11 +87,11 @@ describe("Testing financial use case", () => {
       job.rows[0].job_id,
     );
     const res = await finRepository.getCreditsOfUser(dbClient, test_user_id);
-    const awaited = currCredits.credits + difference;
-    expect(res.credits).toBe(awaited);
+    const awaited = currCredits + difference;
+    expect(res).toBe(awaited);
   }, 60000);
   it("Should deduct credits if the difference is negative", async () => {
-    const { credits } = await finRepository.getCreditsOfUser(
+    const credits = await finRepository.getCreditsOfUser(
       dbClient,
       test_user_id,
     );
@@ -106,7 +112,7 @@ describe("Testing financial use case", () => {
     );
     const res = await finRepository.getCreditsOfUser(dbClient, test_user_id);
     const awaited = credits - difference;
-    expect(res.credits).toBe(awaited);
+    expect(res).toBe(awaited);
   }, 60000);
   it("Should create financial events", async () => {
     const job = await dbClient.query(

@@ -24,6 +24,8 @@ async function claimAttemptForRecovery(dbClient, attemptId, recoveryWorkerId, le
     WHERE attempt_id = $1 AND (recovery_lease_until IS NULL OR recovery_lease_until < NOW())
     RETURNING *
     `, [attemptId, recoveryWorkerId, leaseUntil]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function claimJobForRecovery(dbClient, jobId, recoveryWorkerId, recoveryLeaseUntil) {
@@ -35,6 +37,8 @@ async function claimJobForRecovery(dbClient, jobId, recoveryWorkerId, recoveryLe
     WHERE job_id = $1 AND (recovery_lease_until IS NULL OR recovery_lease_until < NOW())
     RETURNING *
     `, [jobId, recoveryWorkerId, recoveryLeaseUntil]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function releaseAttemptRecovery(dbClient, attemptId, recoveryWorkerId) {
@@ -46,6 +50,8 @@ async function releaseAttemptRecovery(dbClient, attemptId, recoveryWorkerId) {
     WHERE attempt_id = $1 AND recovery_worker_id = $2
     RETURNING *
     `, [attemptId, recoveryWorkerId]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function releaseJobRecovery(dbClient, jobId, recoveryWorkerId) {
@@ -57,6 +63,8 @@ async function releaseJobRecovery(dbClient, jobId, recoveryWorkerId) {
     WHERE job_id = $1 AND recovery_worker_id = $2
     RETURNING *
     `, [jobId, recoveryWorkerId]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 export default {

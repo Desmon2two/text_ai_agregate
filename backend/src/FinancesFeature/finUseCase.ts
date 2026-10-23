@@ -4,7 +4,7 @@ import finRepository from "./finRepository.js";
 
 async function changeCreditsOnJobCompletion(dbClient: Client, job_id: string) {
   if (!job_id || job_id == "") throw new Error("Invalid job_id input");
-  const job = await jobRepository.getJob(dbClient, job_id);
+  const job = await jobRepository.getJobById(dbClient, job_id);
   if (!job) throw new Error("No such job");
   if (job.state !== "COMPLETED")
     throw new Error("Can't process incomplete job");

@@ -1,26 +1,50 @@
 import { NotFoundError } from "../errors/applicationErrors.js";
+import { estimateCost, reserveCredits } from "../FinancesFeature/finService.js";
 import jobService from "../jobFeature/jobService.js";
-import userService from "../userFeature/userService.js";
+import userRepository from "../userFeature/userRepository.js";
 
-async function processJob(dbClient: Client, userId: string, body: unknown) {
-  await validateJobInput(body);
-  const user = await userService.findById(userId);
+async function startJob(
+  dbClient: Client,
+  user_id: string,
+  provider: string,
+  model: string,
+  job_type: string,
+  body: { prompt: string },
+  files?: string,
+) {
+  if (!body.prompt) throw new Error("No prompt to process job");
+  if (body.prompt.length === 0)
+    throw new Error("Invalid prompt to process job");
+  const user = await userRepository.getUserById(dbClient, user_id);
   if (!user) throw new NotFoundError("User not found");
-  const jobType = await jobTypeEstimator(body);
-  const providerAndModel = await providerAndModelEstimator(body);
-  const estimatedCost = finService.estimateCost(jobType);
-  await finService.deductCredits(user.userId, estimatedCost);
-  const jobId = await jobService.createJob(
-    dbClient,
-    jobType,
-    estimatedCost,
-    user.userId,
-    { provider: providerAndModel.provider, model: providerAndModel.model },
-    body,
-  );
-  return jobId;
+  dbClient.query("BEGIN");
+  try {
+    const { fullPrice } = await estimateCost(
+      dbClient,
+      body.prompt,
+      job_type,
+      model,
+    );
+    await reserveCredits(dbClient, user.user_id, fullPrice);
+    const job = await jobService.createJob(
+      dbClient,
+      job_type,
+      fullPrice,
+      user.user_id,
+      provider,
+      model,
+      body,
+      files,
+    );
+    dbClient.query("COMMIT");
+    await queueService.enqueue(job.job_id);
+    return job.job_id;
+  } catch (error) {
+    dbClient.query("ROLLBACK");
+    throw error;
+  }
 }
 
 export default {
-  processJob,
+  startJob,
 };

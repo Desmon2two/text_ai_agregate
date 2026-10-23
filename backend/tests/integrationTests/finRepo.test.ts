@@ -18,27 +18,39 @@ describe("Testing financial repository", () => {
   });
   it("should get user's credits", async () => {
     const result = await finRepository.getCreditsOfUser(dbClient, user_id);
-    expect(result.credits).not.toBeNull();
+    expect(typeof result).toBe("number");
+    expect(result).not.toBeNull();
   });
   it("should add credits", async () => {
+    const curr = await finRepository.getCreditsOfUser(dbClient, user_id);
     const result = await finRepository.addCredits(dbClient, user_id, 150);
-    expect(result.credits).not.toBeNull();
+    console.log(curr)
+    console.log(result)
+    expect(typeof result).toBe("number");
+    expect(result).not.toBeNull();
+    expect(result).toBe(curr + result)
   });
   it("should deduct credits", async () => {
     const result = await finRepository.deductCredits(dbClient, user_id, 150);
-    expect(result.credits).not.toBeNull();
+    expect(typeof result).toBe("number");
+    expect(result).not.toBeNull();
   });
   it("The addition and deduction should work correctly", async () => {
     const curr = await finRepository.getCreditsOfUser(dbClient, user_id);
-    console.log("Current:", curr.credits);
-    await finRepository.deductCredits(dbClient, user_id, curr.credits);
-    console.log("Full credits deducted");
+    await finRepository.deductCredits(dbClient, user_id, curr);
     await finRepository.addCredits(dbClient, user_id, 180);
     await finRepository.deductCredits(dbClient, user_id, 150);
-    console.log("Basic operations complete");
     const result = await finRepository.getCreditsOfUser(dbClient, user_id);
-    console.log("Result credits get:", result.credits);
     await finRepository.deductCredits(dbClient, user_id, 30);
-    expect(Number(result.credits)).toBe(30);
+    expect(Number(result)).toBe(30);
+  });
+  it("Should support external atomic transactions wrapper", async () => {
+    const currCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
+    await dbClient.query("BEGIN");
+    await finRepository.addCredits(dbClient, user_id, 63);
+    await dbClient.query("ROLLBACK");
+    const resCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
+
+    expect(currCredits).toBe(resCredits);
   });
 });

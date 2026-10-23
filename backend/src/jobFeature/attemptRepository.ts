@@ -4,20 +4,21 @@ import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
 import type { Client } from "pg";
 async function getAttempt(
   dbClient: Client,
-  attemptId: string,
+  attempt_id: string,
 ): Promise<Attempt | null> {
   const result = await dbClient.query(
     `SELECT * FROM attempts
       WHERE attempt_id = $1
       `,
-    [attemptId],
+    [attempt_id],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createAttempt({
   dbClient,
   job_id,
-  attemptNumber,
+  attempt_number,
   provider,
   model,
 }: CreateAttemptInput): Promise<Attempt | null> {
@@ -26,8 +27,9 @@ async function createAttempt({
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `,
-    ["CREATED", job_id, attemptNumber, provider, model],
+    ["CREATED", job_id, attempt_number, provider, model],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function deleteAttempt(
@@ -41,7 +43,7 @@ async function deleteAttempt(
   );
   return result;
 }
-async function markSending(dbClient: Client, attemptId: string) {
+async function markSending(dbClient: Client, attempt_id: string) {
   const result = await dbClient.query(
     `UPDATE attempts
     SET state = $3, updated_at = NOW()
@@ -49,13 +51,14 @@ async function markSending(dbClient: Client, attemptId: string) {
     AND state = $2
     RETURNING *
     `,
-    [attemptId, "CREATED", "SENDING"],
+    [attempt_id, "CREATED", "SENDING"],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markWaiting(
   dbClient: Client,
-  attemptId: string,
+  attempt_id: string,
   providerJobId?: string,
 ) {
   const result = await dbClient.query(
@@ -65,13 +68,14 @@ async function markWaiting(
     AND state = $2
     RETURNING *
     `,
-    [attemptId, "SENDING", "WAITING", providerJobId || null],
+    [attempt_id, "SENDING", "WAITING", providerJobId || null],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markReceived(
   dbClient: Client,
-  attemptId: string,
+  attempt_id: string,
   data: unknown,
 ) {
   const result = await dbClient.query(
@@ -81,13 +85,14 @@ async function markReceived(
     AND state = $2
     RETURNING *
     `,
-    [attemptId, "WAITING", "RECEIVED", data],
+    [attempt_id, "WAITING", "RECEIVED", data],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markValidated(
   dbClient: Client,
-  attemptId: string,
+  attempt_id: string,
   data: unknown,
 ) {
   const result = await dbClient.query(
@@ -97,15 +102,16 @@ async function markValidated(
     AND state = $2
     RETURNING *
     `,
-    [attemptId, "RECEIVED", "VALIDATED", data],
+    [attempt_id, "RECEIVED", "VALIDATED", data],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markCompleted(
   dbClient: Client,
-  attemptId: string,
+  attempt_id: string,
   data: unknown,
-) {
+): Promise<Attempt | null> {
   const result = await dbClient.query(
     `UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW(), completed_at = NOW()
@@ -113,13 +119,14 @@ async function markCompleted(
     AND state = $2
     RETURNING *
     `,
-    [attemptId, "VALIDATED", "COMPLETED", data],
+    [attempt_id, "VALIDATED", "COMPLETED", data],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markFailed(
   dbClient: Client,
-  attemptId: string,
+  attempt_id: string,
   error: AttemptError,
 ) {
   const result = await dbClient.query(
@@ -129,8 +136,9 @@ async function markFailed(
     AND state IN ('CREATED', 'SENDING', 'WAITING', 'RECEIVED', 'VALIDATED')
     RETURNING *
     `,
-    [attemptId, "FAILED", error],
+    [attempt_id, "FAILED", error],
   );
+  if (!result.rows[0]) return null;
   return result.rows[0];
 }
 export default {

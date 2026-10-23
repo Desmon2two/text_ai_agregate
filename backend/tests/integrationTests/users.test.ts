@@ -8,7 +8,7 @@ afterAll(async () => {
   await teardownTestDB(dbClient);
 });
 let userId: string;
-describe("Testing users creation and deletion", () => {
+describe("Testing users repository", () => {
   it("should create users", async () => {
     const user = await userRepository.createUser(
       dbClient,
@@ -23,4 +23,6 @@ describe("Testing users creation and deletion", () => {
     const res = await userRepository.deleteUser(dbClient, userId);
     expect(res.rowCount).toBe(1);
   });
+  it("Should find users", async () => {});
+
 });

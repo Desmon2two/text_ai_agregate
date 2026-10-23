@@ -1,8 +1,10 @@
-async function getJob(dbClient, job_id) {
+async function getJobById(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM jobs 
     WHERE job_id = $1
     `, [job_id]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function getAttemptsPerJob(dbClient, jobId) {
@@ -19,12 +21,16 @@ async function createJob({ dbClient, type, body, userId, estimatedCost, }) {
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `, ["CREATED", type, body, userId, estimatedCost]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function deleteJob(dbClient, jobId) {
     const result = await dbClient.query(`
     DELETE FROM jobs WHERE job_id = $1
     `, [jobId]);
+    if (!result)
+        return null;
     return result;
 }
 async function markAccepted(dbClient, jobId) {
@@ -34,6 +40,8 @@ async function markAccepted(dbClient, jobId) {
     AND state = $2
     RETURNING *
     `, [jobId, "CREATED", "ACCEPTED"]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markQueued(dbClient, jobId) {
@@ -43,6 +51,8 @@ async function markQueued(dbClient, jobId) {
     AND state = $2
     RETURNING *
     `, [jobId, "ACCEPTED", "QUEUED"]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markProcessing(dbClient, jobId) {
@@ -52,6 +62,8 @@ async function markProcessing(dbClient, jobId) {
     AND state = $2
     RETURNING *
     `, [jobId, "QUEUED", "PROCESSING"]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markCompleted(dbClient, jobId, data, actualCost) {
@@ -61,6 +73,8 @@ async function markCompleted(dbClient, jobId, data, actualCost) {
     AND state = $2
     RETURNING *
     `, [jobId, "PROCESSING", "COMPLETED", data, actualCost]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markFailed(dbClient, jobId, error) {
@@ -70,10 +84,12 @@ async function markFailed(dbClient, jobId, error) {
     AND state = ('CREATED', 'ACCEPTED', 'QUEUED', 'PROCESSING')
     RETURNING *
     `, [jobId, "FAILED", error]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 export default {
-    getJob,
+    getJobById,
     deleteJob,
     getAttemptsPerJob,
     createJob,

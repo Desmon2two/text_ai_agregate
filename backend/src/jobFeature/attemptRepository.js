@@ -2,6 +2,8 @@ async function getAttempt(dbClient, attemptId) {
     const result = await dbClient.query(`SELECT * FROM attempts
       WHERE attempt_id = $1
       `, [attemptId]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function createAttempt({ dbClient, job_id, attemptNumber, provider, model, }) {
@@ -9,6 +11,8 @@ async function createAttempt({ dbClient, job_id, attemptNumber, provider, model,
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `, ["CREATED", job_id, attemptNumber, provider, model]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function deleteAttempt(dbClient, attempt_id) {
@@ -23,6 +27,8 @@ async function markSending(dbClient, attemptId) {
     AND state = $2
     RETURNING *
     `, [attemptId, "CREATED", "SENDING"]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markWaiting(dbClient, attemptId, providerJobId) {
@@ -32,6 +38,8 @@ async function markWaiting(dbClient, attemptId, providerJobId) {
     AND state = $2
     RETURNING *
     `, [attemptId, "SENDING", "WAITING", providerJobId || null]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markReceived(dbClient, attemptId, data) {
@@ -41,6 +49,8 @@ async function markReceived(dbClient, attemptId, data) {
     AND state = $2
     RETURNING *
     `, [attemptId, "WAITING", "RECEIVED", data]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markValidated(dbClient, attemptId, data) {
@@ -50,6 +60,8 @@ async function markValidated(dbClient, attemptId, data) {
     AND state = $2
     RETURNING *
     `, [attemptId, "RECEIVED", "VALIDATED", data]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markCompleted(dbClient, attemptId, data) {
@@ -59,6 +71,8 @@ async function markCompleted(dbClient, attemptId, data) {
     AND state = $2
     RETURNING *
     `, [attemptId, "VALIDATED", "COMPLETED", data]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 async function markFailed(dbClient, attemptId, error) {
@@ -68,6 +82,8 @@ async function markFailed(dbClient, attemptId, error) {
     AND state IN ('CREATED', 'SENDING', 'WAITING', 'RECEIVED', 'VALIDATED')
     RETURNING *
     `, [attemptId, "FAILED", error]);
+    if (!result.rows[0])
+        return null;
     return result.rows[0];
 }
 export default {

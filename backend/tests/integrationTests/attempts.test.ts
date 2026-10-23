@@ -5,12 +5,12 @@ beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-    await teardownTestDB(dbClient);
+  await teardownTestDB(dbClient);
 });
 
 let attemptId: string;
 
-describe("Testing attempt creation and deletion", () => {
+describe("Testing attempt repository", () => {
   it(" Should create attempts", async () => {
     const attempt = {
       dbClient,
@@ -23,8 +23,10 @@ describe("Testing attempt creation and deletion", () => {
     attemptId = result.attempt_id;
     expect(result?.attempt_id).not.toBeNull();
   });
-  it('Should delete attempts', async ()=>{
+  it("Should delete attempts", async () => {
     const res = await attemptRepository.deleteAttempt(dbClient, attemptId);
-    expect(res.rowCount).toBe(1)
-  })
+    expect(res.rowCount).toBe(1);
+  });
+  it("Should complete attempts", async () => {});
+  it("Should not allow invalid state transitions", async () => {});
 });
