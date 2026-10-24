@@ -2,7 +2,7 @@ import type { Client } from "pg";
 import type { CreateJob, Job } from "./types/JobTypes.js";
 import type { Attempt } from "./types/AttemptTypes.js";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
-import { JobStateTypes } from "./types/JobStateType.js";
+import type { JobStateTypes } from "./types/JobStateType.js";
 async function getJobById(
   dbClient: Client,
   job_id: string,

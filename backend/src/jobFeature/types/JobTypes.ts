@@ -29,7 +29,7 @@ type CreateJob = {
 };
 type CreateJobOutput = {
   job_id: string;
-  created_at: Date;
+  attempt_id: string;
 };
 
 type completeJobType = {

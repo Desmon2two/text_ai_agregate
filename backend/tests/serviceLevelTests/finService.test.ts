@@ -1,4 +1,4 @@
-import finService from "../../src/FinancesFeature/finService.js";
+import {estimateCost} from "../../src/FinancesFeature/finService.js";
 import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
@@ -11,7 +11,7 @@ afterAll(async () => {
 describe("Testing financial service level functionality", () => {
   it("Should consistently calculate prices", async () => {
     const prompt = "This is a test prompt. Give back a 100 random words.";
-    const result = await finService.estimateCost(
+    const result = await estimateCost(
       dbClient,
       prompt,
       "QUESTION",

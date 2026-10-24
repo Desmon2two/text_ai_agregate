@@ -1,4 +1,4 @@
-import { EventNamesType } from "./EventsStateType.js";
+import type { EventNamesType } from "./EventsStateType.js";
 
 /* 
 The db tables are a source of truth for jobs, attempts, and events

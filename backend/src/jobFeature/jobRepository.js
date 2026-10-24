@@ -1,4 +1,3 @@
-import { JobStateTypes } from "./types/JobStateType.js";
 async function getJobById(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM jobs 

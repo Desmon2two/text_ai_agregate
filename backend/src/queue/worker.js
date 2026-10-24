@@ -7,6 +7,12 @@ import attemptRepository from "../jobFeature/attemptRepository.js";
 import attemptService from "../jobFeature/attemptService.js";
 import eventRepository from "../jobFeature/eventRepository.js";
 import jobService from "../jobFeature/jobService.js";
+import { Job, Worker } from "bullmq";
+import { connection } from "./queueService.js";
+const worker = new Worker("dispatchQueue", async (job) => {
+    await job.updateProgress({ job_id });
+    return 'some value';
+}, { connection });
 async function processJobFromBeginning(dbClient, job_id, provider, model) {
     try {
         await dbClient.query("BEGIN");
@@ -113,8 +119,4 @@ async function executeAttempt(dbClient, attemptId) {
         throw error;
     }
 }
-export default {
-    processJobFromBeginning,
-    processJobFromIntermediateState,
-    executeAttempt,
-};
+export { processJobFromIntermediateState, worker };

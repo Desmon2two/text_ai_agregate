@@ -1,5 +1,5 @@
 import attemptService from "../jobFeature/attemptService.js";
-import nonSecretVariables from "../infrastructure/utils/nonSecretVariables.js";
+import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
 import attemptRepository from "../jobFeature/attemptRepository.js";
 import jobRepository from "../jobFeature/jobRepository.js";
 import eventRepository from "../jobFeature/eventRepository.js";

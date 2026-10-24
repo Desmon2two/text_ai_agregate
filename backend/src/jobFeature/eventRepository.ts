@@ -1,6 +1,6 @@
 import { Client } from "pg";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes";
-import { EventType } from "./types/EventType";
+import type { EventType } from "./types/EventType";
 async function getEventById(dbClient: Client, event_id: string): Promise<EventType | null> {
   const result = await dbClient.query(
     `

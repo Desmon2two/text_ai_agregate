@@ -7,30 +7,27 @@ import attemptRepository from "../jobFeature/attemptRepository.js";
 import attemptService from "../jobFeature/attemptService.js";
 import eventRepository from "../jobFeature/eventRepository.js";
 import jobService from "../jobFeature/jobService.js";
+import { Job, Worker } from "bullmq";
+import queueService, { connection } from "./queueService.js";
+import { CreateJob } from "../jobFeature/types/JobTypes.js";
+import { DispatchWorkerInputData } from "./types/DispatchWorkerInputDataType.js";
+import jobUseCase from "../jobFeature/jobUseCase.js";
 
-async function processJobFromBeginning(
-  dbClient: Client,
-  job_id: string,
-  provider: string,
-  model: string,
-) {
+const worker = new Worker(
+  "dispatchQueue",
+  async (bullJob: Job<DispatchWorkerInputData>) => {
+    const { job_id, attempt_id } = bullJob.data;
+    return "some value";
+  },
+  { connection },
+);
+
+async function processJobFromBeginning(dbClient: Client, job_id: string) {
   try {
     await dbClient.query("BEGIN");
     const job = await jobRepository.markProcessing(dbClient, job_id);
     if (job === null) throw new Error("Job was not created");
     await eventRepository.createJobProcessingEvent(dbClient, job_id);
-    const attempt = await attemptService.createAttempt(
-      dbClient,
-      job_id,
-      provider,
-      model,
-    );
-    if (attempt === null) throw new Error("Attempt was not created");
-    await eventRepository.createAttemptCreatedEvent(
-      dbClient,
-      attempt.attempt_id,
-      { origin: "Regular Job Processing" },
-    );
     await dbClient.query("COMMIT");
     await executeAttempt(dbClient, attempt.attempt_id);
   } catch (error) {
@@ -48,21 +45,20 @@ async function processJobFromIntermediateState(
   if (job === null) {
     throw new Error("No such job to process from intermediate state");
   }
-  try {
     await eventRepository.createJobProcessedFromIntermediateStateEvent(
       dbClient,
       job.job_id,
     );
     if (job.state === "CREATED") {
-      await queueService.enqueue(dbClient, job.job_id);
+      await queueService.addJobToDispatchQueue(undefined ,{dbClient, job_id: job.job_id});
     }
     if (job.state === "QUEUED") {
       if (!provider || !model)
         throw new Error(
-          "Can't process this job - not listed provider or model",
-        );
-      await processJobFromBeginning(dbClient, job.job_id, provider, model);
-    }
+      "Can't process this job - not listed provider or model",
+    );
+    await processJobFromBeginning(dbClient, job.job_id);
+  }
     if (job.state === "PROCESSING") {
       const attempts = await jobRepository.getAttemptsPerJob(
         dbClient,
@@ -71,11 +67,8 @@ async function processJobFromIntermediateState(
       if (attempts === null) {
         throw new Error("No such attempt to process from intermediate state");
       }
-      await executeAttempt(dbClient, attempts[0].attempt_id);
-    }
-  } catch (error) {
-    throw error;
-  }
+  await executeAttempt(dbClient, attempts[0].attempt_id);
+}
 }
 async function executeAttempt(dbClient: Client, attemptId: string) {
   const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
@@ -86,7 +79,6 @@ async function executeAttempt(dbClient: Client, attemptId: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job === null) throw new Error("No such job");
   try {
-    await dbClient.query("BEGIN");
     try {
       await attemptRepository.markSending(dbClient, attempt_id);
       await eventRepository.createSendingRequestEvent(dbClient, attempt_id);
@@ -133,7 +125,13 @@ async function executeAttempt(dbClient: Client, attemptId: string) {
     } catch (error) {
       await dbClient.query("ROLLBACK");
     }
-    await jobService.completeJob(dbClient, job.job_id, attempt_id);
+    try {
+      await dbClient.query("BEGIN");
+      await jobUseCase.completeJob(dbClient, job.job_id, attempt_id, response);
+      await dbClient.query("COMMIT");
+    } catch (error) {
+      await dbClient.query("ROLLBACK");
+    }
   } catch (error) {
     const attemptError = mapErrorToAttemptError(
       error,
@@ -146,8 +144,4 @@ async function executeAttempt(dbClient: Client, attemptId: string) {
   }
 }
 
-export default {
-  processJobFromBeginning,
-  processJobFromIntermediateState,
-  executeAttempt,
-};
+export { processJobFromIntermediateState, worker };

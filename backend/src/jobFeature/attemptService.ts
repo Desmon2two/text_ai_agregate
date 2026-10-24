@@ -12,47 +12,46 @@ async function createAttempt(
   provider: string,
   model: string,
 ): Promise<Attempt> {
-  await dbClient.query("BEGIN");
-  try {
-    const attempts = await jobRepository.getAttemptsPerJob(dbClient, jobId);
-    if (attempts === null) throw new Error("No attempts");
-    const attemptNumber = attempts[0].attempt_number;
-    if (attemptNumber >= nonSecretVariables.getMaxAttempts()) {
-      throw new Error("Too many attempts for this job");
-    }
-    const attempt = await attemptRepository.createAttempt({
-      dbClient,
-      job_id,
-      attempt_number: attemptNumber + 1,
-      provider,
-      model,
-    });
-    if (attempt === null) throw new Error("Attempt was not created");
-    await dbClient.query("COMMIT");
-    return attempt;
-  } catch (error) {
-    await dbClient.query("ROLLBACK");
-    throw error;
+  const attempts = await jobRepository.getAttemptsPerJob(dbClient, job_id);
+  if (attempts === null) throw new Error("No attempts");
+  const attemptNumber = attempts[0].attempt_number;
+  if (attemptNumber >= nonSecretVariables.getMaxAttempts()) {
+    throw new Error("Too many attempts for this job");
   }
+  const attempt = await attemptRepository.createAttempt(
+    dbClient,
+    job_id,
+    attemptNumber + 1,
+    provider,
+    model,
+  );
+  if (attempt === null) throw new Error("Attempt was not created");
+  await eventRepository.createAttemptCreatedEvent(
+    dbClient,
+    attempt.attempt_id,
+    { origin: "Regular attempt creation" },
+  );
+  return attempt;
 }
 async function completeAttempt(
   dbClient: Client,
   attempt_id: string,
-  data: unknown,
-): Promise<void> {
+  data: {
+    tokens: { input_tokens: number; output_tokens: number };
+    received_data: unknown;
+  },
+): Promise<Attempt> {
   const attempt = await attemptRepository.getAttempt(dbClient, attempt_id);
   if (!attempt) throw new Error("Attempt not found");
   if (attempt.state !== "VALIDATED")
     throw new Error("Attempt not in validated state, unable to complete");
-  await dbClient.query("BEGIN");
-  try {
-    await attemptRepository.markCompleted(dbClient, attempt_id, data);
-    await eventRepository.createAttemptCompletedEvent(dbClient, attempt_id);
-    await dbClient.query("COMMIT");
-  } catch (error) {
-    await dbClient.query("ROLLBACK");
-    throw error;
-  }
+  const finalizedAttempt = await attemptRepository.markCompleted(
+    dbClient,
+    attempt_id,
+    data.received_data,
+  );
+  await eventRepository.createAttemptCompletedEvent(dbClient, attempt_id);
+  return finalizedAttempt;
 }
 async function failAttempt(
   dbClient: Client,
@@ -66,17 +65,10 @@ async function failAttempt(
   if (!failedAttempt) throw new Error("Attempt not found");
   if (failedAttempt.state === "COMPLETED")
     throw new Error("Attempt in completed state, unable to fail");
-  await dbClient.query("BEGIN");
-  try {
-    await attemptRepository.markFailed(dbClient, attempt_id, error);
-    await eventRepository.createAttemptFailedEvent(dbClient, attempt_id, {
-      error: error,
-    });
-    await dbClient.query("COMMIT");
-  } catch (error) {
-    await dbClient.query("ROLLBACK");
-    throw error;
-  }
+  await attemptRepository.markFailed(dbClient, attempt_id, error);
+  await eventRepository.createAttemptFailedEvent(dbClient, attempt_id, {
+    error: error,
+  });
 }
 export default {
   createAttempt,

@@ -1,6 +1,6 @@
 import { connectDB } from "../../src/database/dbClient.js";
 import dotenv from "dotenv";
-dotenv.config({ path: ".env" });
+dotenv.config({ path: ".env", quiet: true });
 type DBClient = Awaited<ReturnType<typeof connectDB>>;
 
 export async function setupTestDB(): Promise<DBClient> {

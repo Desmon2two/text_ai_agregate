@@ -1,5 +1,4 @@
 import { Client } from "pg";
-import { EventType } from "./types/EventType";
 async function getEventById(dbClient, event_id) {
     const result = await dbClient.query(`
   SELECT * FROM events
