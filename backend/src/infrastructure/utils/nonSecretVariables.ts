@@ -1,6 +1,7 @@
 const nonSecretVariables = {
   MAX_ATTEMPTS: 2,
   OUTPUT_TOKENS_MULTIPLIER: 2.5,
+  GLOBAL_CONCURRENCY_SETTING: 1,
 
   getMaxAttempts() {
     return this.MAX_ATTEMPTS;
@@ -14,6 +15,9 @@ const nonSecretVariables = {
       LARGE_REPORT: 20,
     };
     return multipliers[jobType] ?? this.OUTPUT_TOKENS_MULTIPLIER;
+  },
+  getGlobalConcurrency() {
+    return this.GLOBAL_CONCURRENCY_SETTING;
   },
 };
 export { nonSecretVariables };

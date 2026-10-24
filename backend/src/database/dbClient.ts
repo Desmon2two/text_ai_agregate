@@ -18,13 +18,11 @@ async function connectDB(
 
   try {
     await client.connect();
-
-    const result = await client.query("SELECT VERSION()");
-    console.log(result.rows[0].version);
+    console.log("Connected to db");
 
     return client;
   } catch (error) {
-    console.log("error during connection to db")
+    console.log("error during connection to db");
     throw error;
   }
 }

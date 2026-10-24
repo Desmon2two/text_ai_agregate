@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import recoveryRepository from "./recoveryRepository.js";
+import recoveryRepository from "../jobFeature/recoveryRepository.js";
 async function claimRecovery(dbClient, recoveryWorkerId, attempt_id, leasedUntil) {
     const result = recoveryRepository.claimAttemptForRecovery(dbClient, attempt_id, recoveryWorkerId, leasedUntil);
     if (result === null)
@@ -7,5 +7,5 @@ async function claimRecovery(dbClient, recoveryWorkerId, attempt_id, leasedUntil
     return result;
 }
 export default {
-    claimRecovery
+    claimRecovery,
 };

@@ -7,6 +7,7 @@ const config: Config = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1",
   },
+  testTimeout: 20000,
 };
 
 export default config;

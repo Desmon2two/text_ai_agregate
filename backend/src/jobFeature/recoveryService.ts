@@ -3,7 +3,7 @@ import recoveryRepository from "./recoveryRepository.js";
 import jobService from "./jobService.js";
 import handleFailure from "../infrastructure/failureHandler.js";
 import eventRepository from "./eventRepository.js";
-import worker from "./worker.js";
+import worker from "../queue/worker.js";
 
 async function recoverAttempts(dbClient: Client, recovery_worker_id: string) {
   const recoverableAttempts =

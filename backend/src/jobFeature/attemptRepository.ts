@@ -76,7 +76,13 @@ async function markWaiting(
 async function markReceived(
   dbClient: Client,
   attempt_id: string,
-  data: unknown,
+  data: {
+    tokens: {
+      input_tokens: number,
+      output_tokens: number
+    },
+    received_data: unknown
+  },
 ) {
   const result = await dbClient.query(
     `UPDATE attempts

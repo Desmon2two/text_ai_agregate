@@ -31,7 +31,7 @@ describe("Testing users repository", () => {
   });
   it("Should find users", async () => {
     const result = await userRepository.getUserById(dbClient, user_id);
-    expect(result.user_id).toBe(user_id)
+    expect(result?.user_id).toBe(user_id)
   });
 
 });
