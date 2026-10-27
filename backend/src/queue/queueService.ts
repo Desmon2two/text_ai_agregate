@@ -32,7 +32,7 @@ function jobsConstructor(overrides = {}) {
 
 async function addJobToDispatchQueue(
   dbClient?: Client,
-  payload?: {job_id: string, attempt_id: string, override?: unknown},
+  payload?: { job_id: string; attempt_id: string; override?: unknown },
   name?: string,
   options?: {},
 ) {
@@ -41,13 +41,15 @@ async function addJobToDispatchQueue(
     name: name || "dispatchJob",
     options: options || {},
   });
-  if(!dbClient) {  const dispatchedJob = await dispatchQueue.add(
-    job.name,
-    job.payload,
-    job.options,
-  );
-  return dispatchedJob}
-  await jobService.markQueued(dbClient, payload.job_id)
+  if (!dbClient) {
+    const dispatchedJob = await dispatchQueue.add(
+      job.name,
+      job.payload,
+      job.options,
+    );
+    return dispatchedJob;
+  }
+  await jobService.markQueued(dbClient, payload.job_id);
   const dispatchedJob = await dispatchQueue.add(
     job.name,
     job.payload,

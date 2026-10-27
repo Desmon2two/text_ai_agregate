@@ -2,9 +2,9 @@ import { ValidationError } from "../errors/applicationErrors.js";
 
 export function validateUserDisplayedInfo(
   username: string,
-  displayName: string,
-  profilePic: string,
-  bio: string,
+  displayName?: string,
+  profilePic?: string,
+  bio?: string,
 ) {
   if (!username && !displayName && !profilePic && !bio)
     throw new ValidationError("No user fields to validate");

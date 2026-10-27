@@ -34,10 +34,7 @@ async function createAttempt(
   return attempt;
 }
 async function markSending(dbClient: Client, attempt_id: string) {
-  const attempt = await attemptRepository.getAttemptById(
-    dbClient,
-    attempt_id,
-  );
+  const attempt = await attemptRepository.getAttemptById(dbClient, attempt_id);
   if (attempt?.state !== "CREATED")
     throw new Error(
       "Attempt not in 'CREATED' state to transition to 'SENDING' state",
@@ -49,51 +46,64 @@ async function markSending(dbClient: Client, attempt_id: string) {
   await eventRepository.createSendingRequestEvent(dbClient, attempt_id);
   return result.attempt_id;
 }
-async function markReceived(dbClient: Client, attempt_id: string, data: {
+async function markReceived(
+  dbClient: Client,
+  attempt_id: string,
+  data: {
     tokens: {
       input_tokens: number;
       output_tokens: number;
     };
     received_data: unknown;
-  }) {
-    const attempt = await attemptRepository.getAttemptById(
-    dbClient,
-    attempt_id,
-  );
+  },
+) {
+  const attempt = await attemptRepository.getAttemptById(dbClient, attempt_id);
   if (attempt?.state !== "SENDING")
     throw new Error(
       "Attempt not in 'SENDING' state to transition to 'RECEIVED' state",
     );
- 
-  const result = await attemptRepository.markReceived(dbClient, attempt_id, data);
+
+  const result = await attemptRepository.markReceived(
+    dbClient,
+    attempt_id,
+    data,
+  );
   if (result === null) {
     throw new Error("Attempt was not marked received");
   }
   await eventRepository.createResponseReceivedEvent(dbClient, attempt_id);
   return result.attempt_id;
 }
-async function markValidated(dbClient: Client, attempt_id: string, data: {
+async function markValidated(
+  dbClient: Client,
+  attempt_id: string,
+  data: {
     tokens: {
       input_tokens: number;
       output_tokens: number;
     };
     validated_data: unknown;
-  }) {
-    const attempt = await attemptRepository.getAttemptById(
-    dbClient,
-    attempt_id,
-  );
+  },
+) {
+  const attempt = await attemptRepository.getAttemptById(dbClient, attempt_id);
   if (attempt?.state !== "RECEIVED")
     throw new Error(
       "Attempt not in 'RECEIVED' state to transition to 'VALIDATED' state",
     );
- if (!attempt?.data?.received_data){
-    throw new Error("No received data to mark attempt validated")
-  };
-  if (!attempt?.data?.tokens.input_tokens || !attempt?.data?.tokens.output_tokens){
-    throw new Error("No received tokens to mark attempt validated")
-  };
-  const result = await attemptRepository.markValidated(dbClient, attempt_id, data);
+  if (!attempt?.data?.received_data) {
+    throw new Error("No received data to mark attempt validated");
+  }
+  if (
+    !attempt?.data?.tokens.input_tokens ||
+    !attempt?.data?.tokens.output_tokens
+  ) {
+    throw new Error("No received tokens to mark attempt validated");
+  }
+  const result = await attemptRepository.markValidated(
+    dbClient,
+    attempt_id,
+    data,
+  );
   if (result === null) {
     throw new Error("Attempt was not marked validated");
   }
@@ -108,7 +118,10 @@ async function completeAttempt(
   if (!attempt) throw new Error("Attempt not found");
   if (attempt.state !== "VALIDATED")
     throw new Error("Attempt not in validated state, unable to complete");
-  if(!attempt.data?.validated_data) throw new Error("No validated data present on the attempt to mark it completed")
+  if (!attempt.data?.validated_data)
+    throw new Error(
+      "No validated data present on the attempt to mark it completed",
+    );
   const finalizedAttempt = await attemptRepository.markCompleted(
     dbClient,
     attempt_id,

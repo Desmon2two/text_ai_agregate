@@ -1,5 +1,5 @@
 import { ValidationError } from "../../src/errors/applicationErrors.js";
-import { validateUserCredentials } from "../../src/userFeature/userValidation.js";
+import { validateUserCredentials } from "../../src/userFeature/js";
 
 describe("User validation tests", () => {
   it("Should not allow invalid inputs", () => {

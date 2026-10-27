@@ -43,12 +43,12 @@ const worker = new Worker(
       console.log("Worker completed job:", job_id.data);
     });
 
-    worker.on("progress", ({progress}) => {
+    worker.on("progress", ({ progress }) => {
       console.log("Worker progress:", progress);
     });
     try {
       const { job_id, attempt_id } = bullJob.data;
-await bullJob.updateProgress("Initialized")
+      await bullJob.updateProgress("Initialized");
       await processJobFromBeginning(dbClient, bullJob, job_id, attempt_id);
     } catch (error) {
       console.error("Job processor threw:", error);
@@ -68,14 +68,14 @@ async function processJobFromBeginning(
   job_id: string,
   attempt_id: string,
 ) {
-    await bullJob.updateProgress(
-      `Worker started job ${job_id}, attempt ${attempt_id}`,
-    );
+  await bullJob.updateProgress(
+    `Worker started job ${job_id}, attempt ${attempt_id}`,
+  );
 
   try {
     await dbClient.query("BEGIN");
 
-   await jobService.markProcessing(dbClient, job_id);
+    await jobService.markProcessing(dbClient, job_id);
 
     await dbClient.query("COMMIT");
     await bullJob.updateProgress(
@@ -141,15 +141,15 @@ async function executeAttempt(
     );
     try {
       await dbClient.query("BEGIN");
-      await attemptService.markSending(dbClient, attempt_id)
+      await attemptService.markSending(dbClient, attempt_id);
       await dbClient.query("COMMIT");
       await bullJob.updateProgress(
         `Job: ${job_id}, attempt: ${attempt_id}. Attempt was successfully marked as sending`,
       );
     } catch (error) {
       await dbClient.query("ROLLBACK");
-        console.error("Failed to mark attempt sending:", error);
-  throw error;
+      console.error("Failed to mark attempt sending:", error);
+      throw error;
     }
 
     const { received_data, input_tokens, output_tokens } =
@@ -181,35 +181,31 @@ async function executeAttempt(
       await attemptService.markReceived(dbClient, attempt_id, {
         tokens: { input_tokens, output_tokens },
         received_data,
-      })
+      });
       await dbClient.query("COMMIT");
       await bullJob.updateProgress(
         `Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as received`,
       );
     } catch (error) {
       await dbClient.query("ROLLBACK");
-        console.error("Failed to mark attempt received:", error);
-  throw error;
+      console.error("Failed to mark attempt received:", error);
+      throw error;
     }
     // THINK ABOUT HOW TO VALIDATE OUTPUT
     try {
       await dbClient.query("BEGIN");
-      await attemptService.markValidated(
-        dbClient,
-        attempt_id,
-        {
+      await attemptService.markValidated(dbClient, attempt_id, {
         tokens: { input_tokens, output_tokens },
         validated_data: received_data,
-      },
-      );
+      });
       await dbClient.query("COMMIT");
       await bullJob.updateProgress(
         `Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as validated`,
       );
     } catch (error) {
       await dbClient.query("ROLLBACK");
-        console.error("Failed to mark attempt validated:", error);
-  throw error;
+      console.error("Failed to mark attempt validated:", error);
+      throw error;
     }
     try {
       await bullJob.updateProgress(
@@ -226,8 +222,8 @@ async function executeAttempt(
       );
     } catch (error) {
       await dbClient.query("ROLLBACK");
-        console.error("Failed to mark job and attempt complete:", error);
-  throw error;
+      console.error("Failed to mark job and attempt complete:", error);
+      throw error;
     }
   } catch (error) {
     const attemptError = mapErrorToAttemptError(

@@ -72,10 +72,7 @@ async function completeJob(
   if (job === null) throw new Error("No such job for completeJob");
   if (job.state !== "PROCESSING")
     throw new Error("Job is not in processing state");
-  const attempt = await attemptService.completeAttempt(
-    dbClient,
-    attempt_id,
-  );
+  const attempt = await attemptService.completeAttempt(dbClient, attempt_id);
   const { fullPrice } = await mapTokensToActualCost(
     dbClient,
     attempt.model,
