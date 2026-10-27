@@ -7,7 +7,7 @@ async function getJobById(dbClient, job_id) {
         return null;
     return result.rows[0];
 }
-async function getAttemptsPerJob(dbClient, job_id) {
+async function getAttemptByIdsPerJob(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM attempts 
     WHERE job_id = $1
@@ -64,16 +64,16 @@ async function markProcessing(dbClient, job_id) {
     AND state = $2
     RETURNING *
     `, [job_id, "QUEUED", "PROCESSING"]);
-    console.log(result);
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function markCompleted(dbClient, job_id, data, actual_cost) {
-    if (!data || data === null)
+async function markCompleted(dbClient, job_id, validatedData, actual_cost) {
+    if (!validatedData || validatedData === null)
         throw new Error("Data can't be empty");
     if (!actual_cost || actual_cost === null)
         throw new Error("Actual cost can't be empty");
+    const data = JSON.stringify(validatedData);
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
     WHERE job_id = $1
@@ -98,7 +98,7 @@ async function markFailed(dbClient, job_id, error) {
 export default {
     getJobById,
     deleteJob,
-    getAttemptsPerJob,
+    getAttemptByIdsPerJob,
     createJob,
     markAccepted,
     markQueued,

@@ -38,9 +38,9 @@ async function completeJob(dbClient, job_id, attempt_id, data) {
         throw new Error("No such job for completeJob");
     if (job.state !== "PROCESSING")
         throw new Error("Job is not in processing state");
-    const attempt = await attemptService.completeAttempt(dbClient, attempt_id, data);
+    const attempt = await attemptService.completeAttempt(dbClient, attempt_id);
     const { fullPrice } = await mapTokensToActualCost(dbClient, attempt.model, attempt.data.tokens.input_tokens, attempt.data.tokens.output_tokens);
-    const finalizedJob = await jobService.completeJob(dbClient, job_id, attempt.data?.received_data, fullPrice);
+    const finalizedJob = await jobService.completeJob(dbClient, job_id, attempt.data?.validated_data, fullPrice);
     await finUseCase.changeCreditsOnJobCompletion(dbClient, finalizedJob.job_id);
     return;
 }

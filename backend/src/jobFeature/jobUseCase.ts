@@ -75,7 +75,6 @@ async function completeJob(
   const attempt = await attemptService.completeAttempt(
     dbClient,
     attempt_id,
-    data,
   );
   const { fullPrice } = await mapTokensToActualCost(
     dbClient,
@@ -86,7 +85,7 @@ async function completeJob(
   const finalizedJob = await jobService.completeJob(
     dbClient,
     job_id,
-    attempt.data?.received_data,
+    attempt.data?.validated_data,
     fullPrice,
   );
   await finUseCase.changeCreditsOnJobCompletion(dbClient, finalizedJob.job_id);

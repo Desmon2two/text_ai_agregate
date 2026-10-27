@@ -13,6 +13,7 @@ type Attempt = {
   data?: {
     tokens: { input_tokens: number; output_tokens: number };
     received_data: unknown;
+    validated_data?: unknown;
   };
   error?: unknown;
   retryable?: false;

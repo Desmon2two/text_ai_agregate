@@ -2,7 +2,7 @@ import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.j
 import type { AttemptError } from "../errors/AttemptErrorType.js";
 import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
 import type { Client } from "pg";
-async function getAttempt(
+async function getAttemptById(
   dbClient: Client,
   attempt_id: string,
 ): Promise<Attempt | null> {
@@ -102,7 +102,14 @@ async function markReceived(
 async function markValidated(
   dbClient: Client,
   attempt_id: string,
-  data: unknown,
+  data: {
+
+    tokens: {
+      input_tokens: number;
+      output_tokens: number;
+    };
+    validated_data: unknown;
+  }
 ) {
   if (data === null || !data)
     throw new Error("Data can't be null while validating attempt");
@@ -121,18 +128,15 @@ async function markValidated(
 async function markCompleted(
   dbClient: Client,
   attempt_id: string,
-  data: unknown,
 ): Promise<Attempt | null> {
-  if (data === null || !data)
-    throw new Error("Data can't be null while completing attempt");
   const result = await dbClient.query(
     `UPDATE attempts
-    SET state = $3, data = $4, updated_at = NOW(), completed_at = NOW()
+    SET state = $3, updated_at = NOW(), completed_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
     `,
-    [attempt_id, "VALIDATED", "COMPLETED", data],
+    [attempt_id, "VALIDATED", "COMPLETED"],
   );
   if (!result.rows[0]) return null;
   return result.rows[0];
@@ -155,7 +159,7 @@ async function markFailed(
   return result.rows[0];
 }
 export default {
-  getAttempt,
+  getAttemptById,
   deleteAttempt,
   createAttempt,
   markSending,

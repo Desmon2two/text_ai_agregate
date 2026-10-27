@@ -17,7 +17,7 @@ async function getJobById(
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
-async function getAttemptsPerJob(
+async function getAttemptByIdsPerJob(
   dbClient: Client,
   job_id: string,
 ): Promise<Attempt[] | null> {
@@ -108,19 +108,19 @@ async function markProcessing(
     `,
     [job_id, "QUEUED", "PROCESSING"],
   );
-  console.log(result)
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markCompleted(
   dbClient: Client,
   job_id: string,
-  data: unknown,
+  validatedData: unknown,
   actual_cost: number,
 ): Promise<Job | null> {
-  if (!data || data === null) throw new Error("Data can't be empty");
+  if (!validatedData || validatedData === null) throw new Error("Data can't be empty");
   if (!actual_cost || actual_cost === null)
     throw new Error("Actual cost can't be empty");
+  const data = JSON.stringify(validatedData)
   const result = await dbClient.query(
     `UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
@@ -153,7 +153,7 @@ async function markFailed(
 export default {
   getJobById,
   deleteJob,
-  getAttemptsPerJob,
+  getAttemptByIdsPerJob,
   createJob,
   markAccepted,
   markQueued,

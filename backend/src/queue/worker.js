@@ -11,6 +11,7 @@ import localAiService from "../aiFeature/aiServices/localAiService.js";
 import { setupTestDB, teardownTestDB, } from "../../tests/helpers/testDatabase.js";
 import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
 import jobService from "../jobFeature/jobService.js";
+import attemptService from "../jobFeature/attemptService.js";
 const worker = new Worker("dispatchQueue", async (bullJob) => {
     let dbClient;
     nonSecretVariables.getProjectState() === "test"
@@ -29,13 +30,14 @@ const worker = new Worker("dispatchQueue", async (bullJob) => {
         });
     });
     worker.on("completed", (job_id) => {
-        console.log("Worker completed job:", job_id);
+        console.log("Worker completed job:", job_id.data);
     });
-    worker.on("progress", (progress) => {
+    worker.on("progress", ({ progress }) => {
         console.log("Worker progress:", progress);
     });
     try {
         const { job_id, attempt_id } = bullJob.data;
+        await bullJob.updateProgress("Initialized");
         await processJobFromBeginning(dbClient, bullJob, job_id, attempt_id);
     }
     catch (error) {
@@ -49,13 +51,12 @@ const worker = new Worker("dispatchQueue", async (bullJob) => {
     }
 }, { connection });
 async function processJobFromBeginning(dbClient, bullJob, job_id, attempt_id) {
-    const result = await bullJob.updateProgress(`Worker started job ${job_id}, attempt ${attempt_id}`);
+    await bullJob.updateProgress(`Worker started job ${job_id}, attempt ${attempt_id}`);
     try {
         await dbClient.query("BEGIN");
-        const job = await jobService.markProcessing(dbClient, job_id);
-        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Job was marked processing`);
+        await jobService.markProcessing(dbClient, job_id);
         await dbClient.query("COMMIT");
-        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The job was fully accepted for work. Starting attempt execution`);
+        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The job was marked processing and fully accepted for work. Starting attempt execution`);
         await executeAttempt(dbClient, bullJob, attempt_id);
     }
     catch (error) {
@@ -81,7 +82,7 @@ async function processJobFromIntermediateState(dbClient, job_id, provider, model
         await processJobFromBeginning(dbClient, job.job_id);
     }
     if (job.state === "PROCESSING") {
-        const attempts = await jobRepository.getAttemptsPerJob(dbClient, job.job_id);
+        const attempts = await jobRepository.getAttemptByIdsPerJob(dbClient, job.job_id);
         if (attempts === null) {
             throw new Error("No such attempt to process from intermediate state");
         }
@@ -89,7 +90,7 @@ async function processJobFromIntermediateState(dbClient, job_id, provider, model
     }
 }
 async function executeAttempt(dbClient, bullJob, attemptId) {
-    const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
+    const attempt = await attemptRepository.getAttemptById(dbClient, attemptId);
     if (attempt === null) {
         throw new Error("No such attempt");
     }
@@ -98,15 +99,17 @@ async function executeAttempt(dbClient, bullJob, attemptId) {
     if (job === null)
         throw new Error("No such job");
     try {
-        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Initial validation checks passed. Starting attempt execution`);
+        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Initial validation checks passed.`);
         try {
-            await attemptRepository.markSending(dbClient, attempt_id);
-            await eventRepository.createSendingRequestEvent(dbClient, attempt_id);
+            await dbClient.query("BEGIN");
+            await attemptService.markSending(dbClient, attempt_id);
             await dbClient.query("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Attempt was successfully marked as sending`);
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
+            console.error("Failed to mark attempt sending:", error);
+            throw error;
         }
         const { received_data, input_tokens, output_tokens } = await localAiService.acceptJob(job.body.prompt);
         await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The request returned a response`);
@@ -131,26 +134,32 @@ async function executeAttempt(dbClient, bullJob, attemptId) {
         // const response = await aiProvider.receive(dbClient, aiRequest);
         try {
             await dbClient.query("BEGIN");
-            await attemptRepository.markReceived(dbClient, attempt_id, {
+            await attemptService.markReceived(dbClient, attempt_id, {
                 tokens: { input_tokens, output_tokens },
                 received_data,
             });
-            await eventRepository.createResponseReceivedEvent(dbClient, attempt_id);
             await dbClient.query("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as received`);
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
+            console.error("Failed to mark attempt received:", error);
+            throw error;
         }
+        // THINK ABOUT HOW TO VALIDATE OUTPUT
         try {
             await dbClient.query("BEGIN");
-            await attemptRepository.markValidated(dbClient, attempt_id, received_data);
-            await eventRepository.createResponseValidatedEvent(dbClient, attempt_id);
+            await attemptService.markValidated(dbClient, attempt_id, {
+                tokens: { input_tokens, output_tokens },
+                validated_data: received_data,
+            });
             await dbClient.query("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as validated`);
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
+            console.error("Failed to mark attempt validated:", error);
+            throw error;
         }
         try {
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Starting the final job completion step`);
@@ -164,6 +173,8 @@ async function executeAttempt(dbClient, bullJob, attemptId) {
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
+            console.error("Failed to mark job and attempt complete:", error);
+            throw error;
         }
     }
     catch (error) {

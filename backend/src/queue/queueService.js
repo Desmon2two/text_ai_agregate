@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables";
+import jobService from "../jobFeature/jobService";
 export const connection = {
     host: "0.0.0.0",
     port: 6379,
@@ -25,12 +26,17 @@ function jobsConstructor(overrides = {}) {
         ...overrides,
     };
 }
-async function addJobToDispatchQueue(payload, name, options) {
+async function addJobToDispatchQueue(dbClient, payload, name, options) {
     const job = jobsConstructor({
         payload: payload || {},
         name: name || "dispatchJob",
         options: options || {},
     });
+    if (!dbClient) {
+        const dispatchedJob = await dispatchQueue.add(job.name, job.payload, job.options);
+        return dispatchedJob;
+    }
+    await jobService.markQueued(dbClient, payload.job_id);
     const dispatchedJob = await dispatchQueue.add(job.name, job.payload, job.options);
     return dispatchedJob;
 }

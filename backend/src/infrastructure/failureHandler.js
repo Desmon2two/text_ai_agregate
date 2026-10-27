@@ -6,7 +6,7 @@ import eventRepository from "../jobFeature/eventRepository.js";
 export default async function handleFailure(dbClient, attemptId, error) {
     try {
         await dbClient.query("BEGIN");
-        const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
+        const attempt = await attemptRepository.getAttemptById(dbClient, attemptId);
         if (attempt === null)
             return null;
         if (attempt.state === "COMPLETED" || attempt.state === "FAILED") {

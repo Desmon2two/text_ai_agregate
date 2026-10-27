@@ -1,7 +1,7 @@
 import type { Client } from "pg";
 import type { AttemptError } from "../errors/AttemptErrorType.js";
 import attemptService from "../jobFeature/attemptService.js";
-import {nonSecretVariables} from "../infrastructure/utils/nonSecretVariables.js";
+import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
 import attemptRepository from "../jobFeature/attemptRepository.js";
 import jobRepository from "../jobFeature/jobRepository.js";
 import eventRepository from "../jobFeature/eventRepository.js";
@@ -13,7 +13,7 @@ export default async function handleFailure(
 ): Promise<string | null> {
   try {
     await dbClient.query("BEGIN");
-    const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
+    const attempt = await attemptRepository.getAttemptById(dbClient, attemptId);
     if (attempt === null) return null;
     if (attempt.state === "COMPLETED" || attempt.state === "FAILED") {
       return null;

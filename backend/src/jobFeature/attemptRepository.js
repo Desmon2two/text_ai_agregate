@@ -1,4 +1,4 @@
-async function getAttempt(dbClient, attempt_id) {
+async function getAttemptById(dbClient, attempt_id) {
     const result = await dbClient.query(`SELECT * FROM attempts
       WHERE attempt_id = $1
       `, [attempt_id]);
@@ -72,15 +72,13 @@ async function markValidated(dbClient, attempt_id, data) {
         return null;
     return result.rows[0];
 }
-async function markCompleted(dbClient, attempt_id, data) {
-    if (data === null || !data)
-        throw new Error("Data can't be null while completing attempt");
+async function markCompleted(dbClient, attempt_id) {
     const result = await dbClient.query(`UPDATE attempts
-    SET state = $3, data = $4, updated_at = NOW(), completed_at = NOW()
+    SET state = $3, updated_at = NOW(), completed_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attempt_id, "VALIDATED", "COMPLETED", data]);
+    `, [attempt_id, "VALIDATED", "COMPLETED"]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -97,7 +95,7 @@ async function markFailed(dbClient, attempt_id, error) {
     return result.rows[0];
 }
 export default {
-    getAttempt,
+    getAttemptById,
     deleteAttempt,
     createAttempt,
     markSending,

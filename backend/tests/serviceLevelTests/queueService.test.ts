@@ -14,7 +14,7 @@ describe("Testing queue service", () => {
     expect(result.name).toBe("dispatchJob");
   });
   it("should accept jobs", async () => {
-    const result = await queueService.addJobToDispatchQueue({
+    const result = await queueService.addJobToDispatchQueue(null, {job_id: null, attempt_id: null, 
       foo: "bar",
     });
     expect(result.name).toBe("dispatchJob");

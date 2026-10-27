@@ -16,33 +16,53 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await teardownTestDB(dbClient);
-  // await queueService.dispatchQueue.obliterate({ force: true });
-  // await queueService.recoveryQueue.obliterate({ force: true });
-  // await worker.close();
-  // await queueEvents.close();
-  // await queueService.disconnectQueue(queueService.dispatchQueue);
-  // await queueService.disconnectQueue(queueService.recoveryQueue);
+  await queueService.dispatchQueue.obliterate({ force: true });
+  await queueService.recoveryQueue.obliterate({ force: true });
+  await worker.close();
+  await queueEvents.close();
+  await queueService.disconnectQueue(queueService.dispatchQueue);
+  await queueService.disconnectQueue(queueService.recoveryQueue);
 });
 const queueEvents = new QueueEvents("dispatchQueue");
 
 describe("Testing dispatch workers", () => {
   it("Should accept fresh jobs/attempts and start processing them", async () => {
-    const { user_id, type, body, estimated_cost } = createTestJob({job_id: null});
-    const newTestJob = await jobService.createJob(dbClient, user_id,type, body, estimated_cost )
-console.log(newTestJob)
-    await jobService.markQueued(dbClient, newTestJob?.job_id)
-    const {attempt_number, provider, model} = createTestAttempt({attempt_id: null})
-const newTestAttempt = await attemptRepository.createAttempt(dbClient, newTestJob?.job_id, attempt_number, provider, model)
-    
-const completedPromise = once(queueEvents, "completed")
-    await queueService.addJobToDispatchQueue({ job_id: newTestJob.job_id, attempt_id: newTestAttempt.attempt_id });
-    const [event] = await completedPromise
-    console.log("Job completed :", event)
-      const { state } = await attemptRepository.getAttempt(
-        dbClient,
-        attempt_id,
-      );
-      expect(state).toBe("COMPLETED");
+    const { user_id, type, body, estimated_cost } = createTestJob({
+      job_id: null,
+    });
+    const newTestJob = await jobService.createJob(
+      dbClient,
+      user_id,
+      type,
+      body,
+      estimated_cost,
+    );
+    await jobService.markAccepted(dbClient, newTestJob?.job_id);
+    const { attempt_number, provider, model } = createTestAttempt({
+      attempt_id: null,
+    });
+    const newTestAttempt = await attemptRepository.createAttempt(
+      dbClient,
+      newTestJob?.job_id,
+      attempt_number,
+      provider,
+      model,
+    );
+
+    const completedPromise = once(queueEvents, "completed");
+    await queueService.addJobToDispatchQueue(dbClient, {
+      job_id: newTestJob.job_id,
+      attempt_id: newTestAttempt.attempt_id,
+    });
+    const [event] = await completedPromise;
+    console.log("Job completed :", event);
+    const atmpt = await attemptRepository.getAttemptById(
+      dbClient,
+      newTestAttempt.attempt_id,
+    );
+    const jb = await jobRepository.getJobById(dbClient, newTestJob.job_id)
+    expect(atmpt.state).toBe("COMPLETED");
+    expect(jb.state).toBe("COMPLETED");
   });
   it("Should detect invalid inputs and gracefully handle them", async () => {});
   it("Should detect invalid users/jobs/attempts", async () => {});
