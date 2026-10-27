@@ -64,6 +64,7 @@ async function markProcessing(dbClient, job_id) {
     AND state = $2
     RETURNING *
     `, [job_id, "QUEUED", "PROCESSING"]);
+    console.log(result);
     if (!result.rows[0])
         return null;
     return result.rows[0];

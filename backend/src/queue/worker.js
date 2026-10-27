@@ -1,31 +1,62 @@
-import { Client } from "pg";
 import handleFailure from "../infrastructure/failureHandler.js";
 import mapErrorToAttemptError from "../infrastructure/utils/errorToProviderErrorMapper.js";
 import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper.js";
 import jobRepository from "../jobFeature/jobRepository.js";
 import attemptRepository from "../jobFeature/attemptRepository.js";
-import attemptService from "../jobFeature/attemptService.js";
 import eventRepository from "../jobFeature/eventRepository.js";
-import jobService from "../jobFeature/jobService.js";
 import { Job, Worker } from "bullmq";
-import { connection } from "./queueService.js";
-const worker = new Worker("dispatchQueue", async (job) => {
-    await job.updateProgress({ job_id });
-    return 'some value';
+import queueService, { connection } from "./queueService.js";
+import jobUseCase from "../jobFeature/jobUseCase.js";
+import localAiService from "../aiFeature/aiServices/localAiService.js";
+import { setupTestDB, teardownTestDB, } from "../../tests/helpers/testDatabase.js";
+import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
+import jobService from "../jobFeature/jobService.js";
+const worker = new Worker("dispatchQueue", async (bullJob) => {
+    let dbClient;
+    nonSecretVariables.getProjectState() === "test"
+        ? (dbClient = await setupTestDB())
+        : (dbClient = await setupProdDB());
+    worker.on("error", (error) => {
+        console.error("BullMQ worker error:", error);
+    });
+    worker.on("failed", (job, error, prev) => {
+        console.error("Job failed:", {
+            jobId: job?.data,
+            progress: job?.progress,
+            message: error.message,
+            stack: error.stack,
+            previousState: prev,
+        });
+    });
+    worker.on("completed", (job_id) => {
+        console.log("Worker completed job:", job_id);
+    });
+    worker.on("progress", (progress) => {
+        console.log("Worker progress:", progress);
+    });
+    try {
+        const { job_id, attempt_id } = bullJob.data;
+        await processJobFromBeginning(dbClient, bullJob, job_id, attempt_id);
+    }
+    catch (error) {
+        console.error("Job processor threw:", error);
+        throw error;
+    }
+    finally {
+        nonSecretVariables.getProjectState() === "test"
+            ? await teardownTestDB(dbClient)
+            : await teardownProdDB();
+    }
 }, { connection });
-async function processJobFromBeginning(dbClient, job_id, provider, model) {
+async function processJobFromBeginning(dbClient, bullJob, job_id, attempt_id) {
+    const result = await bullJob.updateProgress(`Worker started job ${job_id}, attempt ${attempt_id}`);
     try {
         await dbClient.query("BEGIN");
-        const job = await jobRepository.markProcessing(dbClient, job_id);
-        if (job === null)
-            throw new Error("Job was not created");
-        await eventRepository.createJobProcessingEvent(dbClient, job_id);
-        const attempt = await attemptService.createAttempt(dbClient, job_id, provider, model);
-        if (attempt === null)
-            throw new Error("Attempt was not created");
-        await eventRepository.createAttemptCreatedEvent(dbClient, attempt.attempt_id, { origin: "Regular Job Processing" });
+        const job = await jobService.markProcessing(dbClient, job_id);
+        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Job was marked processing`);
         await dbClient.query("COMMIT");
-        await executeAttempt(dbClient, attempt.attempt_id);
+        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The job was fully accepted for work. Starting attempt execution`);
+        await executeAttempt(dbClient, bullJob, attempt_id);
     }
     catch (error) {
         await dbClient.query("ROLLBACK");
@@ -37,29 +68,27 @@ async function processJobFromIntermediateState(dbClient, job_id, provider, model
     if (job === null) {
         throw new Error("No such job to process from intermediate state");
     }
-    try {
-        await eventRepository.createJobProcessedFromIntermediateStateEvent(dbClient, job.job_id);
-        if (job.state === "CREATED") {
-            await queueService.enqueue(dbClient, job.job_id);
-        }
-        if (job.state === "QUEUED") {
-            if (!provider || !model)
-                throw new Error("Can't process this job - not listed provider or model");
-            await processJobFromBeginning(dbClient, job.job_id, provider, model);
-        }
-        if (job.state === "PROCESSING") {
-            const attempts = await jobRepository.getAttemptsPerJob(dbClient, job.job_id);
-            if (attempts === null) {
-                throw new Error("No such attempt to process from intermediate state");
-            }
-            await executeAttempt(dbClient, attempts[0].attempt_id);
-        }
+    await eventRepository.createJobProcessedFromIntermediateStateEvent(dbClient, job.job_id);
+    if (job.state === "CREATED") {
+        await queueService.addJobToDispatchQueue(undefined, {
+            dbClient,
+            job_id: job.job_id,
+        });
     }
-    catch (error) {
-        throw error;
+    if (job.state === "QUEUED") {
+        if (!provider || !model)
+            throw new Error("Can't process this job - not listed provider or model");
+        await processJobFromBeginning(dbClient, job.job_id);
+    }
+    if (job.state === "PROCESSING") {
+        const attempts = await jobRepository.getAttemptsPerJob(dbClient, job.job_id);
+        if (attempts === null) {
+            throw new Error("No such attempt to process from intermediate state");
+        }
+        await executeAttempt(dbClient, attempts[0].attempt_id);
     }
 }
-async function executeAttempt(dbClient, attemptId) {
+async function executeAttempt(dbClient, bullJob, attemptId) {
     const attempt = await attemptRepository.getAttempt(dbClient, attemptId);
     if (attempt === null) {
         throw new Error("No such attempt");
@@ -69,49 +98,73 @@ async function executeAttempt(dbClient, attemptId) {
     if (job === null)
         throw new Error("No such job");
     try {
-        await dbClient.query("BEGIN");
+        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Initial validation checks passed. Starting attempt execution`);
         try {
             await attemptRepository.markSending(dbClient, attempt_id);
             await eventRepository.createSendingRequestEvent(dbClient, attempt_id);
             await dbClient.query("COMMIT");
+            await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Attempt was successfully marked as sending`);
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
         }
-        const aiRequest = mapJobToAiRequest(job);
-        const providerJobId = await aiProvider.send(dbClient, aiRequest);
-        if (providerJobId !== null) {
-            try {
-                await dbClient.query("BEGIN");
-                await attemptRepository.markWaiting(dbClient, attempt_id, providerJobId);
-                await eventRepository.createWaitingForResponseEvent(dbClient, attempt_id, { providerJobId });
-                await dbClient.query("COMMIT");
-            }
-            catch (error) {
-                await dbClient.query("ROLLBACK");
-            }
-        }
-        const response = await aiProvider.receive(dbClient, aiRequest);
+        const { received_data, input_tokens, output_tokens } = await localAiService.acceptJob(job.body.prompt);
+        await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The request returned a response`);
+        // if (providerJobId !== null) {
+        //   try {
+        //     await dbClient.query("BEGIN");
+        //     await attemptRepository.markWaiting(
+        //       dbClient,
+        //       attempt_id,
+        //       providerJobId,
+        //     );
+        //     await eventRepository.createWaitingForResponseEvent(
+        //       dbClient,
+        //       attempt_id,
+        //       { providerJobId },
+        //     );
+        //     await dbClient.query("COMMIT");
+        //   } catch (error) {
+        //     await dbClient.query("ROLLBACK");
+        //   }
+        // }
+        // const response = await aiProvider.receive(dbClient, aiRequest);
         try {
             await dbClient.query("BEGIN");
-            await attemptRepository.markReceived(dbClient, attempt_id, response);
+            await attemptRepository.markReceived(dbClient, attempt_id, {
+                tokens: { input_tokens, output_tokens },
+                received_data,
+            });
             await eventRepository.createResponseReceivedEvent(dbClient, attempt_id);
             await dbClient.query("COMMIT");
+            await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as received`);
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
         }
-        await validateAiResponse(response);
         try {
             await dbClient.query("BEGIN");
-            await attemptRepository.markValidated(dbClient, attempt_id, response);
+            await attemptRepository.markValidated(dbClient, attempt_id, received_data);
             await eventRepository.createResponseValidatedEvent(dbClient, attempt_id);
             await dbClient.query("COMMIT");
+            await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as validated`);
         }
         catch (error) {
             await dbClient.query("ROLLBACK");
         }
-        await jobService.completeJob(dbClient, job.job_id, attempt_id);
+        try {
+            await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Starting the final job completion step`);
+            await dbClient.query("BEGIN");
+            await jobUseCase.completeJob(dbClient, job.job_id, attempt_id, {
+                tokens: { input_tokens, output_tokens },
+                received_data,
+            });
+            await dbClient.query("COMMIT");
+            await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Job fully completed`);
+        }
+        catch (error) {
+            await dbClient.query("ROLLBACK");
+        }
     }
     catch (error) {
         const attemptError = mapErrorToAttemptError(error, retryable, provider, error.code);

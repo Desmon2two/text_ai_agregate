@@ -43,7 +43,10 @@ async function deleteAttempt(
   );
   return result;
 }
-async function markSending(dbClient: Client, attempt_id: string) {
+async function markSending(
+  dbClient: Client,
+  attempt_id: string,
+): Promise<Attempt | null> {
   const result = await dbClient.query(
     `UPDATE attempts
     SET state = $3, updated_at = NOW()
@@ -56,32 +59,32 @@ async function markSending(dbClient: Client, attempt_id: string) {
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
-async function markWaiting(
-  dbClient: Client,
-  attempt_id: string,
-  providerJobId?: string,
-) {
-  const result = await dbClient.query(
-    `UPDATE attempts
-    SET state = $3, provider_job_id = $4, updated_at = NOW()
-    WHERE attempt_id = $1
-    AND state = $2
-    RETURNING *
-    `,
-    [attempt_id, "SENDING", "WAITING", providerJobId || null],
-  );
-  if (!result.rows[0]) return null;
-  return result.rows[0];
-}
+// async function markWaiting(
+//   dbClient: Client,
+//   attempt_id: string,
+//   providerJobId?: string,
+// ) {
+//   const result = await dbClient.query(
+//     `UPDATE attempts
+//     SET state = $3, provider_job_id = $4, updated_at = NOW()
+//     WHERE attempt_id = $1
+//     AND state = $2
+//     RETURNING *
+//     `,
+//     [attempt_id, "SENDING", "WAITING", providerJobId || null],
+//   );
+//   if (!result.rows[0]) return null;
+//   return result.rows[0];
+// }
 async function markReceived(
   dbClient: Client,
   attempt_id: string,
   data: {
     tokens: {
-      input_tokens: number,
-      output_tokens: number
-    },
-    received_data: unknown
+      input_tokens: number;
+      output_tokens: number;
+    };
+    received_data: unknown;
   },
 ) {
   const result = await dbClient.query(
@@ -91,7 +94,7 @@ async function markReceived(
     AND state = $2
     RETURNING *
     `,
-    [attempt_id, "WAITING", "RECEIVED", data],
+    [attempt_id, "SENDING", "RECEIVED", data],
   );
   if (!result.rows[0]) return null;
   return result.rows[0];
@@ -156,7 +159,7 @@ export default {
   deleteAttempt,
   createAttempt,
   markSending,
-  markWaiting,
+  // markWaiting,
   markReceived,
   markValidated,
   markCompleted,

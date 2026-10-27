@@ -31,24 +31,30 @@ async function markSending(dbClient, attempt_id) {
         return null;
     return result.rows[0];
 }
-async function markWaiting(dbClient, attempt_id, providerJobId) {
-    const result = await dbClient.query(`UPDATE attempts
-    SET state = $3, provider_job_id = $4, updated_at = NOW()
-    WHERE attempt_id = $1
-    AND state = $2
-    RETURNING *
-    `, [attempt_id, "SENDING", "WAITING", providerJobId || null]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
-}
+// async function markWaiting(
+//   dbClient: Client,
+//   attempt_id: string,
+//   providerJobId?: string,
+// ) {
+//   const result = await dbClient.query(
+//     `UPDATE attempts
+//     SET state = $3, provider_job_id = $4, updated_at = NOW()
+//     WHERE attempt_id = $1
+//     AND state = $2
+//     RETURNING *
+//     `,
+//     [attempt_id, "SENDING", "WAITING", providerJobId || null],
+//   );
+//   if (!result.rows[0]) return null;
+//   return result.rows[0];
+// }
 async function markReceived(dbClient, attempt_id, data) {
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW()
     WHERE attempt_id = $1
     AND state = $2
     RETURNING *
-    `, [attempt_id, "WAITING", "RECEIVED", data]);
+    `, [attempt_id, "SENDING", "RECEIVED", data]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -95,7 +101,7 @@ export default {
     deleteAttempt,
     createAttempt,
     markSending,
-    markWaiting,
+    // markWaiting,
     markReceived,
     markValidated,
     markCompleted,

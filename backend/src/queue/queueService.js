@@ -14,8 +14,8 @@ dispatchQueue.setGlobalConcurrency(nonSecretVariables.getGlobalConcurrency());
 recoveryQueue.setGlobalConcurrency(nonSecretVariables.getGlobalConcurrency());
 function jobsConstructor(overrides = {}) {
     return {
-        name: "myJob",
         payload: {},
+        name: "myJob",
         options: {
             attempts: 3,
             backoff: { type: "exponential", delay: 1000 },
@@ -25,19 +25,19 @@ function jobsConstructor(overrides = {}) {
         ...overrides,
     };
 }
-async function addJobToDispatchQueue(name, payload, options) {
+async function addJobToDispatchQueue(payload, name, options) {
     const job = jobsConstructor({
-        name: name || "dispatchJob",
         payload: payload || {},
+        name: name || "dispatchJob",
         options: options || {},
     });
     const dispatchedJob = await dispatchQueue.add(job.name, job.payload, job.options);
     return dispatchedJob;
 }
-async function addJobToRecoveryQueue(name, payload, options) {
+async function addJobToRecoveryQueue(payload, name, options) {
     const job = jobsConstructor({
-        name: name || "recoveryJob",
         payload: payload || {},
+        name: name || "recoveryJob",
         options: options || {},
     });
     const recoveryJob = await recoveryQueue.add(job.name, job.payload, job.options);

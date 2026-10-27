@@ -1,7 +1,11 @@
 const OLLAMA_URL = "http://127.0.0.1:11434/api/chat";
 const MODEL = "gemma3:1b";
 
-async function acceptJob(prompt: string) {
+async function acceptJob(prompt: string): Promise<{
+  received_data: string;
+  input_tokens: number;
+  output_tokens: number;
+}> {
   const response = await fetch(OLLAMA_URL, {
     method: "POST",
     headers: {
@@ -30,9 +34,11 @@ async function acceptJob(prompt: string) {
   }
 
   const data = await response.json();
-  console.log("Input tokens:", data.prompt_eval_count);
-  console.log("Output tokens:", data.eval_count);
-  return data.message.content;
+  return {
+    received_data: data.message.content,
+    input_tokens: data.prompt_eval_count,
+    output_tokens: data.eval_count,
+  };
 }
 
 export default { acceptJob };

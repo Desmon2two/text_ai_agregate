@@ -17,6 +17,15 @@ async function createJobAcceptedEvent(dbClient, job_id) {
         return null;
     return result.rows[0];
 }
+async function createJobQueuedEvent(dbClient, job_id) {
+    const result = await dbClient.query(`INSERT INTO events(name, job_id) 
+    VALUES ('JOB_QUEUED', $1)
+    RETURNING *
+    `, [job_id]);
+    if (!result.rows[0])
+        return null;
+    return result.rows[0];
+}
 async function createJobProcessingEvent(dbClient, job_id) {
     const result = await dbClient.query(`INSERT INTO events(name, job_id) 
     VALUES ('JOB_PROCESSING', $1)
@@ -62,15 +71,21 @@ async function createSendingRequestEvent(dbClient, attempt_id) {
         return null;
     return result.rows[0];
 }
-async function createWaitingForResponseEvent(dbClient, attempt_id, metadata) {
-    const result = await dbClient.query(`INSERT INTO events(name, attempt_id, metadata) 
-    VALUES ('WAITING_FOR_RESPONSE', $1, $2)
-    RETURNING *
-    `, [attempt_id, metadata]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
-}
+// async function createWaitingForResponseEvent(
+//   dbClient: Client,
+//   attempt_id: string,
+//   metadata: { providerJobId: string },
+// ): Promise<EventType | null> {
+//   const result = await dbClient.query(
+//     `INSERT INTO events(name, attempt_id, metadata) 
+//     VALUES ('WAITING_FOR_RESPONSE', $1, $2)
+//     RETURNING *
+//     `,
+//     [attempt_id, metadata],
+//   );
+//   if (!result.rows[0]) return null;
+//   return result.rows[0];
+// }
 async function createResponseReceivedEvent(dbClient, attempt_id) {
     const result = await dbClient.query(`INSERT INTO events(name, attempt_id) 
     VALUES ('RESPONSE_RECEIVED', $1)
@@ -186,12 +201,13 @@ async function deleteEvent(dbClient, event_id) {
 export default {
     getEventById,
     createJobAcceptedEvent,
+    createJobQueuedEvent,
     createJobProcessingEvent,
     createJobProcessedFromIntermediateStateEvent,
     createWorkerStartedEvent,
     createAttemptCreatedEvent,
     createSendingRequestEvent,
-    createWaitingForResponseEvent,
+    // createWaitingForResponseEvent,
     createResponseReceivedEvent,
     createResponseValidatedEvent,
     createAttemptCompletedEvent,

@@ -18,6 +18,9 @@ function createTestJob(overrides: Partial<Job> = {}): Job {
     state: "CREATED",
     type: "QUESTION",
     estimated_cost: 100,
+    body: {
+      prompt: "Hello!!!",
+    },
     ...overrides,
   };
 }

@@ -1,6 +1,11 @@
-import { Client } from "pg";
-import type { JobStateTypes } from "./JobStateType.js";
-
+import type { Client } from "pg";
+import type { JobStateTypes } from "./JobStateTypes.js";
+type JobTypes =
+  | "QUESTION"
+  | "SUMMARY"
+  | "CODE"
+  | "CLASSIFICATION"
+  | "LARGE_REPORT";
 /* 
 The db tables are a source of truth for jobs, attempts, and events
 */
@@ -8,8 +13,11 @@ type Job = {
   user_id: string;
   job_id: string;
   state: JobStateTypes;
-  type: string;
-  body?: unknown;
+  type: JobTypes;
+  body?: {
+    prompt: string;
+    else?: unknown;
+  };
   files?: string[];
   error?: unknown;
   data?: unknown;
@@ -23,7 +31,7 @@ type Job = {
 type CreateJob = {
   dbClient: Client;
   user_id: string;
-  type: string;
+  type: jobTypes;
   body: unknown;
   estimated_cost: number;
 };
@@ -37,4 +45,4 @@ type completeJobType = {
   job_id: string;
   attempt_id: string;
 };
-export type { Job, CreateJob, CreateJobOutput, completeJobType };
+export type { Job, JobTypes, CreateJob, CreateJobOutput, completeJobType };

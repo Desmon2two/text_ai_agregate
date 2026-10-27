@@ -2,6 +2,7 @@ export const nonSecretVariables = {
     MAX_ATTEMPTS: 2,
     OUTPUT_TOKENS_MULTIPLIER: 2.5,
     GLOBAL_CONCURRENCY_SETTING: 1,
+    PROJECT_STATE: "test",
     getMaxAttempts() {
         return this.MAX_ATTEMPTS;
     },
@@ -17,5 +18,8 @@ export const nonSecretVariables = {
     },
     getGlobalConcurrency() {
         return this.GLOBAL_CONCURRENCY_SETTING;
+    },
+    getProjectState() {
+        return this.PROJECT_STATE;
     },
 };

@@ -7,7 +7,7 @@ async function scanAttemptsForRecovery(
 ): Promise<Attempt[] | null> {
   const result = await dbClient.query(`
     SELECT * FROM attempts
-    WHERE ((state = 'SENDING' OR state = 'WAITING') AND last_heartbeat < NOW() - INTERVAL '1 hour') 
+    WHERE ((state = 'SENDING' OR state = 'SENDING') AND last_heartbeat < NOW() - INTERVAL '1 hour') 
     OR (state = 'VALIDATED' AND updated_at < NOW() - INTERVAL '5 seconds') 
     OR (state = 'CREATED' AND updated_at < NOW() - INTERVAL '5 seconds')
     `);

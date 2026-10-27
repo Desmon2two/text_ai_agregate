@@ -25,8 +25,10 @@ async function acceptJob(prompt) {
         throw new Error(`Ollama returned HTTP ${response.status}: ${await response.text()}`);
     }
     const data = await response.json();
-    console.log("Input tokens:", data.prompt_eval_count);
-    console.log("Output tokens:", data.eval_count);
-    return data.message.content;
+    return {
+        received_data: data.message.content,
+        input_tokens: data.prompt_eval_count,
+        output_tokens: data.eval_count,
+    };
 }
 export default { acceptJob };

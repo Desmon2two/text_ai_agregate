@@ -23,6 +23,17 @@ async function createJobAcceptedEvent(dbClient: Client, job_id: string): Promise
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
+async function createJobQueuedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
+  const result = await dbClient.query(
+    `INSERT INTO events(name, job_id) 
+    VALUES ('JOB_QUEUED', $1)
+    RETURNING *
+    `,
+    [job_id],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
+}
 async function createJobProcessingEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
   const result = await dbClient.query(
     `INSERT INTO events(name, job_id) 
@@ -85,21 +96,21 @@ async function createSendingRequestEvent(dbClient: Client, attempt_id: string): 
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
-async function createWaitingForResponseEvent(
-  dbClient: Client,
-  attempt_id: string,
-  metadata: { providerJobId: string },
-): Promise<EventType | null> {
-  const result = await dbClient.query(
-    `INSERT INTO events(name, attempt_id, metadata) 
-    VALUES ('WAITING_FOR_RESPONSE', $1, $2)
-    RETURNING *
-    `,
-    [attempt_id, metadata],
-  );
-  if (!result.rows[0]) return null;
-  return result.rows[0];
-}
+// async function createWaitingForResponseEvent(
+//   dbClient: Client,
+//   attempt_id: string,
+//   metadata: { providerJobId: string },
+// ): Promise<EventType | null> {
+//   const result = await dbClient.query(
+//     `INSERT INTO events(name, attempt_id, metadata) 
+//     VALUES ('WAITING_FOR_RESPONSE', $1, $2)
+//     RETURNING *
+//     `,
+//     [attempt_id, metadata],
+//   );
+//   if (!result.rows[0]) return null;
+//   return result.rows[0];
+// }
 async function createResponseReceivedEvent(
   dbClient: Client,
   attempt_id: string,
@@ -291,12 +302,13 @@ async function deleteEvent(
 export default {
   getEventById,
   createJobAcceptedEvent,
+  createJobQueuedEvent,
   createJobProcessingEvent,
   createJobProcessedFromIntermediateStateEvent,
   createWorkerStartedEvent,
   createAttemptCreatedEvent,
   createSendingRequestEvent,
-  createWaitingForResponseEvent,
+  // createWaitingForResponseEvent,
   createResponseReceivedEvent,
   createResponseValidatedEvent,
   createAttemptCompletedEvent,

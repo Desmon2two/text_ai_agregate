@@ -1,14 +1,12 @@
-import type { Job } from "./types/JobTypes.js";
-import attemptRepository from "./attemptRepository.js";
+import type { Job, JobTypes } from "./types/JobTypes.js";
 import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";
-import { Client } from "pg";
-import { mapTokensToActualCost } from "../FinancesFeature/finService.js";
-import { JobStateTypes } from "./types/JobStateType.js";
+import type { Client } from "pg";
+import type { JobStateTypes } from "./types/JobStateTypes.js";
 
 async function createJob(
   dbClient: Client,
-  type: JobStateTypes,
+  type: JobTypes,
   estimated_cost: number,
   user_id: string,
   body: { prompt: string; [keys?: any] },
@@ -24,6 +22,22 @@ async function createJob(
   if (job === null) throw new Error("Job was not created");
   await eventRepository.createJobAcceptedEvent(dbClient, job.job_id);
   return job;
+}
+async function markQueued(dbClient: Client, job_id: string){
+  const job = await jobRepository.markQueued(dbClient, job_id);
+  if(job === null) {
+throw new Error("Job was not marked queued")
+  }
+    await eventRepository.createJobQueuedEvent(dbClient, job_id);
+return job.job_id
+}
+async function markProcessing(dbClient: Client, job_id: string){
+  const job = await jobRepository.markProcessing(dbClient, job_id);
+  if(job === null) {
+throw new Error("Job was not marked processing")
+  }
+    await eventRepository.createJobProcessingEvent(dbClient, job_id);
+return job.job_id
 }
 
 async function completeJob(
@@ -46,5 +60,8 @@ async function completeJob(
 
 export default {
   createJob,
+  markProcessing,
+markQueued,
+
   completeJob,
 };

@@ -1,8 +1,8 @@
 import type { Client } from "pg";
-import type { CreateJob, Job } from "./types/JobTypes.js";
+import type { Job } from "./types/JobTypes.js";
 import type { Attempt } from "./types/AttemptTypes.js";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
-import type { JobStateTypes } from "./types/JobStateType.js";
+import type { JobStateTypes } from "./types/JobStateTypes.js";
 async function getJobById(
   dbClient: Client,
   job_id: string,
@@ -108,6 +108,7 @@ async function markProcessing(
     `,
     [job_id, "QUEUED", "PROCESSING"],
   );
+  console.log(result)
   if (!result.rows[0]) return null;
   return result.rows[0];
 }

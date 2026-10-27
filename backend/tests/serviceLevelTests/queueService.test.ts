@@ -1,6 +1,5 @@
 import queueService from "../../src/queue/queueService.js";
 import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
-let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 
 afterAll(async () => {
     await queueService.dispatchQueue.obliterate({force: true})
@@ -15,10 +14,10 @@ describe("Testing queue service", () => {
     expect(result.name).toBe("dispatchJob");
   });
   it("should accept jobs", async () => {
-    const result = await queueService.addJobToDispatchQueue("test", {
+    const result = await queueService.addJobToDispatchQueue({
       foo: "bar",
     });
-    expect(result.name).toBe("test");
+    expect(result.name).toBe("dispatchJob");
     expect(result.data.foo).toBe("bar");
   });
   it("should have queue for whole jobs processing", async () => {

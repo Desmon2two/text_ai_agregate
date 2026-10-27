@@ -1,7 +1,7 @@
 export type AttemptsState =
 	| "CREATED"
 	| "SENDING"
-	| "WAITING"
+	// | "WAITING"
 	| "RECEIVED"
 	| "VALIDATED"
 	| "COMPLETED"
