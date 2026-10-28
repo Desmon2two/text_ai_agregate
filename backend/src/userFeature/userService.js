@@ -1,125 +1,107 @@
-import userService from "./userService.js";
 import passwordService from "../authFeature/passwordService.js";
 import authService from "../authFeature/authService.js";
-import atomicTransaction from "../infrastructure/database/mongoDB/atomicTransaction.js";
-import videoService from "../videoFeature/videoService.js";
-import { NotFoundError } from "../errors/notFoundError.js";
-import { ForbiddenError } from "../errors/forbiddenError.js";
-import { UnauthorizedError } from "../errors/unauthorizedError.js";
-import { ValidationError } from "../errors/validationError.js";
-import userValidation from "./js";
-async function registerUser(email, password, username) {
-  validateCredentialsPatch({ email, password });
-  validateUserPatch(username);
-  const existsByEmail = await userRepository.getUserByEmaill(email);
-  const existsByUsername = await userService.findByUsername(username);
-  if (existsByEmail || existsByUsername)
-    throw new ForbiddenError("User already exists");
-  const hashedPassword = await passwordService.hashPassword(password);
-  const user = await userService.createUser(email, hashedPassword, username);
-  const accessToken = await authService.generateAccessToken(user._id);
-  return {
-    user: {
-      id: user._id,
-      email: user.email,
-      username: user.username,
-    },
-    accessToken,
-  };
+import { ForbiddenError, NotFoundError, UnauthorizedError, } from "../errors/applicationErrors.js";
+import { validateUserCredentials, validateUserDisplayedInfo } from "./js";
+import userRepository from "./userRepository.js";
+async function registerUser(dbClient, email, password, username) {
+    validateUserCredentials(email, password);
+    validateUserDisplayedInfo(username);
+    const existsByEmail = await userRepository.getUserByEmail(dbClient, email);
+    const existsByUsername = await userRepository.getUserById(dbClient, username);
+    if (existsByEmail || existsByUsername)
+        throw new ForbiddenError("User already exists");
+    const hashedPassword = await passwordService.hashPassword(password);
+    const user = await userRepository.createUser(dbClient, username, email, hashedPassword);
+    if (!user)
+        throw new Error("User was not created");
+    const accessToken = authService.generateAccessToken(user.user_id);
+    return { user, accessToken };
 }
-async function loginUser(email, password) {
-  await validateCredentialsPatch({ email, password });
-  const user = await userRepository.getUserByEmaill(email);
-  if (!user) throw new UnauthorizedError("Wrong email");
-  const isPasswordCorrect = await passwordService.checkPassword(
-    password,
-    user.password,
-  );
-  if (!isPasswordCorrect) throw new UnauthorizedError("Wrong password");
-  const accessToken = await authService.generateAccessToken(user._id);
-  const refreshToken = await authService.generateRefreshToken(user._id);
-  return {
-    user: {
-      id: user._id,
-      email: user.email,
-      username: user.userName,
-      displayName: user.displayName,
-      profilePic: user.profilePic,
-      bio: user.bio,
-    },
-    accessToken,
-    refreshToken,
-  };
+async function loginUser(dbClient, email, inputPassword) {
+    validateUserCredentials(email, inputPassword);
+    const user = await userRepository.getUserByEmail(dbClient, email);
+    if (!user)
+        throw new UnauthorizedError("wrong email");
+    const isPasswordCorrect = await passwordService.checkPassword(inputPassword, user.password);
+    if (!isPasswordCorrect)
+        throw new UnauthorizedError("Wrong password");
+    const accessToken = authService.generateAccessToken(user.user_id);
+    const refreshToken = authService.generateRefreshToken(user.user_id);
+    return {
+        user_id: user.user_id,
+        accessToken,
+        refreshToken,
+    };
 }
-async function patchUserPassword(userId, currentPassword, newPassword) {
-  await validateCredentialsPatch(newPassword);
-  const user = await userRepository.getUserById(dbClient, user_id);
-  if (!user) throw new NotFoundError("User not found");
-  const isCorrect = await passwordService.checkPassword(
-    currentPassword,
-    user.password,
-  );
-  const isNew = await passwordService.checkPassword(newPassword, user.password);
-  if (!isCorrect) throw new UnauthorizedError("Wrong password");
-  if (!isNew) throw new UnauthorizedError("Same password");
-  const hash = await passwordService.hashPassword(newPassword);
-  const hashedPassword = { password: hash };
-  const patchedUser = await userService.patchOne(userId, hashedPassword);
-  if (!patchedUser) throw new Error("Something went wrong, please try again");
-  return;
+async function patchUserPassword(dbClient, user_id, currentPassword, newPassword) {
+    validateUserCredentials(null, newPassword);
+    const user = await userRepository.getUserById(dbClient, user_id);
+    if (!user)
+        throw new NotFoundError("User not found");
+    const isCorrect = await passwordService.checkPassword(currentPassword, user.password);
+    const isNew = await passwordService.checkPassword(newPassword, user.password);
+    if (!isCorrect)
+        throw new UnauthorizedError("Wrong password");
+    if (!isNew)
+        throw new UnauthorizedError("Same password");
+    const hash = await passwordService.hashPassword(newPassword);
+    const patchedUser = await userRepository.changeUserPassword(dbClient, user_id, hash);
+    if (!patchedUser)
+        throw new Error("Something went wrong, please try again");
+    return;
 }
-async function patchUserEmail(userId, password, email) {
-  await validateCredentialsPatch({ email, password });
-  const user = await userRepository.getUserById(dbClient, user_id);
-  if (!user) throw new NotFoundError("User not found");
-  const isCorrect = await passwordService.checkPassword(
-    password,
-    user.password,
-  );
-  if (!isCorrect) throw new UnauthorizedError("Wrong password");
-  if (user.email === email) throw new UnauthorizedError("Email is the same");
-  const existingUser = await userRepository.getUserByEmaill(email);
-  if (existingUser) throw new UnauthorizedError("Email already in use");
-  const result = await userService.patchOne(userId, { email });
-  if (!result) throw new Error("Something went wrong, please try again");
-  return;
+async function patchUserEmail(dbClient, user_id, password, email) {
+    await validateUserCredentials(email, password);
+    const user = await userRepository.getUserById(dbClient, user_id);
+    if (!user)
+        throw new NotFoundError("User not found");
+    const isCorrect = await passwordService.checkPassword(password, user.password);
+    if (!isCorrect)
+        throw new UnauthorizedError("Wrong password");
+    if (user.email === email)
+        throw new UnauthorizedError("Email is the same");
+    const existingUser = await userRepository.getUserByEmail(dbClient, email);
+    if (existingUser)
+        throw new UnauthorizedError("Email already in use");
+    const result = await userRepository.changeUserEmail(dbClient, user.user_id, email);
+    if (!result)
+        throw new Error("Something went wrong, please try again");
+    return;
 }
-async function patchUser(userId, userData) {
-  const { username, displayName, profilePic, bio } = userData;
-  validateUserPatch(username, displayName, profilePic, bio);
-  const user = await userService.patchOne(userId, userData);
-  if (!user) throw new NotFoundError("User not found");
-  return {
-    user: {
-      username: user.username,
-      displayName: user.displayName,
-      profilePic: user.profilePic,
-      bio: user.bio,
-    },
-  };
+async function refreshToken(dbClient, token) {
+    const payload = authService.verifyRefreshToken(token);
+    const user = await userRepository.getUserById(dbClient, payload.user_id);
+    if (!user)
+        throw new UnauthorizedError("User does not exists");
+    const accessToken = authService.generateAccessToken(user.user_id);
+    return accessToken;
 }
-async function refreshToken(token) {
-  const payload = await authService.verifyRefreshToken(token);
-  const user = await userRepository.getUserById(payload.userId);
-  if (!user) throw new UnauthorizedError("User does not exists");
-  const accessToken = await authService.generateAccessToken(user.id);
-  return { accessToken };
+async function getCurrentUser(dbClient, user_id, email) {
+    if (!user_id && !email)
+        throw new NotFoundError("Must provide at least one of identifyable fields");
+    let user;
+    if (user_id) {
+        user = await userRepository.getUserById(dbClient, user_id);
+    }
+    else {
+        user = await userRepository.getUserByEmail(dbClient, email);
+    }
+    if (!user)
+        throw new NotFoundError("No such user");
+    return user;
 }
-async function deleteUser(userId) {
-  const user = await userRepository.getUserById(dbClient, user_id);
-  if (user === null) throw new NotFoundError("User not found");
-  return atomicTransaction.execute(async (context) => {
-    await userService.deleteById(userId, context);
-    await videoService.deleteByUser(userId, context);
-  });
+async function deleteUser(dbClient, user_id) {
+    const user = await userRepository.getUserById(dbClient, user_id);
+    if (user === null)
+        throw new NotFoundError("User not found");
+    await userRepository.deleteUser(dbClient, user.user_id);
 }
 export default {
-  registerUser,
-  deleteUser,
-  loginUser,
-  refreshToken,
-  getCurrentUser,
-  patchUser,
-  patchUserPassword,
-  patchUserEmail,
+    registerUser,
+    deleteUser,
+    loginUser,
+    refreshToken,
+    getCurrentUser,
+    patchUserPassword,
+    patchUserEmail,
 };

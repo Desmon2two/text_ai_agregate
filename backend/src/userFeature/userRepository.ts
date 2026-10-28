@@ -47,12 +47,13 @@ async function changeUserDisplayData(
   dbClient: Client,
   user_id: string,
   username: string,
-) {
+): Promise<User | null> {
   const result = await dbClient.query(
     `
   UPDATE users 
   SET username= $2,
   WHERE user_id = $1
+  RETURNING *
   `,
     [user_id, username],
   );
@@ -63,12 +64,13 @@ async function changeUserPassword(
   dbClient: Client,
   user_id: string,
   passwordHash: string,
-) {
+): Promise<User | null> {
   const result = await dbClient.query(
     `
   UPDATE users 
   SET password= $2,
   WHERE user_id = $1
+  RETURNING *
   `,
     [user_id, passwordHash],
   );
@@ -79,29 +81,26 @@ async function changeUserEmail(
   dbClient: Client,
   user_id: string,
   email: string,
-) {
+): Promise<User | null> {
   const result = await dbClient.query(
     `
   UPDATE users 
   SET email= $2,
   WHERE user_id = $1
+  RETURNING *
   `,
     [user_id, email],
   );
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
-async function deleteUser(
-  dbClient: Client,
-  userId: string,
-): Promise<PostgreSQLResponse | null> {
+async function deleteUser(dbClient: Client, user_id: string): Promise<0 | 1> {
   const result = await dbClient.query(
     `DELETE FROM users WHERE user_id = $1
     `,
-    [userId],
+    [user_id],
   );
-  if (!result) return null;
-  return result;
+  return result.rowCount;
 }
 
 export default {

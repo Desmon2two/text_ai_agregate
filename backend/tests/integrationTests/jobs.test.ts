@@ -5,10 +5,10 @@ import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
   dbClient = await setupTestDB();
-}, 15000);
+});
 afterAll(async () => {
   await teardownTestDB(dbClient);
-}, 15000);
+});
 beforeEach(async () => {
   await dbClient.query("BEGIN");
 });

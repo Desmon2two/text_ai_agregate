@@ -1,11 +1,10 @@
 import jwt from "jsonwebtoken";
-import { UnauthorizedError } from "../errors/unauthorizedError.js";
-function generateAccessToken(userId) {
-    return jwt.sign({ userId, type: "access" }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
+import { UnauthorizedError } from "../errors/applicationErrors";
+function generateAccessToken(user_id) {
+    return jwt.sign({ user_id, type: "access" }, process.env.JWT_SECRET, {
+        expiresIn: "4h",
     });
 }
-;
 function verifyAccessToken(token) {
     try {
         const result = jwt.verify(token, process.env.JWT_SECRET);
@@ -21,12 +20,11 @@ function verifyAccessToken(token) {
         throw error;
     }
 }
-function generateRefreshToken(userId) {
-    return jwt.sign({ userId, type: "refresh" }, process.env.JWT_SECRET, {
+function generateRefreshToken(user_id) {
+    return jwt.sign({ user_id, type: "refresh" }, process.env.JWT_SECRET, {
         expiresIn: "14d",
     });
 }
-;
 function verifyRefreshToken(token) {
     try {
         const result = jwt.verify(token, process.env.JWT_SECRET);

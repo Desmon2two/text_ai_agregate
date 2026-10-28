@@ -59,7 +59,9 @@ async function failJob(dbClient, job_id, reason) {
     const jobResult = await jobRepository.markCompleted(dbClient, job_id, validated_data, fullPrice);
     if (jobResult === null)
         throw Error("Complete job operation failed at mark job completed");
-    await eventRepository.createJobFailedEvent(dbClient, job_id, { error: reason });
+    await eventRepository.createJobFailedEvent(dbClient, job_id, {
+        error: reason,
+    });
     return jobResult;
 }
 export default {

@@ -5,6 +5,7 @@ import type { Attempt } from "../../src/jobFeature/types/AttemptTypes.js";
 function createTestUser(overrides: Partial<User> = {}): User {
   return {
     user_id: crypto.randomUUID(),
+    username: "testUserUsername",
     email: "testEmail@example.com",
     password: "exampleUserPassword!!!!",
     credits: 100,

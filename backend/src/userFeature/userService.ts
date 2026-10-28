@@ -18,9 +18,7 @@ async function registerUser(
   validateUserCredentials(email, password);
   validateUserDisplayedInfo(username);
   const existsByEmail = await userRepository.getUserByEmail(dbClient, email);
-  const existsByUsername = await userRepository.getUserById(dbClient, username);
-  if (existsByEmail || existsByUsername)
-    throw new ForbiddenError("User already exists");
+  if (existsByEmail) throw new ForbiddenError("User already exists");
   const hashedPassword = await passwordService.hashPassword(password);
   const user = await userRepository.createUser(
     dbClient,
@@ -38,7 +36,7 @@ async function loginUser(
   inputPassword: string,
 ): Promise<{ user_id: string; accessToken: string; refreshToken: string }> {
   validateUserCredentials(email, inputPassword);
-  const user = await userRepository.getUserByEmail(dbClient, email);
+  const user = await getCurrentUser(dbClient, undefined, email);
   if (!user) throw new UnauthorizedError("wrong email");
   const isPasswordCorrect = await passwordService.checkPassword(
     inputPassword,
@@ -85,7 +83,7 @@ async function patchUserEmail(
   email: string,
 ) {
   await validateUserCredentials(email, password);
-  const user = await userRepository.getUserById(dbClient, user_id);
+  const user = await getCurrentUser(dbClient, user_id);
   if (!user) throw new NotFoundError("User not found");
   const isCorrect = await passwordService.checkPassword(
     password,
@@ -93,7 +91,7 @@ async function patchUserEmail(
   );
   if (!isCorrect) throw new UnauthorizedError("Wrong password");
   if (user.email === email) throw new UnauthorizedError("Email is the same");
-  const existingUser = await userRepository.getUserByEmail(dbClient, email);
+  const existingUser = await getCurrentUser(dbClient, null, email);
   if (existingUser) throw new UnauthorizedError("Email already in use");
   const result = await userRepository.changeUserEmail(
     dbClient,
@@ -103,9 +101,9 @@ async function patchUserEmail(
   if (!result) throw new Error("Something went wrong, please try again");
   return;
 }
-async function refreshToken(dbClient: Client, token: string) {
+async function refreshAccessToken(dbClient: Client, token: string) {
   const payload = authService.verifyRefreshToken(token);
-  const user = await userRepository.getUserById(dbClient, payload.user_id);
+  const user = await getCurrentUser(dbClient, payload.user_id);
   if (!user) throw new UnauthorizedError("User does not exists");
   const accessToken = authService.generateAccessToken(user.user_id);
   return accessToken;
@@ -114,10 +112,18 @@ async function getCurrentUser(
   dbClient: Client,
   user_id?: string,
   email?: string,
-): Promise<User> {
+): Promise<User | NotFoundError> {
   if (!user_id && !email)
     throw new NotFoundError("Must provide at least one of identifyable fields");
   let user;
+  if (user_id && email) {
+    const userById = await userRepository.getUserById(dbClient, user_id);
+    const userByEmail = await userRepository.getUserByEmail(dbClient, email);
+    if (!userById || !userByEmail) throw new NotFoundError("No such user");
+    if (userById != userByEmail)
+      throw new NotFoundError("You are searching for different users");
+    return userById;
+  }
   if (user_id) {
     user = await userRepository.getUserById(dbClient, user_id);
   } else {
@@ -136,7 +142,7 @@ export default {
   registerUser,
   deleteUser,
   loginUser,
-  refreshToken,
+  refreshAccessToken,
   getCurrentUser,
   patchUserPassword,
   patchUserEmail,

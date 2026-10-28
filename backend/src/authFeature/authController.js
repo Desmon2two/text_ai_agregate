@@ -1,8 +1,9 @@
-import userUseCase from "../useCases/userUseCase.js";
+import userUseCase from "../userFeature/userUseCase.js";
+import { dbClient } from "../server.js";
 async function registerUser(req, res, next) {
     try {
         const { email, password, username } = req.body;
-        const result = await userUseCase.registerUser(email, password, username);
+        const result = await userUseCase.registerUser(dbClient, email, password, username);
         const isProduction = process.env.NODE_ENV === "production";
         res.cookie("accessToken", result.accessToken, {
             httpOnly: true,
@@ -18,7 +19,7 @@ async function registerUser(req, res, next) {
 async function loginUser(req, res, next) {
     try {
         const { email, password } = req.body;
-        const result = await userUseCase.loginUser(email, password);
+        const result = await userUseCase.loginUser(dbClient, email, password);
         const isProduction = process.env.NODE_ENV === "production";
         res.cookie("accessToken", result.accessToken, {
             httpOnly: true,
@@ -49,9 +50,9 @@ async function logoutUser(req, res, next) {
 async function refreshToken(req, res, next) {
     try {
         const { token } = req.body;
-        const result = await userUseCase.refreshToken(token);
+        const { accessToken } = await userUseCase.refreshAccessToken(dbClient, token);
         const isProduction = process.env.NODE_ENV === "production";
-        res.cookie("accessToken", result.accessToken, {
+        res.cookie("accessToken", accessToken, {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? "none" : "lax",
@@ -65,7 +66,7 @@ async function refreshToken(req, res, next) {
 async function deleteUser(req, res, next) {
     try {
         const { userId } = req.user;
-        await userUseCase.deleteUser(userId);
+        await userUseCase.deleteUser(dbClient, userId);
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
         res.status(204).send();
@@ -77,29 +78,28 @@ async function deleteUser(req, res, next) {
 async function getCurrentUser(req, res, next) {
     try {
         const { userId } = req.user;
-        const result = await userUseCase.getCurrentUser(userId);
+        const result = await userUseCase.getCurrentUser(dbClient, userId);
         res.status(200).json(result);
     }
     catch (error) {
         next(error);
     }
 }
-async function patchUser(req, res, next) {
-    try {
-        const { userId } = req.user;
-        const userData = req.body;
-        const result = await userUseCase.patchUser(userId, userData);
-        res.status(200).json(result);
-    }
-    catch (error) {
-        next(error);
-    }
-}
+// async function patchUser(req, res, next) {
+// 	try {
+// 		const { userId } = req.user;
+// 		const userData = req.body;
+// 		const result = await userUseCase.(dbClient, userId, userData);
+// 		res.status(200).json(result);
+// 	} catch (error) {
+// 		next(error);
+// 	}
+// }
 async function patchUserPassword(req, res, next) {
     try {
         const { userId } = req.user;
         const { currentPassword, newPassword } = req.body;
-        await userUseCase.patchUserPassword(userId, currentPassword, newPassword);
+        await userUseCase.patchUserPassword(dbClient, userId, currentPassword, newPassword);
         res.status(200).json({ message: "Password changed" });
     }
     catch (error) {
@@ -110,7 +110,7 @@ async function patchUserEmail(req, res, next) {
     try {
         const { userId } = req.user;
         const { email, password } = req.body;
-        await userUseCase.patchUserEmail(userId, password, email);
+        await userUseCase.patchUserEmail(dbClient, userId, password, email);
         res.status(200).json({ message: "Email changed" });
     }
     catch (error) {

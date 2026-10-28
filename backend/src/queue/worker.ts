@@ -1,7 +1,6 @@
 import type { Client } from "pg";
 import handleFailure from "../infrastructure/failureHandler.js";
 import mapErrorToAttemptError from "../infrastructure/utils/errorToProviderErrorMapper.js";
-import mapJobToAiRequest from "../infrastructure/utils/JobToAiRequestMapper.js";
 import jobRepository from "../jobFeature/jobRepository.js";
 import attemptRepository from "../jobFeature/attemptRepository.js";
 import eventRepository from "../jobFeature/eventRepository.js";
@@ -37,6 +36,7 @@ const worker = new Worker(
         stack: error.stack,
         previousState: prev,
       });
+      
     });
 
     worker.on("completed", (job_id) => {

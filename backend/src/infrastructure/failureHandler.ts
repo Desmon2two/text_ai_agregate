@@ -1,5 +1,5 @@
 import type { Client } from "pg";
-import type { AttemptError } from "../errors/AttemptErrorType.js";
+import type { AttemptError } from "../errors/applicationErrors.js";
 import attemptService from "../jobFeature/attemptService.js";
 import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
 import attemptRepository from "../jobFeature/attemptRepository.js";

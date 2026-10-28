@@ -45,11 +45,10 @@ async function markValidated(dbClient, attempt_id, data) {
     if (!attempt?.data?.received_data) {
         throw new Error("No received data to mark attempt validated");
     }
-    ;
-    if (!attempt?.data?.tokens.input_tokens || !attempt?.data?.tokens.output_tokens) {
+    if (!attempt?.data?.tokens.input_tokens ||
+        !attempt?.data?.tokens.output_tokens) {
         throw new Error("No received tokens to mark attempt validated");
     }
-    ;
     const result = await attemptRepository.markValidated(dbClient, attempt_id, data);
     if (result === null) {
         throw new Error("Attempt was not marked validated");
