@@ -10,8 +10,8 @@ class ApplicationError extends Error {
 export type AttemptError = {
   message: string;
   retryable: boolean;
-  provider?: string;
   code?: string;
+  model?: string;
 };
 
 class ForbiddenError extends ApplicationError {

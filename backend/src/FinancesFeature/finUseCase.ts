@@ -1,7 +1,5 @@
-import eventRepository from "../jobFeature/eventRepository.js";
 import jobRepository from "../jobFeature/jobRepository.js";
-import finRepository from "./finRepository.js";
-
+import finService from "./finService.js";
 async function changeCreditsOnJobCompletion(dbClient: Client, job_id: string) {
   if (!job_id || job_id == "") throw new Error("Invalid job_id input");
   const job = await jobRepository.getJobById(dbClient, job_id);
@@ -15,28 +13,23 @@ async function changeCreditsOnJobCompletion(dbClient: Client, job_id: string) {
   if (estimated_cost == actual_cost) return;
   const difference = estimated_cost - actual_cost;
   if (difference > 0) {
-    await finRepository.addCredits(dbClient, user_id, difference);
-    const event = await eventRepository.createCreditsAddedEvent(
+    const { fin_log_id } = await finService.addCredits(
       dbClient,
       user_id,
-      {
-        reason: "REFUND_ON_JOB_COMPLETION",
-        amount: difference,
-      },
+      difference,
+      "CREDITS_REFUND_ON_JOB_COMPLETION",
     );
-    return { difference, event_id: event.event_id };
+
+    return { difference, fin_log_id };
   }
   if (difference < 0) {
-    await finRepository.deductCredits(dbClient, user_id, difference);
-    const event = await eventRepository.createCreditsDeductedEvent(
+    const { fin_log_id } = await finService.deductCredits(
       dbClient,
       user_id,
-      {
-        reason: "DEDUCT_ON_JOB_COMPLETION",
-        amount: difference,
-      },
+      difference,
+      "CREDITS_DEDUCTION_ON_JOB_COMPLETION",
     );
-    return { difference, event_id: event.event_id };
+    return { difference, fin_log_id };
   }
 }
 export default {

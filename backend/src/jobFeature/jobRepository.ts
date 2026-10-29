@@ -1,8 +1,9 @@
 import type { Client } from "pg";
-import type { Job } from "./types/JobTypes.js";
+import type { Job, JobTypes } from "./types/JobTypes.js";
 import type { Attempt } from "./types/AttemptTypes.js";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 import type { JobStateTypes } from "./types/JobStateTypes.js";
+import type { User } from "../userFeature/types/userType.js";
 async function getJobById(
   dbClient: Client,
   job_id: string,
@@ -13,6 +14,26 @@ async function getJobById(
     WHERE job_id = $1
     `,
     [job_id],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
+}
+async function getJobsByUserId(
+  dbClient: Client,
+  user_id: string,
+): Promise<{
+  user: User;
+  jobs: { job_id: string; state: JobStateTypes; data?: unknown }[];
+} | null> {
+  const result = await dbClient.query(
+    `
+    SELECT users.user_id, jobs.job_id, jobs.state, jobs.data 
+     FROM users
+     JOIN jobs
+     ON users.user_id  = jobs.user_id
+    WHERE user_id = $1
+    `,
+    [user_id],
   );
   if (!result.rows[0]) return null;
   return result.rows[0];
@@ -35,7 +56,7 @@ async function getAttemptByIdsPerJob(
 async function createJob(
   dbClient: Client,
   user_id: string,
-  type: JobStateTypes,
+  type: JobTypes,
   body: unknown,
   estimated_cost: number,
 ): Promise<Job | null> {
@@ -153,6 +174,7 @@ async function markFailed(
 }
 export default {
   getJobById,
+  getJobsByUserId,
   deleteJob,
   getAttemptByIdsPerJob,
   createJob,

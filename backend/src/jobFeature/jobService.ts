@@ -2,7 +2,7 @@ import type { Job, JobTypes } from "./types/JobTypes.js";
 import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";
 import type { Client } from "pg";
-import type { JobStateTypes } from "./types/JobStateTypes.js";
+import { NotFoundError } from "../errors/applicationErrors.js";
 
 async function createJob(
   dbClient: Client,
@@ -63,7 +63,6 @@ async function markProcessing(dbClient: Client, job_id: string) {
   await eventRepository.createJobProcessingEvent(dbClient, job_id);
   return result.job_id;
 }
-
 async function completeJob(
   dbClient: Client,
   job_id: string,
@@ -96,12 +95,7 @@ async function failJob(
     throw new Error(
       "Job in 'COMPLETED' state and can't be transitioned to 'FAILED' state",
     );
-  const jobResult = await jobRepository.markCompleted(
-    dbClient,
-    job_id,
-    validated_data,
-    fullPrice,
-  );
+  const jobResult = await jobRepository.markFailed(dbClient, job_id, reason);
   if (jobResult === null)
     throw Error("Complete job operation failed at mark job completed");
   await eventRepository.createJobFailedEvent(dbClient, job_id, {
@@ -109,9 +103,21 @@ async function failJob(
   });
   return jobResult;
 }
+async function getJob(dbClient: Client, job_id: string) {
+  const job = await jobRepository.getJobById(dbClient, job_id);
+  if (!job) throw new NotFoundError("No such job");
+  return job;
+}
+async function getJobsByUser(dbClient: Client, user_id: string) {
+  const jobs = await jobRepository.getJobsByUserId(dbClient, user_id);
+  if (!jobs) throw new NotFoundError("No such job");
+  return jobs;
+}
 
 export default {
   createJob,
+  getJob,
+  getJobsByUser,
   markAccepted,
   markProcessing,
   markQueued,

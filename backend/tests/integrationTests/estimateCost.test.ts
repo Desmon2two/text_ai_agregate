@@ -1,5 +1,4 @@
-import { estimateCost } from "../../src/FinancesFeature/finService.js";
-
+import finService from "../../src/FinancesFeature/finService.js"
 import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
@@ -23,7 +22,7 @@ describe("Testing estimation on cost of job", () => {
     const invalidModel0 = "";
     const invalidModel1 = null;
     expect(async () => {
-      await estimateCost(
+      await finService.estimateCost(
         dbClient,
         invalidPrompt0,
         invalidJobType0,
@@ -31,7 +30,7 @@ describe("Testing estimation on cost of job", () => {
       );
     }).rejects.toThrow();
     expect(async () => {
-      await estimateCost(
+      await finService.estimateCost(
         dbClient,
         invalidPrompt1,
         invalidJobType1,
@@ -43,7 +42,7 @@ describe("Testing estimation on cost of job", () => {
     const prompt = "Hello, how are you?";
     const jobType = "code";
     const model = "gemma3b";
-    const res = await estimateCost(dbClient, prompt, jobType, model);
+    const res = await finService.estimateCost(dbClient, prompt, jobType, model);
     expect(typeof res.fullPrice).toBe("number");
     expect(res.fullPrice).toBeGreaterThan(0);
     expect(typeof res.inputPrice).toBe("number");
@@ -55,12 +54,12 @@ describe("Testing estimation on cost of job", () => {
     const prompt1 = "Null";
     const jobType1 = "SUMMARY";
     const model1 = "gemma3b";
-    const res1 = await estimateCost(dbClient, prompt1, jobType1, model1);
+    const res1 = await finService.estimateCost(dbClient, prompt1, jobType1, model1);
     const prompt2 =
       "Some significantly longer prompt - like this one. What can you tell me about SQLite? Is it good? How much can you tell me?";
     const jobType2 = "CODE";
     const model2 = "gpt-5";
-    const res2 = await estimateCost(dbClient, prompt2, jobType2, model2);
+    const res2 = await finService.estimateCost(dbClient, prompt2, jobType2, model2);
     expect(res2.fullPrice).toBeGreaterThan(res1.fullPrice);
   });
 });

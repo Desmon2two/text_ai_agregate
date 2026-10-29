@@ -1,9 +1,5 @@
 import { NotFoundError } from "../errors/applicationErrors.js";
-import {
-  estimateCost,
-  mapTokensToActualCost,
-  reserveCredits,
-} from "../FinancesFeature/finService.js";
+import finService from "../FinancesFeature/finService.js";
 import finUseCase from "../FinancesFeature/finUseCase.js";
 import jobService from "../jobFeature/jobService.js";
 import queueService from "../queue/queueService.js";
@@ -27,13 +23,13 @@ async function startJob(
   if (!user) throw new NotFoundError("User not found");
   dbClient.query("BEGIN");
   try {
-    const { fullPrice } = await estimateCost(
+    const { fullPrice } = await finService.estimateCost(
       dbClient,
       body.prompt,
       job_type,
       model,
     );
-    await reserveCredits(dbClient, user.user_id, fullPrice);
+    await finService.reserveCredits(dbClient, user.user_id, fullPrice);
     const { job_id } = await jobService.createJob(
       dbClient,
       job_type,
@@ -73,7 +69,7 @@ async function completeJob(
   if (job.state !== "PROCESSING")
     throw new Error("Job is not in processing state");
   const attempt = await attemptService.completeAttempt(dbClient, attempt_id);
-  const { fullPrice } = await mapTokensToActualCost(
+  const { fullPrice } = await finService.mapTokensToActualCost(
     dbClient,
     attempt.model,
     attempt.data.tokens.input_tokens,

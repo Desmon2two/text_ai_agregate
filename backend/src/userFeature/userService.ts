@@ -5,9 +5,13 @@ import {
   NotFoundError,
   UnauthorizedError,
 } from "../errors/applicationErrors.js";
-import { validateUserCredentials, validateUserDisplayedInfo } from "./js";
+import {
+  validateUserCredentials,
+  validateUserDisplayedInfo,
+} from "./userValidation.js";
 import userRepository from "./userRepository.js";
 import type { User } from "./types/userType.js";
+import type { Job } from "../jobFeature/types/JobTypes.js";
 
 async function registerUser(
   dbClient: Client,
@@ -112,7 +116,7 @@ async function getCurrentUser(
   dbClient: Client,
   user_id?: string,
   email?: string,
-): Promise<User | NotFoundError> {
+): Promise<User> {
   if (!user_id && !email)
     throw new NotFoundError("Must provide at least one of identifyable fields");
   let user;

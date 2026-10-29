@@ -1,8 +1,4 @@
 import { ApplicationError } from "../errors/applicationErrors.js";
-import { ForbiddenError } from "../errors/forbiddenError.js";
-import { NotFoundError } from "../errors/notFoundError.js";
-import { UnauthorizedError } from "../errors/unauthorizedError.js";
-import { ValidationError } from "../errors/validationError.js";
 
 function errorHandler(err, req, res, next) {
   if (err instanceof ApplicationError)

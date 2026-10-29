@@ -1,5 +1,7 @@
 import userService from "../userFeature/userService.js";
+import finService from "../FinancesFeature/finService.js";
 import { dbClient } from "../server.js";
+import userUseCase from "../userFeature/userUseCase.js";
 
 async function registerUser(req, res, next) {
   try {
@@ -88,6 +90,33 @@ async function getCurrentUser(req, res, next) {
     next(error);
   }
 }
+async function getCreditsOfCurrentUser(req, res, next) {
+  try {
+    const { user_id } = req.user;
+    const result = await finService.getCreditsOfUser(dbClient, user_id);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+async function getFinHistoryOfUser(req, res, next) {
+  try {
+    const { user_id } = req.user;
+    const result = await finService.getFinancialLogOfUser(dbClient, user_id);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+async function getAllJobsOfUser(req, res, next) {
+  try {
+    const { user_id } = req.user;
+    const result = await userUseCase.getAllJobsOfUser(dbClient, user_id);
+    res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
 // async function patchUser(req, res, next) {
 // 	try {
 // 		const { userId } = req.user;
@@ -131,6 +160,9 @@ export default {
   logoutUser,
   refreshAccessToken,
   getCurrentUser,
+  getCreditsOfCurrentUser,
+  getFinHistoryOfUser,
+  getAllJobsOfUser,
   // patchUser,
   patchUserPassword,
   patchUserEmail,
