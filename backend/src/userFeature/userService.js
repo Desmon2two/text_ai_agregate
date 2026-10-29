@@ -1,14 +1,13 @@
 import passwordService from "../authFeature/passwordService.js";
 import authService from "../authFeature/authService.js";
 import { ForbiddenError, NotFoundError, UnauthorizedError, } from "../errors/applicationErrors.js";
-import { validateUserCredentials, validateUserDisplayedInfo } from "./js";
+import { validateUserCredentials, validateUserDisplayedInfo, } from "./userValidation.js";
 import userRepository from "./userRepository.js";
 async function registerUser(dbClient, email, password, username) {
     validateUserCredentials(email, password);
     validateUserDisplayedInfo(username);
     const existsByEmail = await userRepository.getUserByEmail(dbClient, email);
-    const existsByUsername = await userRepository.getUserById(dbClient, username);
-    if (existsByEmail || existsByUsername)
+    if (existsByEmail)
         throw new ForbiddenError("User already exists");
     const hashedPassword = await passwordService.hashPassword(password);
     const user = await userRepository.createUser(dbClient, username, email, hashedPassword);
@@ -19,7 +18,7 @@ async function registerUser(dbClient, email, password, username) {
 }
 async function loginUser(dbClient, email, inputPassword) {
     validateUserCredentials(email, inputPassword);
-    const user = await userRepository.getUserByEmail(dbClient, email);
+    const user = await getCurrentUser(dbClient, undefined, email);
     if (!user)
         throw new UnauthorizedError("wrong email");
     const isPasswordCorrect = await passwordService.checkPassword(inputPassword, user.password);
@@ -52,7 +51,7 @@ async function patchUserPassword(dbClient, user_id, currentPassword, newPassword
 }
 async function patchUserEmail(dbClient, user_id, password, email) {
     await validateUserCredentials(email, password);
-    const user = await userRepository.getUserById(dbClient, user_id);
+    const user = await getCurrentUser(dbClient, user_id);
     if (!user)
         throw new NotFoundError("User not found");
     const isCorrect = await passwordService.checkPassword(password, user.password);
@@ -60,7 +59,7 @@ async function patchUserEmail(dbClient, user_id, password, email) {
         throw new UnauthorizedError("Wrong password");
     if (user.email === email)
         throw new UnauthorizedError("Email is the same");
-    const existingUser = await userRepository.getUserByEmail(dbClient, email);
+    const existingUser = await getCurrentUser(dbClient, null, email);
     if (existingUser)
         throw new UnauthorizedError("Email already in use");
     const result = await userRepository.changeUserEmail(dbClient, user.user_id, email);
@@ -68,9 +67,9 @@ async function patchUserEmail(dbClient, user_id, password, email) {
         throw new Error("Something went wrong, please try again");
     return;
 }
-async function refreshToken(dbClient, token) {
+async function refreshAccessToken(dbClient, token) {
     const payload = authService.verifyRefreshToken(token);
-    const user = await userRepository.getUserById(dbClient, payload.user_id);
+    const user = await getCurrentUser(dbClient, payload.user_id);
     if (!user)
         throw new UnauthorizedError("User does not exists");
     const accessToken = authService.generateAccessToken(user.user_id);
@@ -80,6 +79,15 @@ async function getCurrentUser(dbClient, user_id, email) {
     if (!user_id && !email)
         throw new NotFoundError("Must provide at least one of identifyable fields");
     let user;
+    if (user_id && email) {
+        const userById = await userRepository.getUserById(dbClient, user_id);
+        const userByEmail = await userRepository.getUserByEmail(dbClient, email);
+        if (!userById || !userByEmail)
+            throw new NotFoundError("No such user");
+        if (userById != userByEmail)
+            throw new NotFoundError("You are searching for different users");
+        return userById;
+    }
     if (user_id) {
         user = await userRepository.getUserById(dbClient, user_id);
     }
@@ -100,7 +108,7 @@ export default {
     registerUser,
     deleteUser,
     loginUser,
-    refreshToken,
+    refreshAccessToken,
     getCurrentUser,
     patchUserPassword,
     patchUserEmail,

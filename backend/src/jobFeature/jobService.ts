@@ -2,7 +2,8 @@ import type { Job, JobTypes } from "./types/JobTypes.js";
 import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";
 import type { Client } from "pg";
-import { NotFoundError } from "../errors/applicationErrors.js";
+import { ForbiddenError, NotFoundError } from "../errors/applicationErrors.js";
+import { JobStateTypes } from "./types/JobStateTypes.js";
 
 async function createJob(
   dbClient: Client,
@@ -19,7 +20,7 @@ async function createJob(
     body,
     estimated_cost,
   );
-  if (job?.state !== "CREATED") throw new Error("Job not in 'CREATED' state");
+  if (job?.state !== "CREATED") throw new ForbiddenError("Job not in 'CREATED' state");
   if (job === null) throw new Error("Job was not created");
   await eventRepository.createJobAcceptedEvent(dbClient, job.job_id);
   return job;
@@ -27,7 +28,7 @@ async function createJob(
 async function markAccepted(dbClient: Client, job_id: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job?.state !== "CREATED")
-    throw new Error(
+    throw new ForbiddenError(
       "Job not in 'CREATED' state to transition to 'ACCEPTED' state",
     );
   const result = await jobRepository.markAccepted(dbClient, job_id);
@@ -40,7 +41,7 @@ async function markAccepted(dbClient: Client, job_id: string) {
 async function markQueued(dbClient: Client, job_id: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job?.state !== "ACCEPTED")
-    throw new Error(
+    throw new ForbiddenError(
       "Job not in 'ACCEPTED' state to transition to 'QUEUED' state",
     );
   const result = await jobRepository.markQueued(dbClient, job_id);
@@ -53,7 +54,7 @@ async function markQueued(dbClient: Client, job_id: string) {
 async function markProcessing(dbClient: Client, job_id: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job?.state !== "QUEUED")
-    throw new Error(
+    throw new ForbiddenError(
       "Job not in 'QUEUED' state to transition to 'PROCESSING' state",
     );
   const result = await jobRepository.markProcessing(dbClient, job_id);
@@ -71,7 +72,7 @@ async function completeJob(
 ): Promise<Job> {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job?.state !== "PROCESSING")
-    throw new Error(
+    throw new ForbiddenError(
       "Job not in 'PROCESSING' state to transition to 'COMPLETED' state",
     );
   const jobResult = await jobRepository.markCompleted(
@@ -92,7 +93,7 @@ async function failJob(
 ): Promise<Job> {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job?.state === "COMPLETED")
-    throw new Error(
+    throw new ForbiddenError(
       "Job in 'COMPLETED' state and can't be transitioned to 'FAILED' state",
     );
   const jobResult = await jobRepository.markFailed(dbClient, job_id, reason);
@@ -102,6 +103,17 @@ async function failJob(
     error: reason,
   });
   return jobResult;
+}
+async function changeJobState(
+  dbClient: Client,
+  job_id: string,
+  state: JobStateTypes,
+) {
+  const job = await jobRepository.getJobById(dbClient, job_id);
+  if (!job) throw new NotFoundError("No such job to change state");
+  const res = await jobRepository.changeJobState(dbClient, job_id, state);
+  if (!res) throw new Error("Error during change of job state");
+  return;
 }
 async function getJob(dbClient: Client, job_id: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
@@ -119,6 +131,7 @@ export default {
   getJob,
   getJobsByUser,
   markAccepted,
+  changeJobState,
   markProcessing,
   markQueued,
   completeJob,

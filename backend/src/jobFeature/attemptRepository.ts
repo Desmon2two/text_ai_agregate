@@ -1,4 +1,5 @@
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
+import { ForbiddenError } from "../errors/applicationErrors.js";
 import type { AttemptError } from "../errors/AttemptErrorType.js";
 import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
 import type { Client } from "pg";
@@ -112,7 +113,7 @@ async function markValidated(
   }
 ) {
   if (data === null || !data)
-    throw new Error("Data can't be null while validating attempt");
+    throw new ForbiddenError("Data can't be null while validating attempt");
   const result = await dbClient.query(
     `UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW()

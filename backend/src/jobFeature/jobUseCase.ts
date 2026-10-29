@@ -1,4 +1,4 @@
-import { NotFoundError } from "../errors/applicationErrors.js";
+import { ForbiddenError, NotFoundError, ValidationError } from "../errors/applicationErrors.js";
 import finService from "../FinancesFeature/finService.js";
 import finUseCase from "../FinancesFeature/finUseCase.js";
 import jobService from "../jobFeature/jobService.js";
@@ -16,9 +16,9 @@ async function startJob(
   body: { prompt: string },
   files?: string,
 ) {
-  if (!body.prompt) throw new Error("No prompt to process job");
+  if (!body.prompt) throw new NotFoundError("No prompt to process job");
   if (body.prompt.length === 0)
-    throw new Error("Invalid prompt to process job");
+    throw new ValidationError("Invalid prompt to process job");
   const user = await userRepository.getUserById(dbClient, user_id);
   if (!user) throw new NotFoundError("User not found");
   dbClient.query("BEGIN");
@@ -65,9 +65,9 @@ async function completeJob(
   },
 ): Promise<void> {
   const job = await jobRepository.getJobById(dbClient, job_id);
-  if (job === null) throw new Error("No such job for completeJob");
+  if (job === null) throw new NotFoundError("No such job for completeJob");
   if (job.state !== "PROCESSING")
-    throw new Error("Job is not in processing state");
+    throw new ForbiddenError("Job is not in processing state");
   const attempt = await attemptService.completeAttempt(dbClient, attempt_id);
   const { fullPrice } = await finService.mapTokensToActualCost(
     dbClient,

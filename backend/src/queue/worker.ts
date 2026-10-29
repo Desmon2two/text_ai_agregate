@@ -6,7 +6,10 @@ import attemptRepository from "../jobFeature/attemptRepository.js";
 import eventRepository from "../jobFeature/eventRepository.js";
 import { Job, Worker } from "bullmq";
 import queueService, { connection } from "./queueService.js";
-import type { DispatchWorkerInputData } from "./types/DispatchWorkerInputDataType.js";
+import type {
+  DispatchWorkerInputData,
+  RecoveryWorkerInputData,
+} from "./types/DispatchWorkerInputDataType.js";
 import jobUseCase from "../jobFeature/jobUseCase.js";
 import localAiService from "../aiFeature/aiServices/localAiService.js";
 import {
@@ -16,6 +19,7 @@ import {
 import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
 import jobService from "../jobFeature/jobService.js";
 import attemptService from "../jobFeature/attemptService.js";
+import { NotFoundError } from "../errors/applicationErrors.js";
 
 const worker = new Worker(
   "dispatchQueue",
@@ -36,7 +40,6 @@ const worker = new Worker(
         stack: error.stack,
         previousState: prev,
       });
-      
     });
 
     worker.on("completed", (job_id) => {
@@ -50,6 +53,54 @@ const worker = new Worker(
       const { job_id, attempt_id } = bullJob.data;
       await bullJob.updateProgress("Initialized");
       await processJobFromBeginning(dbClient, bullJob, job_id, attempt_id);
+    } catch (error) {
+      console.error("Job processor threw:", error);
+      throw error;
+    } finally {
+      nonSecretVariables.getProjectState() === "test"
+        ? await teardownTestDB(dbClient)
+        : await teardownProdDB();
+    }
+  },
+  { connection },
+);
+const recoveryWorker = new Worker(
+  "reoveryQueue",
+  async (bullJob: Job<RecoveryWorkerInputData>) => {
+    let dbClient;
+    nonSecretVariables.getProjectState() === "test"
+      ? (dbClient = await setupTestDB())
+      : (dbClient = await setupProdDB());
+    worker.on("error", (error) => {
+      console.error("BullMQ worker error:", error);
+    });
+
+    worker.on("failed", (job, error, prev) => {
+      console.error("Job failed:", {
+        jobId: job?.data,
+        progress: job?.progress,
+        message: error.message,
+        stack: error.stack,
+        previousState: prev,
+      });
+    });
+
+    worker.on("completed", (job_id) => {
+      console.log("Worker recovered job:", job_id.data);
+    });
+
+    worker.on("progress", ({ progress }) => {
+      console.log("Worker progress:", progress);
+    });
+    try {
+      const { job_id, attempt_id } = bullJob.data;
+      await bullJob.updateProgress("Recovery initialized");
+      await processJobFromIntermediateState(
+        dbClient,
+        bullJob,
+        job_id,
+        attempt_id,
+      );
     } catch (error) {
       console.error("Job processor threw:", error);
       throw error;
@@ -89,28 +140,30 @@ async function processJobFromBeginning(
 }
 async function processJobFromIntermediateState(
   dbClient: Client,
+  bullJob: Job<RecoveryWorkerInputData>,
   job_id: string,
+  attempt_id: string,
   provider?: string,
   model?: string,
 ) {
   const job = await jobRepository.getJobById(dbClient, job_id);
   if (job === null) {
-    throw new Error("No such job to process from intermediate state");
+    throw new NotFoundError("No such job to process from intermediate state");
   }
   await eventRepository.createJobProcessedFromIntermediateStateEvent(
     dbClient,
     job.job_id,
   );
-  if (job.state === "CREATED") {
-    await queueService.addJobToDispatchQueue(undefined, {
-      dbClient,
+  if (job.state === "CREATED" || job.state === "QUEUED") {
+    await jobService.changeJobState(dbClient, job.job_id, "CREATED");
+    await queueService.addJobToDispatchQueue(dbClient, {
       job_id: job.job_id,
+      attempt_id,
     });
-  }
-  if (job.state === "QUEUED") {
-    if (!provider || !model)
-      throw new Error("Can't process this job - not listed provider or model");
-    await processJobFromBeginning(dbClient, job.job_id);
+    await bullJob.updateProgress(
+      "Recovery complete: Job returned to dispatch queue",
+    );
+    return;
   }
   if (job.state === "PROCESSING") {
     const attempts = await jobRepository.getAttemptByIdsPerJob(
@@ -118,9 +171,13 @@ async function processJobFromIntermediateState(
       job.job_id,
     );
     if (attempts === null) {
-      throw new Error("No such attempt to process from intermediate state");
+      throw new NotFoundError("No such attempt to process from intermediate state");
     }
-    await executeAttempt(dbClient, attempts[0].attempt_id);
+    await executeAttempt(dbClient, bullJob, attempts[0].attempt_id);
+    await bullJob.updateProgress(
+      "Recovery complete: Job finished by recovery worker",
+    );
+    return;
   }
 }
 async function executeAttempt(
@@ -130,11 +187,11 @@ async function executeAttempt(
 ) {
   const attempt = await attemptRepository.getAttemptById(dbClient, attemptId);
   if (attempt === null) {
-    throw new Error("No such attempt");
+    throw new NotFoundError("No such attempt");
   }
   const { attempt_id, job_id, retryable, provider } = attempt;
   const job = await jobRepository.getJobById(dbClient, job_id);
-  if (job === null) throw new Error("No such job");
+  if (job === null) throw new NotFoundError("No such job");
   try {
     await bullJob.updateProgress(
       `Job: ${job_id}, attempt: ${attempt_id}. Initial validation checks passed.`,

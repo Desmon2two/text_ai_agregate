@@ -1,4 +1,4 @@
-import { NotFoundError } from "../errors/applicationErrors.js";
+import { ForbiddenError, NotFoundError, ValidationError } from "../errors/applicationErrors.js";
 import { estimateInputAndOutputTokens } from "../infrastructure/utils/tokensEstimator.js";
 import eventRepository from "../jobFeature/eventRepository.js";
 import userRepository from "../userFeature/userRepository.js";
@@ -13,7 +13,7 @@ async function estimateCost(
   model: string,
 ) {
   if (!prompt || !job_type || !model) {
-    throw new Error("Invalid input: should not be null or undefined or empty");
+    throw new ValidationError("Invalid input: should not be null or undefined or empty");
   }
   const { inputTokens, outputTokens } = estimateInputAndOutputTokens(
     prompt,
@@ -103,17 +103,17 @@ async function reserveCredits(
   estimated_cost: number,
 ): Promise<{ fin_log_id: string }> {
   const user = await userRepository.getUserById(dbClient, user_id);
-  if (user === null) throw new Error("No user");
-  if (user.credits < 0) throw new Error("Negative credits");
-  if ((user.credits = 0)) throw new Error("Not enough credits");
+  if (user === null) throw new NotFoundError("No user");
+  if (user.credits < 0) throw new ForbiddenError("Negative credits");
+  if ((user.credits = 0)) throw new ForbiddenError("Not enough credits");
   if (user.credits <= estimated_cost)
-    throw new Error("Insufficient credits for job");
+    throw new ForbiddenError("Insufficient credits for job");
   const deducted = await finRepository.deductCredits(
     dbClient,
     user_id,
     estimated_cost,
   );
-  if (deducted === null) throw new Error("Error during credits reservation");
+  if (!deducted) throw new Error("Error during credits reservation");
   const { fin_log_id } = await finRepository.createFinLog(
     dbClient,
     user_id,

@@ -1,3 +1,4 @@
+import { ForbiddenError } from "../errors/applicationErrors.js";
 async function getAttemptById(dbClient, attempt_id) {
     const result = await dbClient.query(`SELECT * FROM attempts
       WHERE attempt_id = $1
@@ -61,7 +62,7 @@ async function markReceived(dbClient, attempt_id, data) {
 }
 async function markValidated(dbClient, attempt_id, data) {
     if (data === null || !data)
-        throw new Error("Data can't be null while validating attempt");
+        throw new ForbiddenError("Data can't be null while validating attempt");
     const result = await dbClient.query(`UPDATE attempts
     SET state = $3, data = $4, updated_at = NOW()
     WHERE attempt_id = $1

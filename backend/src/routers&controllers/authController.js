@@ -1,16 +1,18 @@
-import userUseCase from "../userFeature/userUseCase.js";
+import userService from "../userFeature/userService.js";
+import finService from "../FinancesFeature/finService.js";
 import { dbClient } from "../server.js";
+import userUseCase from "../userFeature/userUseCase.js";
 async function registerUser(req, res, next) {
     try {
         const { email, password, username } = req.body;
-        const result = await userUseCase.registerUser(dbClient, email, password, username);
+        const result = await userService.registerUser(dbClient, email, password, username);
         const isProduction = process.env.NODE_ENV === "production";
         res.cookie("accessToken", result.accessToken, {
             httpOnly: true,
             secure: isProduction,
             sameSite: isProduction ? "none" : "lax",
         });
-        res.status(201).json({ user: result.user });
+        res.status(201).send();
     }
     catch (error) {
         next(error);
@@ -19,7 +21,7 @@ async function registerUser(req, res, next) {
 async function loginUser(req, res, next) {
     try {
         const { email, password } = req.body;
-        const result = await userUseCase.loginUser(dbClient, email, password);
+        const result = await userService.loginUser(dbClient, email, password);
         const isProduction = process.env.NODE_ENV === "production";
         res.cookie("accessToken", result.accessToken, {
             httpOnly: true,
@@ -31,7 +33,7 @@ async function loginUser(req, res, next) {
             secure: isProduction,
             sameSite: isProduction ? "none" : "lax",
         });
-        res.status(200).json({ user: result.user });
+        res.status(200).send();
     }
     catch (error) {
         next(error);
@@ -47,10 +49,10 @@ async function logoutUser(req, res, next) {
         next(error);
     }
 }
-async function refreshToken(req, res, next) {
+async function refreshAccessToken(req, res, next) {
     try {
         const { token } = req.body;
-        const { accessToken } = await userUseCase.refreshAccessToken(dbClient, token);
+        const { accessToken } = await userService.refreshAccessToken(dbClient, token);
         const isProduction = process.env.NODE_ENV === "production";
         res.cookie("accessToken", accessToken, {
             httpOnly: true,
@@ -66,7 +68,7 @@ async function refreshToken(req, res, next) {
 async function deleteUser(req, res, next) {
     try {
         const { userId } = req.user;
-        await userUseCase.deleteUser(dbClient, userId);
+        await userService.deleteUser(dbClient, userId);
         res.clearCookie("accessToken");
         res.clearCookie("refreshToken");
         res.status(204).send();
@@ -77,8 +79,38 @@ async function deleteUser(req, res, next) {
 }
 async function getCurrentUser(req, res, next) {
     try {
-        const { userId } = req.user;
-        const result = await userUseCase.getCurrentUser(dbClient, userId);
+        const { userId, email } = req.user;
+        const result = await userService.getCurrentUser(dbClient, userId, email);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+async function getCreditsOfCurrentUser(req, res, next) {
+    try {
+        const { user_id } = req.user;
+        const result = await finService.getCreditsOfUser(dbClient, user_id);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+async function getFinHistoryOfUser(req, res, next) {
+    try {
+        const { user_id } = req.user;
+        const result = await finService.getFinancialLogOfUser(dbClient, user_id);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        next(error);
+    }
+}
+async function getAllJobsOfUser(req, res, next) {
+    try {
+        const { user_id } = req.user;
+        const result = await userUseCase.getAllJobsOfUser(dbClient, user_id);
         res.status(200).json(result);
     }
     catch (error) {
@@ -89,7 +121,7 @@ async function getCurrentUser(req, res, next) {
 // 	try {
 // 		const { userId } = req.user;
 // 		const userData = req.body;
-// 		const result = await userUseCase.(dbClient, userId, userData);
+// 		const result = await userService.(dbClient, userId, userData);
 // 		res.status(200).json(result);
 // 	} catch (error) {
 // 		next(error);
@@ -99,7 +131,7 @@ async function patchUserPassword(req, res, next) {
     try {
         const { userId } = req.user;
         const { currentPassword, newPassword } = req.body;
-        await userUseCase.patchUserPassword(dbClient, userId, currentPassword, newPassword);
+        await userService.patchUserPassword(dbClient, userId, currentPassword, newPassword);
         res.status(200).json({ message: "Password changed" });
     }
     catch (error) {
@@ -110,7 +142,7 @@ async function patchUserEmail(req, res, next) {
     try {
         const { userId } = req.user;
         const { email, password } = req.body;
-        await userUseCase.patchUserEmail(dbClient, userId, password, email);
+        await userService.patchUserEmail(dbClient, userId, password, email);
         res.status(200).json({ message: "Email changed" });
     }
     catch (error) {
@@ -122,9 +154,12 @@ export default {
     deleteUser,
     loginUser,
     logoutUser,
-    refreshToken,
+    refreshAccessToken,
     getCurrentUser,
-    patchUser,
+    getCreditsOfCurrentUser,
+    getFinHistoryOfUser,
+    getAllJobsOfUser,
+    // patchUser,
     patchUserPassword,
     patchUserEmail,
 };

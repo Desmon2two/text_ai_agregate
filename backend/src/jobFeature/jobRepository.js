@@ -1,8 +1,21 @@
+import { ForbiddenError } from "../errors/applicationErrors.js";
 async function getJobById(dbClient, job_id) {
     const result = await dbClient.query(`
     SELECT * FROM jobs 
     WHERE job_id = $1
     `, [job_id]);
+    if (!result.rows[0])
+        return null;
+    return result.rows[0];
+}
+async function getJobsByUserId(dbClient, user_id) {
+    const result = await dbClient.query(`
+    SELECT users.user_id, jobs.job_id, jobs.state, jobs.data 
+     FROM users
+     JOIN jobs
+     ON users.user_id  = jobs.user_id
+    WHERE user_id = $1
+    `, [user_id]);
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -34,6 +47,16 @@ async function deleteJob(dbClient, job_id) {
     if (!result)
         return null;
     return result;
+}
+async function changeJobState(dbClient, job_id, state) {
+    const result = await dbClient.query(`
+  UPDATE jobs
+  SET state = $2
+  WHERE job_id = $1
+  `, [job_id, state]);
+    if (!result.rows[0])
+        return null;
+    return result.rows[0];
 }
 async function markAccepted(dbClient, job_id) {
     const result = await dbClient.query(`UPDATE jobs
@@ -70,9 +93,9 @@ async function markProcessing(dbClient, job_id) {
 }
 async function markCompleted(dbClient, job_id, validatedData, actual_cost) {
     if (!validatedData || validatedData === null)
-        throw new Error("Data can't be empty");
+        throw new ForbiddenError("Data can't be empty");
     if (!actual_cost || actual_cost === null)
-        throw new Error("Actual cost can't be empty");
+        throw new ForbiddenError("Actual cost can't be empty");
     const data = JSON.stringify(validatedData);
     const result = await dbClient.query(`UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
@@ -97,7 +120,9 @@ async function markFailed(dbClient, job_id, error) {
 }
 export default {
     getJobById,
+    getJobsByUserId,
     deleteJob,
+    changeJobState,
     getAttemptByIdsPerJob,
     createJob,
     markAccepted,

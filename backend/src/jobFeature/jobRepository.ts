@@ -4,6 +4,7 @@ import type { Attempt } from "./types/AttemptTypes.js";
 import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 import type { JobStateTypes } from "./types/JobStateTypes.js";
 import type { User } from "../userFeature/types/userType.js";
+import { ForbiddenError } from "../errors/applicationErrors.js";
 async function getJobById(
   dbClient: Client,
   job_id: string,
@@ -84,6 +85,22 @@ async function deleteJob(
   if (!result) return null;
   return result;
 }
+async function changeJobState(
+  dbClient: Client,
+  job_id: string,
+  state: JobStateTypes,
+) {
+  const result = await dbClient.query(
+    `
+  UPDATE jobs
+  SET state = $2
+  WHERE job_id = $1
+  `,
+    [job_id, state],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
+}
 async function markAccepted(
   dbClient: Client,
   job_id: string,
@@ -139,9 +156,9 @@ async function markCompleted(
   actual_cost: number,
 ): Promise<Job | null> {
   if (!validatedData || validatedData === null)
-    throw new Error("Data can't be empty");
+    throw new ForbiddenError("Data can't be empty");
   if (!actual_cost || actual_cost === null)
-    throw new Error("Actual cost can't be empty");
+    throw new ForbiddenError("Actual cost can't be empty");
   const data = JSON.stringify(validatedData);
   const result = await dbClient.query(
     `UPDATE jobs
@@ -176,6 +193,7 @@ export default {
   getJobById,
   getJobsByUserId,
   deleteJob,
+  changeJobState,
   getAttemptByIdsPerJob,
   createJob,
   markAccepted,

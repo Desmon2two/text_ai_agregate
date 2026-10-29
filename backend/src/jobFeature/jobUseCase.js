@@ -1,5 +1,5 @@
-import { NotFoundError } from "../errors/applicationErrors.js";
-import { estimateCost, mapTokensToActualCost, reserveCredits, } from "../FinancesFeature/finService.js";
+import { ForbiddenError, NotFoundError, ValidationError } from "../errors/applicationErrors.js";
+import finService from "../FinancesFeature/finService.js";
 import finUseCase from "../FinancesFeature/finUseCase.js";
 import jobService from "../jobFeature/jobService.js";
 import queueService from "../queue/queueService.js";
@@ -8,16 +8,16 @@ import attemptService from "./attemptService.js";
 import jobRepository from "./jobRepository.js";
 async function startJob(dbClient, user_id, provider, model, job_type, body, files) {
     if (!body.prompt)
-        throw new Error("No prompt to process job");
+        throw new NotFoundError("No prompt to process job");
     if (body.prompt.length === 0)
-        throw new Error("Invalid prompt to process job");
+        throw new ValidationError("Invalid prompt to process job");
     const user = await userRepository.getUserById(dbClient, user_id);
     if (!user)
         throw new NotFoundError("User not found");
     dbClient.query("BEGIN");
     try {
-        const { fullPrice } = await estimateCost(dbClient, body.prompt, job_type, model);
-        await reserveCredits(dbClient, user.user_id, fullPrice);
+        const { fullPrice } = await finService.estimateCost(dbClient, body.prompt, job_type, model);
+        await finService.reserveCredits(dbClient, user.user_id, fullPrice);
         const { job_id } = await jobService.createJob(dbClient, job_type, fullPrice, user.user_id, body, files);
         const { attempt_id } = await attemptService.createAttempt(dbClient, job_id, provider, model);
         dbClient.query("COMMIT");
@@ -35,11 +35,11 @@ async function startJob(dbClient, user_id, provider, model, job_type, body, file
 async function completeJob(dbClient, job_id, attempt_id, data) {
     const job = await jobRepository.getJobById(dbClient, job_id);
     if (job === null)
-        throw new Error("No such job for completeJob");
+        throw new NotFoundError("No such job for completeJob");
     if (job.state !== "PROCESSING")
-        throw new Error("Job is not in processing state");
+        throw new ForbiddenError("Job is not in processing state");
     const attempt = await attemptService.completeAttempt(dbClient, attempt_id);
-    const { fullPrice } = await mapTokensToActualCost(dbClient, attempt.model, attempt.data.tokens.input_tokens, attempt.data.tokens.output_tokens);
+    const { fullPrice } = await finService.mapTokensToActualCost(dbClient, attempt.model, attempt.data.tokens.input_tokens, attempt.data.tokens.output_tokens);
     const finalizedJob = await jobService.completeJob(dbClient, job_id, attempt.data?.validated_data, fullPrice);
     await finUseCase.changeCreditsOnJobCompletion(dbClient, finalizedJob.job_id);
     return;
