@@ -1,9 +1,10 @@
-import { Client } from "pg";
+import type { Client } from "pg";
 import recoveryRepository from "./recoveryRepository.js";
 import jobService from "./jobService.js";
 import handleFailure from "../infrastructure/failureHandler.js";
 import eventRepository from "./eventRepository.js";
-import worker from "../queue/worker.js";
+import {worker} from "../queue/worker.js";
+import jobUseCase from "./jobUseCase.js";
 
 async function recoverAttempts(dbClient: Client, recovery_worker_id: string) {
   const recoverableAttempts =
@@ -28,8 +29,8 @@ async function recoverAttempts(dbClient: Client, recovery_worker_id: string) {
 
     try {
       if (
-        claimedAttempt.state === "SENDING" ||
-        claimedAttempt.state === "WAITING"
+        claimedAttempt.state === "SENDING" 
+        // || claimedAttempt.state === "WAITING"
       ) {
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
@@ -50,15 +51,18 @@ async function recoverAttempts(dbClient: Client, recovery_worker_id: string) {
         );
       }
       if (claimedAttempt.state === "VALIDATED") {
+        const {input_tokens , output_tokens} = claimedAttempt.data?.tokens
+        const {validated_data} = claimedAttempt.data?
         await eventRepository.createRecoveryStartedEvent(
           dbClient,
           claimedAttempt.attempt_id,
           { reason: "Stale attempt state" },
         );
-        await jobService.completeJob(
+        await jobUseCase.completeJob(
           dbClient,
-          claimedAttempt.attempt_id,
           claimedAttempt.job_id,
+          claimedAttempt.attempt_id,
+          {tokens: {input_tokens, output_tokens}, validated_data }
         );
         await eventRepository.createRecoveryCompletedEvent(
           dbClient,

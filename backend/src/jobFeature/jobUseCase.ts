@@ -1,4 +1,8 @@
-import { ForbiddenError, NotFoundError, ValidationError } from "../errors/applicationErrors.js";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../errors/applicationErrors.js";
 import finService from "../FinancesFeature/finService.js";
 import finUseCase from "../FinancesFeature/finUseCase.js";
 import jobService from "../jobFeature/jobService.js";
@@ -61,7 +65,7 @@ async function completeJob(
   attempt_id: string,
   data: {
     tokens: { input_tokens: number; output_tokens: number };
-    received_data: unknown;
+    validated_data: unknown;
   },
 ): Promise<void> {
   const job = await jobRepository.getJobById(dbClient, job_id);
