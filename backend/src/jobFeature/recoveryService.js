@@ -1,9 +1,9 @@
-import { Client } from "pg";
 import recoveryRepository from "./recoveryRepository.js";
 import jobService from "./jobService.js";
 import handleFailure from "../infrastructure/failureHandler.js";
 import eventRepository from "./eventRepository.js";
-import worker from "../queue/worker.js";
+import { worker } from "../queue/worker.js";
+import jobUseCase from "./jobUseCase.js";
 async function recoverAttempts(dbClient, recovery_worker_id) {
     const recoverableAttempts = await recoveryRepository.scanAttemptsForRecovery(dbClient);
     if (recoverableAttempts === null)
@@ -18,8 +18,9 @@ async function recoverAttempts(dbClient, recovery_worker_id) {
         }
         await dbClient.query("COMMIT");
         try {
-            if (claimedAttempt.state === "SENDING" ||
-                claimedAttempt.state === "WAITING") {
+            if (claimedAttempt.state === "SENDING"
+            // || claimedAttempt.state === "WAITING"
+            ) {
                 await eventRepository.createRecoveryStartedEvent(dbClient, claimedAttempt.attempt_id, { reason: "Timed out attempt state" });
                 await handleFailure(dbClient, claimedAttempt.attempt_id, {
                     message: "Timed out by recovery",
@@ -30,8 +31,10 @@ async function recoverAttempts(dbClient, recovery_worker_id) {
                 });
             }
             if (claimedAttempt.state === "VALIDATED") {
-                await eventRepository.createRecoveryStartedEvent(dbClient, claimedAttempt.attempt_id, { reason: "Stale attempt state" });
-                await jobService.completeJob(dbClient, claimedAttempt.attempt_id, claimedAttempt.job_id);
+                const { input_tokens, output_tokens } = claimedAttempt.data?.tokens;
+                const { validated_data } = claimedAttempt.data ?
+                    await eventRepository.createRecoveryStartedEvent(dbClient, claimedAttempt.attempt_id, { reason: "Stale attempt state" }) : ;
+                await jobUseCase.completeJob(dbClient, claimedAttempt.job_id, claimedAttempt.attempt_id, { tokens: { input_tokens, output_tokens }, validated_data });
                 await eventRepository.createRecoveryCompletedEvent(dbClient, claimedAttempt.attempt_id, { reason: "Manually completed the attempt" });
             }
             if (claimedAttempt.state === "CREATED") {

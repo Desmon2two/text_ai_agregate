@@ -1,4 +1,4 @@
-import { ForbiddenError, NotFoundError, ValidationError } from "../errors/applicationErrors.js";
+import { ForbiddenError, NotFoundError, ValidationError, } from "../errors/applicationErrors.js";
 import finService from "../FinancesFeature/finService.js";
 import finUseCase from "../FinancesFeature/finUseCase.js";
 import jobService from "../jobFeature/jobService.js";
