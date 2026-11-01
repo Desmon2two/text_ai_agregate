@@ -12,8 +12,6 @@ const dbClient = await connectDB(
   process.env.PGDATABASE,
 );
 
-// testLine
-
 const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
