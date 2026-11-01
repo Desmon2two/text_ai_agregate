@@ -10,9 +10,6 @@ async function addJob(req, res, next) {
     res.status(200).send(JSON.stringify(result));
   } catch (error) {
     next(error);
-
-
-    
   }
 }
 async function getJob(req, res, next) {
