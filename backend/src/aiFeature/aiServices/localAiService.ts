@@ -3,7 +3,9 @@ import mapErrorToAttemptError from "../../infrastructure/utils/errorToProviderEr
 const OLLAMA_URL = "http://127.0.0.1:11434/api/chat";
 const MODEL = "gemma3:1b";
 
-async function acceptJob(prompt: string): Promise<{
+async function acceptJob(
+  prompt: string,
+): Promise<{
   received_data: string;
   input_tokens: number;
   output_tokens: number;
@@ -11,9 +13,7 @@ async function acceptJob(prompt: string): Promise<{
   try {
     const response = await fetch(OLLAMA_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: MODEL,
         messages: [
@@ -21,10 +21,7 @@ async function acceptJob(prompt: string): Promise<{
             role: "system",
             content: "You are a helpful assistant. Be concise.",
           },
-          {
-            role: "user",
-            content: prompt,
-          },
+          { role: "user", content: prompt },
         ],
         stream: false,
       }),
@@ -35,7 +32,7 @@ async function acceptJob(prompt: string): Promise<{
       input_tokens: data.prompt_eval_count,
       output_tokens: data.eval_count,
     };
-  } catch (error) {
+  } catch (error: unknown) {
     const attemptError = mapErrorToAttemptError(
       error,
       false,
