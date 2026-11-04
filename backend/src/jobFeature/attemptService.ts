@@ -13,12 +13,13 @@ async function createAttempt(
   provider: string,
   model: string,
 ): Promise<Attempt> {
-  const attempts = await jobRepository.getAttemptByIdsPerJob(dbClient, job_id);
+  const attempts = await jobRepository.getAttemptsOfJob(dbClient, job_id);
   if (attempts === null) throw new NotFoundError("No attempts");
   const attemptNumber = attempts[0].attempt_number;
   if (attemptNumber >= nonSecretVariables.getMaxAttempts()) {
     throw new Error("Too many attempts for this job");
-  }ForbiddenError
+  }
+  ForbiddenError;
   const attempt = await attemptRepository.createAttempt(
     dbClient,
     job_id,
@@ -51,10 +52,7 @@ async function markReceived(
   dbClient: Client,
   attempt_id: string,
   data: {
-    tokens: {
-      input_tokens: number;
-      output_tokens: number;
-    };
+    tokens: { input_tokens: number; output_tokens: number };
     received_data: unknown;
   },
 ) {
@@ -79,10 +77,7 @@ async function markValidated(
   dbClient: Client,
   attempt_id: string,
   data: {
-    tokens: {
-      input_tokens: number;
-      output_tokens: number;
-    };
+    tokens: { input_tokens: number; output_tokens: number };
     validated_data: unknown;
   },
 ) {
@@ -118,7 +113,9 @@ async function completeAttempt(
   const attempt = await attemptRepository.getAttemptById(dbClient, attempt_id);
   if (!attempt) throw new NotFoundError("Attempt not found");
   if (attempt.state !== "VALIDATED")
-    throw new ForbiddenError("Attempt not in validated state, unable to complete");
+    throw new ForbiddenError(
+      "Attempt not in validated state, unable to complete",
+    );
   if (!attempt.data?.validated_data)
     throw new ForbiddenError(
       "No validated data present on the attempt to mark it completed",

@@ -39,7 +39,7 @@ async function getJobsByUserId(
   if (!result.rows[0]) return null;
   return result.rows[0];
 }
-async function getAttemptByIdsPerJob(
+async function getAttemptsOfJob(
   dbClient: Client,
   job_id: string,
 ): Promise<Attempt[] | null> {
@@ -53,6 +53,22 @@ async function getAttemptByIdsPerJob(
   );
   if (result.rows.length === 0) return null;
   return result.rows;
+}
+async function getLastAttemptOfJob(
+  dbClient: Client,
+  job_id: string,
+): Promise<Attempt | null> {
+  const result = await dbClient.query(
+    `
+    SELECT * FROM attempts 
+    WHERE job_id = $1
+    ORDER BY attempt_number DESC
+    LIMIT 1
+    `,
+    [job_id],
+  );
+  if (result.rows.length === 0) return null;
+  return result.rows[0];
 }
 async function createJob(
   dbClient: Client,
@@ -192,9 +208,10 @@ async function markFailed(
 export default {
   getJobById,
   getJobsByUserId,
+  getLastAttemptOfJob,
   deleteJob,
   changeJobState,
-  getAttemptByIdsPerJob,
+  getAttemptsOfJob,
   createJob,
   markAccepted,
   markQueued,

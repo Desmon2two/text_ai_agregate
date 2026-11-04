@@ -166,12 +166,11 @@ async function processJobFromIntermediateState(
     return;
   }
   if (job.state === "PROCESSING") {
-    const attempts = await jobRepository.getAttemptByIdsPerJob(
-      dbClient,
-      job.job_id,
-    );
+    const attempts = await jobRepository.getAttemptsOfJob(dbClient, job.job_id);
     if (attempts === null) {
-      throw new NotFoundError("No such attempt to process from intermediate state");
+      throw new NotFoundError(
+        "No such attempt to process from intermediate state",
+      );
     }
     await executeAttempt(dbClient, bullJob, attempts[0].attempt_id);
     await bullJob.updateProgress(

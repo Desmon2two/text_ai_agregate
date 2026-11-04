@@ -1,133 +1,155 @@
 import { ForbiddenError } from "../errors/applicationErrors.js";
 async function getJobById(dbClient, job_id) {
-    const result = await dbClient.query(`
+  const result = await dbClient.query(
+    `
     SELECT * FROM jobs 
     WHERE job_id = $1
-    `, [job_id]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [job_id],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function getJobsByUserId(dbClient, user_id) {
-    const result = await dbClient.query(`
+  const result = await dbClient.query(
+    `
     SELECT users.user_id, jobs.job_id, jobs.state, jobs.data 
      FROM users
      JOIN jobs
      ON users.user_id  = jobs.user_id
     WHERE user_id = $1
-    `, [user_id]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [user_id],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
-async function getAttemptByIdsPerJob(dbClient, job_id) {
-    const result = await dbClient.query(`
+async function getAttemptsOfJob(dbClient, job_id) {
+  const result = await dbClient.query(
+    `
     SELECT * FROM attempts 
     WHERE job_id = $1
     ORDER BY attempt_number DESC
-    `, [job_id]);
-    if (result.rows.length === 0)
-        return null;
-    return result.rows;
+    `,
+    [job_id],
+  );
+  if (result.rows.length === 0) return null;
+  return result.rows;
 }
 async function createJob(dbClient, user_id, type, body, estimated_cost) {
-    const result = await dbClient.query(`
+  const result = await dbClient.query(
+    `
     INSERT INTO jobs (state, type, body, user_id, estimated_cost)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
-    `, ["CREATED", type, body, user_id, estimated_cost]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    ["CREATED", type, body, user_id, estimated_cost],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function deleteJob(dbClient, job_id) {
-    const result = await dbClient.query(`
+  const result = await dbClient.query(
+    `
     DELETE FROM jobs WHERE job_id = $1
-    `, [job_id]);
-    if (!result)
-        return null;
-    return result;
+    `,
+    [job_id],
+  );
+  if (!result) return null;
+  return result;
 }
 async function changeJobState(dbClient, job_id, state) {
-    const result = await dbClient.query(`
+  const result = await dbClient.query(
+    `
   UPDATE jobs
   SET state = $2
   WHERE job_id = $1
-  `, [job_id, state]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+  `,
+    [job_id, state],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function markAccepted(dbClient, job_id) {
-    const result = await dbClient.query(`UPDATE jobs
+  const result = await dbClient.query(
+    `UPDATE jobs
     SET state = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [job_id, "CREATED", "ACCEPTED"]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [job_id, "CREATED", "ACCEPTED"],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function markQueued(dbClient, job_id) {
-    const result = await dbClient.query(`UPDATE jobs
+  const result = await dbClient.query(
+    `UPDATE jobs
     SET state = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [job_id, "ACCEPTED", "QUEUED"]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [job_id, "ACCEPTED", "QUEUED"],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function markProcessing(dbClient, job_id) {
-    const result = await dbClient.query(`UPDATE jobs
+  const result = await dbClient.query(
+    `UPDATE jobs
     SET state = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [job_id, "QUEUED", "PROCESSING"]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [job_id, "QUEUED", "PROCESSING"],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function markCompleted(dbClient, job_id, validatedData, actual_cost) {
-    if (!validatedData || validatedData === null)
-        throw new ForbiddenError("Data can't be empty");
-    if (!actual_cost || actual_cost === null)
-        throw new ForbiddenError("Actual cost can't be empty");
-    const data = JSON.stringify(validatedData);
-    const result = await dbClient.query(`UPDATE jobs
+  if (!validatedData || validatedData === null)
+    throw new ForbiddenError("Data can't be empty");
+  if (!actual_cost || actual_cost === null)
+    throw new ForbiddenError("Actual cost can't be empty");
+  const data = JSON.stringify(validatedData);
+  const result = await dbClient.query(
+    `UPDATE jobs
     SET state = $3, data = $4, actual_cost = $5, updated_at = NOW(), completed_at = NOW()
     WHERE job_id = $1
     AND state = $2
     RETURNING *
-    `, [job_id, "PROCESSING", "COMPLETED", data, actual_cost]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [job_id, "PROCESSING", "COMPLETED", data, actual_cost],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function markFailed(dbClient, job_id, error) {
-    const result = await dbClient.query(`UPDATE jobs
+  const result = await dbClient.query(
+    `UPDATE jobs
     SET state = $2, error = $3, updated_at = NOW()
     WHERE job_id = $1
     AND state = ('CREATED', 'ACCEPTED', 'QUEUED', 'PROCESSING')
     RETURNING *
-    `, [job_id, "FAILED", error]);
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
+    `,
+    [job_id, "FAILED", error],
+  );
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 export default {
-    getJobById,
-    getJobsByUserId,
-    deleteJob,
-    changeJobState,
-    getAttemptByIdsPerJob,
-    createJob,
-    markAccepted,
-    markQueued,
-    markProcessing,
-    markCompleted,
-    markFailed,
+  getJobById,
+  getJobsByUserId,
+  deleteJob,
+  changeJobState,
+  getAttemptsOfJob,
+  createJob,
+  markAccepted,
+  markQueued,
+  markProcessing,
+  markCompleted,
+  markFailed,
 };
