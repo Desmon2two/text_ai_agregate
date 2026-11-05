@@ -10,13 +10,13 @@ async function recoverAttempts(dbClient, recovery_worker_id) {
         return null;
     for (let index = 0; index < recoverableAttempts.length; index++) {
         const attempt = recoverableAttempts[index];
-        await dbClient.query("BEGIN");
+        await dbClient.exec("BEGIN");
         const claimedAttempt = await recoveryRepository.claimAttemptForRecovery(dbClient, attempt.attempt_id, recovery_worker_id, new Date(Date.now() + 5000));
         if (claimedAttempt === null) {
-            await dbClient.query("ROLLBACK");
+            await dbClient.exec("ROLLBACK");
             continue;
         }
-        await dbClient.query("COMMIT");
+        await dbClient.exec("COMMIT");
         try {
             if (claimedAttempt.state === "SENDING"
             // || claimedAttempt.state === "WAITING"
@@ -58,13 +58,13 @@ async function recoverJobs(dbClient, recovery_worker_id) {
     }
     for (let index = 0; index < recoverableJobs.length; index++) {
         const job = recoverableJobs[index];
-        await dbClient.query("BEGIN");
+        await dbClient.exec("BEGIN");
         const claimedJob = await recoveryRepository.claimJobForRecovery(dbClient, job.job_id, recovery_worker_id, new Date(Date.now() + 5000));
         if (claimedJob === null) {
-            await dbClient.query("ROLLBACK");
+            await dbClient.exec("ROLLBACK");
             continue;
         }
-        await dbClient.query("COMMIT");
+        await dbClient.exec("COMMIT");
         try {
             if (claimedJob.state === "QUEUED") {
                 await eventRepository.createRecoveryStartedEvent(dbClient, claimedJob.job_id, { reason: "Stale job state" });

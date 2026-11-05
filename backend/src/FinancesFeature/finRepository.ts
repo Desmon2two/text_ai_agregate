@@ -1,39 +1,42 @@
 import { FinLog } from "./types/FinLogType";
 
 async function getCostOfModel(dbClient: Client, model: string) {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
     SELECT * FROM models 
-    WHERE model = $1
-    `,
-    [model],
+    WHERE model = ? 
+    ;`
   );
+    link.run(1, model)
+    link.close()
   if (!result.rows[0]) return null;
-  return result.rows[0];
+  return result.rows[0]);
 }
 async function getCreditsOfUser(
   dbClient: Client,
   user_id: string,
 ): Promise<number | null> {
-  const result = await dbClient.query(
-    `SELECT credits FROM users WHERE user_id = $1`,
-    [user_id],
-  );
-  return result.rows[0].credits;
+  const link = await dbClient.prepare(
+    `SELECT credits FROM users WHERE user_id = ?
+	;`);
+    link.run(1, user_id)
+    link.close()
+  return result.rows[0]).credits;
 }
 async function getCreditLogOfUser(
   dbClient: Client,
   user_id: string,
 ): Promise<FinLog[] | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `SELECT * FROM fin_logs 
-    WHERE user_id = $1
+    WHERE user_id = ?
     SORT DESC
-    `,
-    [user_id],
+    ;`
   );
-  if (!result.rows) return null;
-  return result.rows;
+    link.run(1, user_id)
+    link.close()
+  if (!result.rows[0]) return null;
+  return result.rows[0];
 }
 async function createFinLog(
   dbClient: Client,
@@ -41,50 +44,57 @@ async function createFinLog(
   amount: number,
   reason: string,
 ): Promise<FinLog | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO fin_logs (amount, reason)
     VALUES ($2, $3)
     WHERE user_id = $1
     RETURNING *
-    `,
-    [user_id, amount, JSON.stringify(reason)],
+    ;`
   );
+    link.run(1, user_id)
+link.run(2, amount)
+link.run(3, JSON.stringify(reason))
+link.close()
   if (!result.rows[0]) return null;
-  return result.rows[0];
+  return result.rows[0]);
 }
 async function addCredits(
   dbClient: Client,
   user_id: string,
   amount: number,
 ): Promise<number | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
     UPDATE users
-    SET credits = credits + $2
-    WHERE user_id = $1
+    SET credits = credits + ?
+    WHERE user_id = ?
     RETURNING credits
-    `,
-    [user_id, amount],
+    ;`
   );
+    link.run(1, user_id)
+link.run(2, amount)
+link.close()
   if (!result.rows[0]) return null;
-  return result.rows[0].credits;
+  return result.rows[0]).credits;
 }
 async function deductCredits(
   dbClient: Client,
   user_id: string,
   amount: number,
 ): Promise<number | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
     UPDATE users
-    SET credits = credits - $2
-    WHERE user_id = $1
+    SET credits = credits - ? 
+    WHERE user_id = ? 
     RETURNING credits
-    `,
-    [user_id, amount],
-  );
-  if (!result.rows[0]) return null;
-  return result.rows[0].credits;
+    ;`
+);
+	link.run(1, user_id)
+	link.run(2, amount)
+	link.close()
+ if (!result.rows[0]) return null;
+  return result.rows[0]).credits;
 }
 export default {
   getCostOfModel,

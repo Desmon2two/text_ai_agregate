@@ -7,7 +7,7 @@ import eventRepository from "../jobFeature/eventRepository.js";
 import queueService from "../queue/queueService.js";
 export default async function handleFailure(dbClient, attempt_id, error) {
     try {
-        await dbClient.query("BEGIN");
+        await dbClient.exec("BEGIN");
         const attempt = await attemptRepository.getAttemptById(dbClient, attempt_id);
         if (attempt === null)
             throw new NotFoundError("No such attempt");
@@ -34,7 +34,7 @@ export default async function handleFailure(dbClient, attempt_id, error) {
         await eventRepository.createRetryCreatedEvent(dbClient, attempt.job_id, newAttempt.attempt_id, {
             previousAttemptId: attempt.attempt_id,
         });
-        await dbClient.query("COMMIT");
+        await dbClient.exec("COMMIT");
         await queueService.addJobToRecoveryQueue({
             job_id: newAttempt.job_id,
             attempt_id: newAttempt.attempt_id,
@@ -42,7 +42,7 @@ export default async function handleFailure(dbClient, attempt_id, error) {
         return newAttempt.attempt_id;
     }
     catch (error) {
-        await dbClient.query("ROLLBACK");
+        await dbClient.exec("ROLLBACK");
         throw error;
     }
 }

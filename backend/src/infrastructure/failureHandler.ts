@@ -17,7 +17,7 @@ export default async function handleFailure(
   error: AttemptError,
 ): Promise<string | null> {
   try {
-    await dbClient.query("BEGIN");
+    await dbClient.exec("BEGIN");
     const attempt = await attemptRepository.getAttemptById(
       dbClient,
       attempt_id,
@@ -65,14 +65,14 @@ export default async function handleFailure(
         previousAttemptId: attempt.attempt_id,
       },
     );
-    await dbClient.query("COMMIT");
+    await dbClient.exec("COMMIT");
     await queueService.addJobToRecoveryQueue({
       job_id: newAttempt.job_id,
       attempt_id: newAttempt.attempt_id,
     });
     return newAttempt.attempt_id;
   } catch (error) {
-    await dbClient.query("ROLLBACK");
+    await dbClient.exec("ROLLBACK");
     throw error;
   }
 }

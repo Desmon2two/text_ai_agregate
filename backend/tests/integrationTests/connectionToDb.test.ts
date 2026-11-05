@@ -7,13 +7,13 @@ afterAll(async () => {
   await teardownTestDB(dbClient);
 });
 it("connects and returns the current database", async () => {
-  const result = await dbClient.query("SELECT current_database() AS name");
+  const link = await dbClient.prepare("SELECT current_database() AS name");
 
   expect(result.rows).toHaveLength(1);
   expect(result.rows[0].name).not.toBeNull();
 });
 it("can execute a parameterized query", async () => {
-  const result = await dbClient.query("SELECT $1::int AS value", [42]);
+  const link = await dbClient.prepare("SELECT $1::int AS value", [42]);
 
   expect(result.rows[0].value).toBe(42);
 });

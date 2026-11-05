@@ -91,14 +91,14 @@ const recoveryWorker = new Worker("reoveryQueue", async (bullJob) => {
 async function processJobFromBeginning(dbClient, bullJob, job_id, attempt_id) {
     await bullJob.updateProgress(`Worker started job ${job_id}, attempt ${attempt_id}`);
     try {
-        await dbClient.query("BEGIN");
+        await dbClient.exec("BEGIN");
         await jobService.markProcessing(dbClient, job_id);
-        await dbClient.query("COMMIT");
+        await dbClient.exec("COMMIT");
         await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The job was marked processing and fully accepted for work. Starting attempt execution`);
         await executeAttempt(dbClient, bullJob, attempt_id);
     }
     catch (error) {
-        await dbClient.query("ROLLBACK");
+        await dbClient.exec("ROLLBACK");
         throw error;
     }
 }
@@ -139,13 +139,13 @@ async function executeAttempt(dbClient, bullJob, attemptId) {
     try {
         await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Initial validation checks passed.`);
         try {
-            await dbClient.query("BEGIN");
+            await dbClient.exec("BEGIN");
             await attemptService.markSending(dbClient, attempt_id);
-            await dbClient.query("COMMIT");
+            await dbClient.exec("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Attempt was successfully marked as sending`);
         }
         catch (error) {
-            await dbClient.query("ROLLBACK");
+            await dbClient.exec("ROLLBACK");
             console.error("Failed to mark attempt sending:", error);
             throw error;
         }
@@ -153,7 +153,7 @@ async function executeAttempt(dbClient, bullJob, attemptId) {
         await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The request returned a response`);
         // if (providerJobId !== null) {
         //   try {
-        //     await dbClient.query("BEGIN");
+        //     await dbClient.exec("BEGIN");
         //     await attemptRepository.markWaiting(
         //       dbClient,
         //       attempt_id,
@@ -164,53 +164,53 @@ async function executeAttempt(dbClient, bullJob, attemptId) {
         //       attempt_id,
         //       { providerJobId },
         //     );
-        //     await dbClient.query("COMMIT");
+        //     await dbClient.exec("COMMIT");
         //   } catch (error) {
-        //     await dbClient.query("ROLLBACK");
+        //     await dbClient.exec("ROLLBACK");
         //   }
         // }
         // const response = await aiProvider.receive(dbClient, aiRequest);
         try {
-            await dbClient.query("BEGIN");
+            await dbClient.exec("BEGIN");
             await attemptService.markReceived(dbClient, attempt_id, {
                 tokens: { input_tokens, output_tokens },
                 received_data,
             });
-            await dbClient.query("COMMIT");
+            await dbClient.exec("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as received`);
         }
         catch (error) {
-            await dbClient.query("ROLLBACK");
+            await dbClient.exec("ROLLBACK");
             console.error("Failed to mark attempt received:", error);
             throw error;
         }
         // THINK ABOUT HOW TO VALIDATE OUTPUT
         try {
-            await dbClient.query("BEGIN");
+            await dbClient.exec("BEGIN");
             await attemptService.markValidated(dbClient, attempt_id, {
                 tokens: { input_tokens, output_tokens },
                 validated_data: received_data,
             });
-            await dbClient.query("COMMIT");
+            await dbClient.exec("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. The attempt was marked as validated`);
         }
         catch (error) {
-            await dbClient.query("ROLLBACK");
+            await dbClient.exec("ROLLBACK");
             console.error("Failed to mark attempt validated:", error);
             throw error;
         }
         try {
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Starting the final job completion step`);
-            await dbClient.query("BEGIN");
+            await dbClient.exec("BEGIN");
             await jobUseCase.completeJob(dbClient, job.job_id, attempt_id, {
                 tokens: { input_tokens, output_tokens },
                 received_data,
             });
-            await dbClient.query("COMMIT");
+            await dbClient.exec("COMMIT");
             await bullJob.updateProgress(`Job: ${job_id}, attempt: ${attempt_id}. Job fully completed`);
         }
         catch (error) {
-            await dbClient.query("ROLLBACK");
+            await dbClient.exec("ROLLBACK");
             console.error("Failed to mark job and attempt complete:", error);
             throw error;
         }

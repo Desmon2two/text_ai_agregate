@@ -1,30 +1,28 @@
-import type { Client } from "pg";
 import type { User } from "./types/userType.js";
-import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 async function getUserById(
   dbClient: Client,
   user_id: string,
 ): Promise<User | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `SELECT * FROM users
-    WHERE user_id = $1
-    `,
-    [user_id],
-  );
-  if (!result.rows[0]) return null;
+    WHERE user_id = ?
+    ;`)
+  link.run(1, user_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function getUserByEmail(
   dbClient: Client,
   email: string,
 ): Promise<User | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `SELECT * FROM users
-    WHERE email = $1
-    `,
-    [email],
-  );
-  if (!result.rows[0]) return null;
+    WHERE email = ?
+    ;`)
+  link.run(1, email)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createUser(
@@ -33,14 +31,16 @@ async function createUser(
   email: string,
   passwordHash: string,
 ): Promise<User | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO users(username, email, password) 
-    VALUES ($1, $2, $3)
+    VALUES (?, ?, ?)
     RETURNING *
-    `,
-    [username, email, passwordHash],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+  link.run(1, username)
+  link.run(2, email)
+link.run(3, passwordHash)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function changeUserDisplayData(
@@ -48,16 +48,17 @@ async function changeUserDisplayData(
   user_id: string,
   username: string,
 ): Promise<User | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
   UPDATE users 
-  SET username= $2,
-  WHERE user_id = $1
+  SET username= ?,
+  WHERE user_id = ?
   RETURNING *
-  `,
-    [user_id, username],
-  );
-  if (!result.rows[0]) return null;
+  ;`)
+link.run(1, user_id)
+link.run(2, username)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function changeUserPassword(
@@ -65,16 +66,17 @@ async function changeUserPassword(
   user_id: string,
   passwordHash: string,
 ): Promise<User | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
   UPDATE users 
-  SET password= $2,
-  WHERE user_id = $1
+  SET password= ?,
+  WHERE user_id = ?
   RETURNING *
-  `,
-    [user_id, passwordHash],
-  );
-  if (!result.rows[0]) return null;
+  ;`)
+link.run(1, user_id)
+link.run(2, passwordHash)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function changeUserEmail(
@@ -82,27 +84,26 @@ async function changeUserEmail(
   user_id: string,
   email: string,
 ): Promise<User | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
   UPDATE users 
-  SET email= $2,
-  WHERE user_id = $1
+  SET email= ?,
+  WHERE user_id = ?
   RETURNING *
-  `,
-    [user_id, email],
-  );
-  if (!result.rows[0]) return null;
+  ;`)
+link.run(1, user_id)
+link.run(2, email)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function deleteUser(dbClient: Client, user_id: string): Promise<0 | 1> {
-  const result = await dbClient.query(
-    `DELETE FROM users WHERE user_id = $1
-    `,
-    [user_id],
-  );
+  const link = await dbClient.prepare(
+    `DELETE FROM users WHERE user_id = ?
+    ;`)
+  link.run(1, user_id)
   return result.rowCount;
 }
-
 export default {
   getUserById,
   getUserByEmail,

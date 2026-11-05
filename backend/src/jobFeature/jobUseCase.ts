@@ -25,7 +25,7 @@ async function startJob(
     throw new ValidationError("Invalid prompt to process job");
   const user = await userRepository.getUserById(dbClient, user_id);
   if (!user) throw new NotFoundError("User not found");
-  dbClient.query("BEGIN");
+  dbClient.exec("BEGIN");
   try {
     const { fullPrice } = await finService.estimateCost(
       dbClient,
@@ -48,14 +48,14 @@ async function startJob(
       provider,
       model,
     );
-    dbClient.query("COMMIT");
+    dbClient.exec("COMMIT");
     await queueService.addJobToDispatchQueue(undefined, { job_id, attempt_id });
     return {
       job_id,
       attempt_id,
     };
   } catch (error) {
-    dbClient.query("ROLLBACK");
+    dbClient.exec("ROLLBACK");
     throw error;
   }
 }

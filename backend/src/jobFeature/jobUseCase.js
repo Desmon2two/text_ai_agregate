@@ -14,13 +14,13 @@ async function startJob(dbClient, user_id, provider, model, job_type, body, file
     const user = await userRepository.getUserById(dbClient, user_id);
     if (!user)
         throw new NotFoundError("User not found");
-    dbClient.query("BEGIN");
+    dbClient.exec("BEGIN");
     try {
         const { fullPrice } = await finService.estimateCost(dbClient, body.prompt, job_type, model);
         await finService.reserveCredits(dbClient, user.user_id, fullPrice);
         const { job_id } = await jobService.createJob(dbClient, job_type, fullPrice, user.user_id, body, files);
         const { attempt_id } = await attemptService.createAttempt(dbClient, job_id, provider, model);
-        dbClient.query("COMMIT");
+        dbClient.exec("COMMIT");
         await queueService.addJobToDispatchQueue(undefined, { job_id, attempt_id });
         return {
             job_id,
@@ -28,7 +28,7 @@ async function startJob(dbClient, user_id, provider, model, job_type, body, file
         };
     }
     catch (error) {
-        dbClient.query("ROLLBACK");
+        dbClient.exec("ROLLBACK");
         throw error;
     }
 }

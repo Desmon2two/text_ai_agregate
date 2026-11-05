@@ -1,19 +1,17 @@
-import type { PostgreSQLResponse } from "../database/types/databaseResultTypes.js";
 import { ForbiddenError } from "../errors/applicationErrors.js";
 import type { AttemptError } from "../errors/AttemptErrorType.js";
 import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
-import type { Client } from "pg";
 async function getAttemptById(
   dbClient: Client,
   attempt_id: string,
 ): Promise<Attempt | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `SELECT * FROM attempts
-      WHERE attempt_id = $1
-      `,
-    [attempt_id],
-  );
-  if (!result.rows[0]) return null;
+      WHERE attempt_id = ?
+      ;`)
+link.run(1, attempt_id)
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createAttempt(
@@ -23,41 +21,47 @@ async function createAttempt(
   provider: string,
   model: string,
 ): Promise<Attempt | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
-    VALUES ($1, $2, $3, $4, $5)
+    VALUES (?, ?, ?, ?, ?)
     RETURNING *
-    `,
-    ["CREATED", job_id, attempt_number, provider, model],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+    link.run(1, "CREATED")
+link.run(2, job_id)
+link.run(3, attempt_number)
+link.run(4, provider)
+link.run(5, model)
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function deleteAttempt(
   dbClient: Client,
   attempt_id: string,
 ): Promise<PostgreSQLResponse> {
-  const result = await dbClient.query(
-    `DELETE FROM attempts WHERE attempt_id = $1
-    `,
-    [attempt_id],
-  );
-  return result;
+  const link = await dbClient.prepare(
+    `DELETE FROM attempts WHERE attempt_id = ?
+    ;`)
+link.run(1, attempt_id)
+link.close()
+	return result;
 }
 async function markSending(
   dbClient: Client,
   attempt_id: string,
 ): Promise<Attempt | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `UPDATE attempts
-    SET state = $3, updated_at = NOW()
-    WHERE attempt_id = $1
-    AND state = $2
+    SET state = ?, updated_at = datetime()
+    WHERE attempt_id = ?
+    AND state = ?
     RETURNING *
-    `,
-    [attempt_id, "CREATED", "SENDING"],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+link.run(1, attempt_id)
+link.run(2, "CREATED")
+link.run(3, "SENDING")
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 // async function markWaiting(
@@ -65,16 +69,20 @@ async function markSending(
 //   attempt_id: string,
 //   providerJobId?: string,
 // ) {
-//   const result = await dbClient.query(
+//   const link = await dbClient.prepare(
 //     `UPDATE attempts
-//     SET state = $3, provider_job_id = $4, updated_at = NOW()
-//     WHERE attempt_id = $1
-//     AND state = $2
+//     SET state = ?, provider_job_id = ?, updated_at = NOW()
+//     WHERE attempt_id = ?
+//     AND state = ?
 //     RETURNING *
 //     `,
-//     [attempt_id, "SENDING", "WAITING", providerJobId || null],
+//     link.run(1, attempt_id)
+// link.run(2, "SENDING")
+// link.run(3, "WAITING")
+// link.run(4, providerJobId || null),
 //   );
-//   if (!result.rows[0]) return null;
+//   link.close();
+//	if (!result.rows[0]) return null;
 //   return result.rows[0];
 // }
 async function markReceived(
@@ -88,23 +96,25 @@ async function markReceived(
     received_data: unknown;
   },
 ) {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `UPDATE attempts
-    SET state = $3, data = $4, updated_at = NOW()
-    WHERE attempt_id = $1
-    AND state = $2
+    SET state = ?, data = ?, updated_at = datetime()
+    WHERE attempt_id = ?
+    AND state = ?
     RETURNING *
-    `,
-    [attempt_id, "SENDING", "RECEIVED", data],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+link.run(1, attempt_id)
+link.run(2, "SENDING")
+link.run(3, "RECEIVED")
+link.run(4, data)
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markValidated(
   dbClient: Client,
   attempt_id: string,
   data: {
-
     tokens: {
       input_tokens: number;
       output_tokens: number;
@@ -114,32 +124,38 @@ async function markValidated(
 ) {
   if (data === null || !data)
     throw new ForbiddenError("Data can't be null while validating attempt");
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `UPDATE attempts
-    SET state = $3, data = $4, updated_at = NOW()
-    WHERE attempt_id = $1
-    AND state = $2
+    SET state = ?, data = ?, updated_at = datetime()
+    WHERE attempt_id = ?
+    AND state = ?
     RETURNING *
-    `,
-    [attempt_id, "RECEIVED", "VALIDATED", data],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+link.run(1, attempt_id)
+link.run(2, "RECEIVED")
+link.run(3, "VALIDATED")
+link.run(4, data)
+link.close()
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markCompleted(
   dbClient: Client,
   attempt_id: string,
 ): Promise<Attempt | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `UPDATE attempts
-    SET state = $3, updated_at = NOW(), completed_at = NOW()
-    WHERE attempt_id = $1
-    AND state = $2
+    SET state = ?, updated_at = datetime(), completed_at = datetime()
+    WHERE attempt_id = ?
+    AND state = ?
     RETURNING *
-    `,
-    [attempt_id, "VALIDATED", "COMPLETED"],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+link.run(1, attempt_id)
+link.run(2, "VALIDATED")
+link.run(3, "COMPLETED")
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function markFailed(
@@ -147,16 +163,18 @@ async function markFailed(
   attempt_id: string,
   error: AttemptError,
 ) {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `UPDATE attempts
-    SET state = $2, error = $3, updated_at = NOW()
-    WHERE attempt_id = $1
+    SET state = ?, error = ?, updated_at = datetime()
+    WHERE attempt_id = ?
     AND state IN ('CREATED', 'SENDING', 'WAITING', 'RECEIVED', 'VALIDATED')
     RETURNING *
-    `,
-    [attempt_id, "FAILED", error],
-  );
-  if (!result.rows[0]) return null;
+    ;`)
+link.run(1, attempt_id)
+link.run(2, "FAILED")
+link.run(3, error)
+link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 export default {

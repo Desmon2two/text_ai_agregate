@@ -1,73 +1,77 @@
-import { Client } from "pg";
-import type { PostgreSQLResponse } from "../database/types/databaseResultTypes";
 import type { EventType } from "./types/EventType";
 async function getEventById(dbClient: Client, event_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `
   SELECT * FROM events
-  WHERE event_id = $1
-  `,
-    [event_id],
-  );
-  if (!result.rows[0]) return null;
+  WHERE event_id = ?
+  ;`
+);
+link.run(1, event_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createJobAcceptedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id) 
-    VALUES ('JOB_ACCEPTED', $1)
+    VALUES ('JOB_ACCEPTED', ?)
     RETURNING *
-    `,
-    [job_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createJobQueuedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id) 
-    VALUES ('JOB_QUEUED', $1)
+    VALUES ('JOB_QUEUED', ?)
     RETURNING *
-    `,
-    [job_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createJobProcessingEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id) 
-    VALUES ('JOB_PROCESSING', $1)
+    VALUES ('JOB_PROCESSING', ?)
     RETURNING *
-    `,
-    [job_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createJobProcessedFromIntermediateStateEvent(
   dbClient: Client,
   job_id: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id) 
-    VALUES ('JOB_PROCESSING_FROM_INTERMEDIATE_STATE', $1)
+    VALUES ('JOB_PROCESSING_FROM_INTERMEDIATE_STATE', ?)
     RETURNING *
-    `,
-    [job_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createWorkerStartedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id) 
-    VALUES ('WORKER_STARTED', $1)
+    VALUES ('WORKER_STARTED', ?)
     RETURNING *
-    `,
-    [job_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createAttemptCreatedEvent(
@@ -75,25 +79,28 @@ async function createAttemptCreatedEvent(
   attempt_id: string,
   metadata: { origin: string },
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id, metadata) 
-    VALUES ('ATTEMPT_CREATED', $1, $2)
+    VALUES ('ATTEMPT_CREATED', ?, ?)
     RETURNING *
-    `,
-    [attempt_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id)
+  link.run(2, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createSendingRequestEvent(dbClient: Client, attempt_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id) 
-    VALUES ('SENDING_REQUEST', $1)
+    VALUES ('SENDING_REQUEST', ?)
     RETURNING *
-    `,
-    [attempt_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 // async function createWaitingForResponseEvent(
@@ -101,67 +108,73 @@ async function createSendingRequestEvent(dbClient: Client, attempt_id: string): 
 //   attempt_id: string,
 //   metadata: { providerJobId: string },
 // ): Promise<EventType | null> {
-//   const result = await dbClient.query(
+//   const link = await dbClient.prepare(
 //     `INSERT INTO events(name, attempt_id, metadata) 
 //     VALUES ('WAITING_FOR_RESPONSE', $1, $2)
 //     RETURNING *
 //     `,
-//     [attempt_id, metadata],
+// link.run(2, metadata),
+//     link.run(1, attempt_id)
 //   );
-//   if (!result.rows[0]) return null;
+//   link.close();
+// if (!result.rows[0]) return null;
 //   return result.rows[0];
 // }
 async function createResponseReceivedEvent(
   dbClient: Client,
   attempt_id: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id) 
-    VALUES ('RESPONSE_RECEIVED', $1)
+    VALUES ('RESPONSE_RECEIVED', ?)
     RETURNING *
-    `,
-    [attempt_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createResponseValidatedEvent(
   dbClient: Client,
   attempt_id: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id) 
-    VALUES ('RESPONSE_VALIDATED', $1)
+    VALUES ('RESPONSE_VALIDATED', ?)
     RETURNING *
-    `,
-    [attempt_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createAttemptCompletedEvent(
   dbClient: Client,
   attempt_id: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id) 
-    VALUES ('ATTEMPT_COMPLETED', $1)
+    VALUES ('ATTEMPT_COMPLETED', ?)
     RETURNING *
-    `,
-    [attempt_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createJobCompletedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id) 
-    VALUES ('JOB_COMPLETED', $1)
+    VALUES ('JOB_COMPLETED', ?)
     RETURNING *
-    `,
-    [job_id],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createAttemptFailedEvent(
@@ -169,14 +182,16 @@ async function createAttemptFailedEvent(
   attempt_id: string,
   metadata: { error: unknown },
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id, metadata) 
-    VALUES ('ATTEMPT_FAILED', $1, $2)
+    VALUES ('ATTEMPT_FAILED', ?, ?)
     RETURNING *
-    `,
-    [attempt_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id)
+  link.run(2, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createJobFailedEvent(
@@ -184,14 +199,16 @@ async function createJobFailedEvent(
   job_id: string,
   metadata: { error: unknown },
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id, metadata) 
-    VALUES ('JOB_FAILED', $1, $2)
+    VALUES ('JOB_FAILED', ?, ?)
     RETURNING *
-    `,
-    [job_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, job_id)
+  link.run(2, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createRetryCreatedEvent(
@@ -200,14 +217,17 @@ async function createRetryCreatedEvent(
   attempt_id: string,
   metadata: { previousAttemptId: string },
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, job_id, attempt_id, metadata) 
-    VALUES ('RETRY_CREATED', $1, $2, $3)
+    VALUES ('RETRY_CREATED', ?, ?, ?)
     RETURNING *
-    `,
-    [job_id, attempt_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+    link.run(1, job_id)
+  link.run(2, attempt_id)
+  link.run(3, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createRecoveryStartedEvent(
@@ -216,14 +236,17 @@ async function createRecoveryStartedEvent(
   metadata: { reason: string },
   attempt_id?: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id, job_id, metadata) 
-    VALUES ('RECOVERY_STARTED', $1, $2, $3)
+    VALUES ('RECOVERY_STARTED', ?, ?, ?)
     RETURNING *
-    `,
-    [attempt_id || null, job_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id || null)
+  link.run(2, job_id)
+  link.run(3, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createRecoveryAbandonedEvent(
@@ -232,14 +255,17 @@ async function createRecoveryAbandonedEvent(
   metadata: { reason: string },
   attempt_id?: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id, job_id, metadata) 
-    VALUES ('RECOVERY_ABANDONED', $1, $2, $3)
+    VALUES ('RECOVERY_ABANDONED', ?, ?, ?)
     RETURNING *
-    `,
-    [attempt_id || null, job_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id || null)
+  link.run(2, job_id)
+  link.run(3, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createCreditsAddedEvent(
@@ -247,14 +273,16 @@ async function createCreditsAddedEvent(
   user_id: string,
   metadata: { reason: string; amount: number },
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, user_id, metadata) 
-    VALUES ('CREDITS_ADDED', $1, $2)
+    VALUES ('CREDITS_ADDED', ?, ?)
     RETURNING *
-    `,
-    [user_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, user_id)
+  link.run(2, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createCreditsDeductedEvent(
@@ -262,14 +290,16 @@ async function createCreditsDeductedEvent(
   user_id: string,
   metadata: { reason: string; amount: number },
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, user_id, metadata) 
-    VALUES ('CREDITS_DEDUCTED', $1, $2)
+    VALUES ('CREDITS_DEDUCTED', ?, ?)
     RETURNING *
-    `,
-    [user_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+    link.run(1, user_id)
+  link.run(2, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function createRecoveryCompletedEvent(
@@ -278,25 +308,29 @@ async function createRecoveryCompletedEvent(
   metadata: { reason: string },
   attempt_id?: string,
 ): Promise<EventType | null> {
-  const result = await dbClient.query(
+  const link = await dbClient.prepare(
     `INSERT INTO events(name, attempt_id, job_id, metadata) 
-    VALUES ('RECOVERY_COMPLETED', $1, $2, $3)
+    VALUES ('RECOVERY_COMPLETED', ?, ?, ?)
     RETURNING *
-    `,
-    [attempt_id || null, job_id, metadata],
+    ;`
   );
-  if (!result.rows[0]) return null;
+  link.run(1, attempt_id || null)
+  link.run(2, job_id)
+  link.run(3, metadata)
+  link.close();
+if (!result.rows[0]) return null;
   return result.rows[0];
 }
 async function deleteEvent(
   dbClient: Client,
   event_id: string,
 ): Promise<PostgreSQLResponse> {
-  const result = await dbClient.query(
-    `DELETE FROM events WHERE event_id = $1`,
-    [event_id],
+  const link = await dbClient.prepare(
+ $1   `DELETE FROM events WHERE event_id = ?;`
   );
-  return result;
+  link.run(1, event_id)
+  link.close()
+  return result.rowCount;
 }
 
 export default {
