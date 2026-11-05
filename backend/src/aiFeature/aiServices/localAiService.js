@@ -5,9 +5,7 @@ async function acceptJob(prompt) {
     try {
         const response = await fetch(OLLAMA_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 model: MODEL,
                 messages: [
@@ -15,10 +13,7 @@ async function acceptJob(prompt) {
                         role: "system",
                         content: "You are a helpful assistant. Be concise.",
                     },
-                    {
-                        role: "user",
-                        content: prompt,
-                    },
+                    { role: "user", content: prompt },
                 ],
                 stream: false,
             }),

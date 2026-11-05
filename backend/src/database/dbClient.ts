@@ -1,30 +1,10 @@
-import { dbConfigConstructor } from "./dbConfig.js";
-import pg from "pg";
-import fs from "fs";
-
+import {Database} from "node:sqlite"
+import dbTables from "../database/dbTables.js";
+let dbClient;
 async function connectDB(
-  user: string,
-  password: string,
-  host: string,
-  port: number,
-  database: string,
 ) {
-  const dbConfig = dbConfigConstructor(user, password, host, port, database, {
-    rejectUnauthorized: true,
-    ca: fs.readFileSync("./ca.pem").toString(),
-  });
-
-  const client = new pg.Client(dbConfig);
-
-  try {
-    await client.connect();
-    console.log("Connected to db");
-
-    return client;
-  } catch (error) {
-    console.log("error during connection to db");
-    throw error;
-  }
-}
-
-export { connectDB };
+dbClient = new Database('./DB.sqlite')
+await dbTables.createRequiredTables(dbClient) 
+console.log("Database connected")
+};
+export { connectDB, dbClient };
