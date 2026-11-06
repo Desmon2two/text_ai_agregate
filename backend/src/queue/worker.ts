@@ -13,7 +13,7 @@ import type {
 import jobUseCase from "../jobFeature/jobUseCase.js";
 import localAiService from "../aiFeature/aiServices/localAiService.js";
 import {
-  setupTestDB,
+  connectDB,
   teardownTestDB,
 } from "../../tests/helpers/testDatabase.js";
 import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
@@ -26,7 +26,7 @@ const worker = new Worker(
   async (bullJob: Job<DispatchWorkerInputData>) => {
     let dbClient;
     nonSecretVariables.getProjectState() === "test"
-      ? (dbClient = await setupTestDB())
+      ? (dbClient = await connectDB())
       : (dbClient = await setupProdDB());
     worker.on("error", (error) => {
       console.error("BullMQ worker error:", error);
@@ -69,7 +69,7 @@ const recoveryWorker = new Worker(
   async (bullJob: Job<RecoveryWorkerInputData>) => {
     let dbClient;
     nonSecretVariables.getProjectState() === "test"
-      ? (dbClient = await setupTestDB())
+      ? (dbClient = await connectDB())
       : (dbClient = await setupProdDB());
     worker.on("error", (error) => {
       console.error("BullMQ worker error:", error);

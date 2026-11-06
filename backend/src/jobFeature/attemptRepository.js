@@ -5,7 +5,6 @@ async function getAttemptById(dbClient, attempt_id) {
       ;`);
     link.run(1, attempt_id);
     link.close();
-    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -21,7 +20,6 @@ async function createAttempt(dbClient, job_id, attempt_number, provider, model) 
     link.run(4, provider);
     link.run(5, model);
     link.close();
-    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -35,7 +33,7 @@ async function deleteAttempt(dbClient, attempt_id) {
 }
 async function markSending(dbClient, attempt_id) {
     const link = await dbClient.prepare(`UPDATE attempts
-    SET state = ?, updated_at = NOW()
+    SET state = ?, updated_at = datetime()
     WHERE attempt_id = ?
     AND state = ?
     RETURNING *
@@ -43,7 +41,6 @@ async function markSending(dbClient, attempt_id) {
     link.run(1, attempt_id);
     link.run(2, "CREATED");
     link.run(3, "SENDING");
-    link.close();
     link.close();
     if (!result.rows[0])
         return null;
@@ -67,13 +64,12 @@ async function markSending(dbClient, attempt_id) {
 // link.run(4, providerJobId || null),
 //   );
 //   link.close();
-if (!result.rows[0])
-    return null;
+//	if (!result.rows[0]) return null;
 //   return result.rows[0];
 // }
 async function markReceived(dbClient, attempt_id, data) {
     const link = await dbClient.prepare(`UPDATE attempts
-    SET state = ?, data = ?, updated_at = NOW()
+    SET state = ?, data = ?, updated_at = datetime()
     WHERE attempt_id = ?
     AND state = ?
     RETURNING *
@@ -83,7 +79,6 @@ async function markReceived(dbClient, attempt_id, data) {
     link.run(3, "RECEIVED");
     link.run(4, data);
     link.close();
-    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -92,7 +87,7 @@ async function markValidated(dbClient, attempt_id, data) {
     if (data === null || !data)
         throw new ForbiddenError("Data can't be null while validating attempt");
     const link = await dbClient.prepare(`UPDATE attempts
-    SET state = ?, data = ?, updated_at = NOW()
+    SET state = ?, data = ?, updated_at = datetime()
     WHERE attempt_id = ?
     AND state = ?
     RETURNING *
@@ -109,7 +104,7 @@ async function markValidated(dbClient, attempt_id, data) {
 }
 async function markCompleted(dbClient, attempt_id) {
     const link = await dbClient.prepare(`UPDATE attempts
-    SET state = ?, updated_at = NOW(), completed_at = NOW()
+    SET state = ?, updated_at = datetime(), completed_at = datetime()
     WHERE attempt_id = ?
     AND state = ?
     RETURNING *
@@ -118,14 +113,13 @@ async function markCompleted(dbClient, attempt_id) {
     link.run(2, "VALIDATED");
     link.run(3, "COMPLETED");
     link.close();
-    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
 async function markFailed(dbClient, attempt_id, error) {
     const link = await dbClient.prepare(`UPDATE attempts
-    SET state = ?, error = ?, updated_at = NOW()
+    SET state = ?, error = ?, updated_at = datetime()
     WHERE attempt_id = ?
     AND state IN ('CREATED', 'SENDING', 'WAITING', 'RECEIVED', 'VALIDATED')
     RETURNING *
@@ -133,7 +127,6 @@ async function markFailed(dbClient, attempt_id, error) {
     link.run(1, attempt_id);
     link.run(2, "FAILED");
     link.run(3, error);
-    link.close();
     link.close();
     if (!result.rows[0])
         return null;

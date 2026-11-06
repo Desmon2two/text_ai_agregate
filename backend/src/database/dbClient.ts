@@ -3,9 +3,13 @@ import dbTables from "../database/dbTables.js";
 let dbClient;
 async function connectDB(
 ) {
-  dbClient = new sqlite.DatabaseSync('./src/database/DB.sqlite')
-console.log(dbClient.prepare('SELECT sqlite_version() AS version').get());
-await dbTables.createRequiredTables(dbClient) 
-console.log("Database connected")
+	dbClient = new sqlite.DatabaseSync('./src/database/DB.sqlite')
+	console.log(dbClient.prepare('SELECT sqlite_version() AS version').get());
+	await dbTables.createRequiredTables(dbClient)
+	console.log("Database connected")
 };
-export { connectDB, dbClient };
+async function disconnectDB(dbClient) {
+	await dbClient.end()
+	console.log("Database disconnected")
+}
+export { connectDB, disconnectDB, dbClient };

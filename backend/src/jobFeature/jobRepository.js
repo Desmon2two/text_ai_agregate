@@ -4,8 +4,8 @@ async function getJobById(dbClient, job_id) {
     SELECT * FROM jobs 
     WHERE job_id = ?
     ;`);
-    link.run(1, job_id),
-        link.close();
+    link.run(1, job_id);
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -18,8 +18,8 @@ async function getJobsByUserId(dbClient, user_id) {
      ON users.user_id  = jobs.user_id
     WHERE user_id = ?
     ;`);
-    link.run(1, user_id),
-        link.close();
+    link.run(1, user_id);
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -30,8 +30,8 @@ async function getAttemptsOfJob(dbClient, job_id) {
     WHERE job_id = ?
     ORDER BY attempt_number DESC
     ;`);
-    link.run(1, job_id),
-    ;
+    link.run(1, job_id);
+    link.close();
     if (result.rows.length === 0)
         return null;
     return result.rows;
@@ -43,8 +43,8 @@ async function getLastAttemptOfJob(dbClient, job_id) {
     ORDER BY attempt_number DESC
     LIMIT 1
     ;`);
-    link.run(1, job_id),
-    ;
+    link.run(1, job_id);
+    link.close();
     if (result.rows.length === 0)
         return null;
     return result.rows[0];
@@ -59,22 +59,21 @@ async function createJob(dbClient, user_id, type, body, estimated_cost) {
     link.run(2, type);
     link.run(3, body);
     link.run(4, user_id);
-    link.run(5, estimated_cost),
-        link.close();
+    link.run(5, estimated_cost);
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
-async function deleteJob(dbClient, job_id) {
-    const link = await dbClient.prepare(`
+ || 1 > {
+    const: link = await dbClient.prepare(`
     DELETE FROM jobs WHERE job_id = ?
-    ;`);
-    link.run(1, job_id),
-        link.close();
-    if (!result)
-        return null;
-    return result;
-}
+    ;`),
+    link, : .run(1, job_id),
+    link, : .close(),
+    if(result) { }, : .rowCount === 0, return: 1,
+    return: 0
+};
 async function changeJobState(dbClient, job_id, state) {
     const link = await dbClient.prepare(`
   UPDATE jobs
@@ -82,8 +81,8 @@ async function changeJobState(dbClient, job_id, state) {
   WHERE job_id = ?
   ;`);
     link.run(1, job_id);
-    link.run(2, state),
-        link.close();
+    link.run(2, state);
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -97,8 +96,8 @@ async function markAccepted(dbClient, job_id) {
     ;`);
     link.run(1, job_id);
     link.run(2, "CREATED");
-    link.run(3, "ACCEPTED"),
-        link.close();
+    link.run(3, "ACCEPTED");
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -112,23 +111,23 @@ async function markQueued(dbClient, job_id) {
     ;`);
     link.run(1, job_id);
     link.run(2, "ACCEPTED");
-    link.run(3, "QUEUED"),
-        link.close();
+    link.run(3, "QUEUED");
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
 }
 async function markProcessing(dbClient, job_id) {
     const link = await dbClient.prepare(`UPDATE jobs
-    SET state = ?, updated_at = NOW()
+    SET state = ?, updated_at = datetime()
     WHERE job_id = ?
     AND state = ?
     RETURNING *
     ;`);
     link.run(1, job_id);
     link.run(2, "QUEUED");
-    link.run(3, "PROCESSING"),
-        link.close();
+    link.run(3, "PROCESSING");
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -149,8 +148,8 @@ async function markCompleted(dbClient, job_id, validatedData, actual_cost) {
     link.run(2, "PROCESSING");
     link.run(3, "COMPLETED");
     link.run(4, data);
-    link.run(5, actual_cost),
-        link.close();
+    link.run(5, actual_cost);
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];
@@ -164,8 +163,8 @@ async function markFailed(dbClient, job_id, error) {
     ;`);
     link.run(1, job_id);
     link.run(2, "FAILED");
-    link.run(3, error),
-        link.close();
+    link.run(3, error);
+    link.close();
     if (!result.rows[0])
         return null;
     return result.rows[0];

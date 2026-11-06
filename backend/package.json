@@ -11,12 +11,12 @@
   "type": "module",
   "main": "./src/server.js",
   "scripts": {
-    "dev": "tsc & node ./src/server.js",
-    "test:all": "tsc & cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testAll.config.ts --verbose --watchAll=false --runInBand",
-    "test:integration": "tsc & cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testIntegration.config.ts --verbose --watchAll=false --runInBand",
-    "test:service": "tsc & cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testServiceLevel.config.ts --verbose --watchAll=false --runInBand",
-    "test:unit": "tsc & cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testUnitLevel.config.ts  --verbose --watchAll=false --runInBand",
-    "test:useCase": "tsc & cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testUseCaseLevel.config.ts --verbose --watchAll=false --runInBand"
+    "dev": "tsc; node ./src/server.js",
+    "test:all": "tsc; cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testAll.config.ts --verbose --watchAll=false --runInBand",
+    "test:integration": "tsc; cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testIntegration.config.ts --verbose --watchAll=false --runInBand",
+    "test:service": "tsc; cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testServiceLevel.config.ts --verbose --watchAll=false --runInBand",
+    "test:unit": "tsc; cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testUnitLevel.config.ts  --verbose --watchAll=false --runInBand",
+    "test:useCase": "tsc; cross-env NODE_OPTIONS=--experimental-vm-modules jest --config jest.testUseCaseLevel.config.ts --verbose --watchAll=false --runInBand"
   },
   "dependencies": {
     "bullmq": "^6.4.0",

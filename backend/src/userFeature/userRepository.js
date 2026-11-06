@@ -6,7 +6,6 @@ async function getUserById(dbClient, user_id) {
     link.close();
     if (!result.rows[0])
         return null;
-    ;
     return result.rows[0];
 }
 async function getUserByEmail(dbClient, email) {
@@ -17,7 +16,6 @@ async function getUserByEmail(dbClient, email) {
     link.close();
     if (!result.rows[0])
         return null;
-    ;
     return result.rows[0];
 }
 async function createUser(dbClient, username, email, passwordHash) {
@@ -31,7 +29,6 @@ async function createUser(dbClient, username, email, passwordHash) {
     link.close();
     if (!result.rows[0])
         return null;
-    ;
     return result.rows[0];
 }
 async function changeUserDisplayData(dbClient, user_id, username) {
@@ -46,7 +43,6 @@ async function changeUserDisplayData(dbClient, user_id, username) {
     link.close();
     if (!result.rows[0])
         return null;
-    ;
     return result.rows[0];
 }
 async function changeUserPassword(dbClient, user_id, passwordHash) {
@@ -61,7 +57,6 @@ async function changeUserPassword(dbClient, user_id, passwordHash) {
     link.close();
     if (!result.rows[0])
         return null;
-    ;
     return result.rows[0];
 }
 async function changeUserEmail(dbClient, user_id, email) {
@@ -76,7 +71,6 @@ async function changeUserEmail(dbClient, user_id, email) {
     link.close();
     if (!result.rows[0])
         return null;
-    ;
     return result.rows[0];
 }
 async function deleteUser(dbClient, user_id) {
