@@ -7,12 +7,11 @@ afterAll(async () => {
 	await disconnectDB(dbClient);
 });
 it("connects and returns the current database", async () => {
-	const link = await dbClient.prepare("SELECT sqlite_version() AS name").run()
-	console.log(link)
-	expect(link).not.toBeNull();
+	const link = await dbClient.prepare("SELECT sqlite_version() AS name").get()
+	console.log(link.name)
+	expect(link.name).not.toBeNull();
 });
-it("can execute a parameterized exec", async () => {
-	const link = await dbClient.prepare("SELECT $1::int AS value", [42]);
-
-	expect(result.rows[0].value).toBe(42);
+it("can execute a parameterized query", async () => {
+	const link = await dbClient.prepare("SELECT ? AS value").get(42)
+	expect(link.value).toBe(42);
 });

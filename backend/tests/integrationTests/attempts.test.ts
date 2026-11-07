@@ -9,10 +9,10 @@ afterAll(async () => {
 	await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-	await dbClient.exec("BEGIN");
+	dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-	await dbClient.exec("ROLLBACK");
+	dbClient.exec("ROLLBACK");
 });
 
 describe("Testing attempt repository", () => {
@@ -29,34 +29,39 @@ describe("Testing attempt repository", () => {
 		expect(result?.attempt_id).not.toBeNull();
 	});
 	it("Should delete attempts", async () => {
-		const { attempt_id, attempt_number, provider, model } = createTestAttempt();
-		await attemptRepository.createAttempt(
+		const { job_id, attempt_number, provider, model } = createTestAttempt();
+		const attempt = await attemptRepository.createAttempt(
 			dbClient,
 			job_id,
 			attempt_number,
 			provider,
 			model,
 		);
-		const res = await attemptRepository.deleteAttempt(dbClient, attempt_id);
-		expect(res.rowCount).toBe(1);
+		const res = await attemptRepository.deleteAttempt(dbClient, attempt.attempt_id);
+		expect(res).toBe(1);
 	});
 	it("Should process attempts", async () => {
 		const attempt = createTestAttempt({
 			data: {
 				tokens: { input_tokens: 5, output_tokens: 12 },
 				received_data: "actually something",
+				validated_data: "somethingElse"
 			},
 		});
 		const testAttempt = await attemptRepository.createAttempt(dbClient, job_id, attempt.attempt_number, attempt.provider, attempt.model)
-		await attemptRepository.markSending(dbClient, testAttempt?.attempt_id)
-		await attemptRepository.markReceived(dbClient, testAttempt?.attempt_id, attempt.data)
-		await attemptRepository.markValidated(dbClient, testAttempt?.attempt_id, attempt.data)
+		if (testAttempt === null) throw new Error("No attempt was created")
+		const sending = await attemptRepository.markSending(dbClient, testAttempt?.attempt_id)
+		if (sending === null) throw new Error("No sending")
+		const received = await attemptRepository.markReceived(dbClient, testAttempt?.attempt_id, attempt.data)
+		if (received === null) throw new Error("No received")
+		const validated = await attemptRepository.markValidated(dbClient, testAttempt?.attempt_id, attempt.data)
+		if (validated === null) throw new Error("No validated")
 		const result = await attemptRepository.markCompleted(
 			dbClient,
-			testAttempt.attempt_id,
-			attempt.data,
+			testAttempt?.attempt_id,
 		);
-		expect(result?.data?.received_data).toBe("actually something");
+		if (result === null) throw new Error("No result")
+		expect(result?.data?.validated_data).toBe("somethingElse");
 	});
 	it("Should not allow invalid state transitions", async () => {
 		const attempt = createTestAttempt({
@@ -66,43 +71,8 @@ describe("Testing attempt repository", () => {
 				received_data: "actually something",
 			},
 		});
-		const attempt2 = createTestAttempt({
-			state: "CREATED",
-			data: {
-				tokens: { input_tokens: 5, output_tokens: 12 },
-				received_data: "actually something",
-			},
-		});
-
-		const result = await attemptRepository.markCompleted(
-			dbClient,
-			attempt.attempt_id,
-			attempt.data,
-		);
-		const result2 = await attemptRepository.markCompleted(
-			dbClient,
-			attempt2.attempt_id,
-			attempt2.data,
-		);
-		expect(result).toBeNull();
-		expect(result2).toBeNull();
-	});
-	it("Should not allow completion without data present", async () => {
-		const attempt = createTestAttempt({
-			data: {
-				tokens: { input_tokens: 5, output_tokens: 12 },
-				received_data: null,
-			},
-		});
-		await attemptRepository.markCompleted(
-			dbClient,
-			attempt.attempt_id,
-			attempt.data?.validated_data
-		)
-		const result = await attemptRepository.getAttemptById(
-			dbClient,
-			attempt.attempt_id
-		)
-		expect(result.state).not.toBe('COMPLETED');
+		const testAttempt = await attemptRepository.createAttempt(dbClient, attempt.job_id, attempt.attempt_number, attempt.provider, attempt.model)
+		const res = await attemptRepository.markCompleted(dbClient, testAttempt.attempt_id)
+		expect(res).toBeNull()
 	});
 });
