@@ -1,105 +1,108 @@
 import attemptRepository from "../../src/jobFeature/attemptRepository.js";
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 import { createTestAttempt, createTestJob } from "../helpers/factoryFunctions.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
-  dbClient = await setupTestDB();
+	dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+	await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-  await dbClient.query("BEGIN");
+	await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.query("ROLLBACK");
+	await dbClient.exec("ROLLBACK");
 });
 
 describe("Testing attempt repository", () => {
-  const {job_id} = createTestJob()
-  it(" Should create attempts", async () => {
-    const { attempt_number, provider, model } = createTestAttempt();
-    const result = await attemptRepository.createAttempt(
-      dbClient,
-      job_id,
-      attempt_number,
-      provider,
-      model,
-    );
-    expect(result?.attempt_id).not.toBeNull();
-  });
-  it("Should delete attempts", async () => {
-    const { attempt_id, attempt_number, provider, model } = createTestAttempt();
-    await attemptRepository.createAttempt(
-      dbClient,
-      job_id,
-      attempt_number,
-      provider,
-      model,
-    );
-    const res = await attemptRepository.deleteAttempt(dbClient, attempt_id);
-    expect(res.rowCount).toBe(1);
-  });
-  it("Should process attempts", async () => {
-    const attempt = createTestAttempt({
-      data: {
-        tokens: { input_tokens: 5, output_tokens: 12 },
-        received_data: "actually something",
-      },
-    });
-    const testAttempt = await attemptRepository.createAttempt(dbClient, job_id, attempt.attempt_number, attempt.provider, attempt.model)
-    await attemptRepository.markSending(dbClient, testAttempt?.attempt_id)
-    await attemptRepository.markReceived(dbClient, testAttempt?.attempt_id, attempt.data)
-    await attemptRepository.markValidated(dbClient, testAttempt?.attempt_id, attempt.data)
-    const result = await attemptRepository.markCompleted(
-      dbClient,
-      testAttempt.attempt_id,
-      attempt.data,
-    );
-    expect(result?.data?.received_data).toBe("actually something");
-  });
-  it("Should not allow invalid state transitions", async () => {
-    const attempt = createTestAttempt({
-      state: "COMPLETED",
-      data: {
-        tokens: { input_tokens: 5, output_tokens: 12 },
-        received_data: "actually something",
-      },
-    });
-    const attempt2 = createTestAttempt({
-      state: "CREATED",
-      data: {
-        tokens: { input_tokens: 5, output_tokens: 12 },
-        received_data: "actually something",
-      },
-    });
+	const { job_id } = createTestJob()
+	it(" Should create attempts", async () => {
+		const { attempt_number, provider, model } = createTestAttempt();
+		const result = await attemptRepository.createAttempt(
+			dbClient,
+			job_id,
+			attempt_number,
+			provider,
+			model,
+		);
+		expect(result?.attempt_id).not.toBeNull();
+	});
+	it("Should delete attempts", async () => {
+		const { attempt_id, attempt_number, provider, model } = createTestAttempt();
+		await attemptRepository.createAttempt(
+			dbClient,
+			job_id,
+			attempt_number,
+			provider,
+			model,
+		);
+		const res = await attemptRepository.deleteAttempt(dbClient, attempt_id);
+		expect(res.rowCount).toBe(1);
+	});
+	it("Should process attempts", async () => {
+		const attempt = createTestAttempt({
+			data: {
+				tokens: { input_tokens: 5, output_tokens: 12 },
+				received_data: "actually something",
+			},
+		});
+		const testAttempt = await attemptRepository.createAttempt(dbClient, job_id, attempt.attempt_number, attempt.provider, attempt.model)
+		await attemptRepository.markSending(dbClient, testAttempt?.attempt_id)
+		await attemptRepository.markReceived(dbClient, testAttempt?.attempt_id, attempt.data)
+		await attemptRepository.markValidated(dbClient, testAttempt?.attempt_id, attempt.data)
+		const result = await attemptRepository.markCompleted(
+			dbClient,
+			testAttempt.attempt_id,
+			attempt.data,
+		);
+		expect(result?.data?.received_data).toBe("actually something");
+	});
+	it("Should not allow invalid state transitions", async () => {
+		const attempt = createTestAttempt({
+			state: "COMPLETED",
+			data: {
+				tokens: { input_tokens: 5, output_tokens: 12 },
+				received_data: "actually something",
+			},
+		});
+		const attempt2 = createTestAttempt({
+			state: "CREATED",
+			data: {
+				tokens: { input_tokens: 5, output_tokens: 12 },
+				received_data: "actually something",
+			},
+		});
 
-    const result = await attemptRepository.markCompleted(
-      dbClient,
-      attempt.attempt_id,
-      attempt.data,
-    );
-    const result2 = await attemptRepository.markCompleted(
-      dbClient,
-      attempt2.attempt_id,
-      attempt2.data,
-    );
-    expect(result).toBeNull();
-    expect(result2).toBeNull();
-  });
-  it("Should not allow completion without data present", async () => {
-        const attempt = createTestAttempt({
-      data: {
-        tokens: { input_tokens: 5, output_tokens: 12 },
-        received_data: null,
-      },
-    });
-
-    expect(async()=>      
-      await attemptRepository.markCompleted(
-      dbClient,
-      attempt.attempt_id,
-      attempt.data?.received_data,
-    )).rejects.toThrow("Data can't be null while completing attempt");
-  });
+		const result = await attemptRepository.markCompleted(
+			dbClient,
+			attempt.attempt_id,
+			attempt.data,
+		);
+		const result2 = await attemptRepository.markCompleted(
+			dbClient,
+			attempt2.attempt_id,
+			attempt2.data,
+		);
+		expect(result).toBeNull();
+		expect(result2).toBeNull();
+	});
+	it("Should not allow completion without data present", async () => {
+		const attempt = createTestAttempt({
+			data: {
+				tokens: { input_tokens: 5, output_tokens: 12 },
+				received_data: null,
+			},
+		});
+		await attemptRepository.markCompleted(
+			dbClient,
+			attempt.attempt_id,
+			attempt.data?.validated_data
+		)
+		const result = await attemptRepository.getAttemptById(
+			dbClient,
+			attempt.attempt_id
+		)
+		expect(result.state).not.toBe('COMPLETED');
+	});
 });

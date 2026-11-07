@@ -1,8 +1,15 @@
-import { connectDB } from "../../src/database/dbClient.js";
-export async function setupTestDB() {
-    return await connectDB();
+import sqlite from "node:sqlite";
+import dbTables from "../../src/database/dbTables.js";
+async function setupTestDB() {
+    const dbClient = new sqlite.DatabaseSync('./tests/helpers/testDB.sqlite');
+    console.log(dbClient.prepare('SELECT sqlite_version() AS version').get());
+    await dbTables.createRequiredTables(dbClient);
+    console.log("Database connected");
+    return dbClient;
 }
-export async function teardownTestDB(dbClient) {
-    await dbClient.end();
-    console.log("Connection to DB terminated");
+;
+async function disconnectDB(dbClient) {
+    await dbClient.close();
+    console.log("Database disconnected");
 }
+export { setupTestDB, disconnectDB };

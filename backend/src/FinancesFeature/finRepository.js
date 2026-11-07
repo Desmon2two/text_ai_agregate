@@ -6,9 +6,9 @@ async function getCostOfModel(dbClient, model) {
     ;`);
     link.run(1, model);
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
     ;
 }
 async function getCreditsOfUser(dbClient, user_id) {
@@ -16,8 +16,7 @@ async function getCreditsOfUser(dbClient, user_id) {
 	;`);
     link.run(1, user_id);
     link.close();
-    return result.rows[0];
-    credits;
+    return link;
 }
 async function getCreditLogOfUser(dbClient, user_id) {
     const link = await dbClient.prepare(`SELECT * FROM fin_logs 
@@ -26,9 +25,9 @@ async function getCreditLogOfUser(dbClient, user_id) {
     ;`);
     link.run(1, user_id);
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
 }
 async function createFinLog(dbClient, user_id, amount, reason) {
     const link = await dbClient.prepare(`INSERT INTO fin_logs (amount, reason)
@@ -40,9 +39,9 @@ async function createFinLog(dbClient, user_id, amount, reason) {
     link.run(2, amount);
     link.run(3, JSON.stringify(reason));
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
     ;
 }
 async function addCredits(dbClient, user_id, amount) {
@@ -55,31 +54,20 @@ async function addCredits(dbClient, user_id, amount) {
     link.run(1, user_id);
     link.run(2, amount);
     link.close();
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
-    credits;
+    return link;
 }
 async function deductCredits(dbClient, user_id, amount) {
-    const link = await dbClient.prepare(`
-    UPDATE users
-    SET credits = credits - ? 
-    WHERE user_id = ? 
-    RETURNING credits
-    ;`);
-    link.run(1, user_id);
-    link.run(2, amount);
-    link.close();
-    if (!result.rows[0])
-        return null;
-    return result.rows[0];
-    credits;
+    await dbClient.prepare(`UPDATE users
+		SET credits = credits - ? 
+		WHERE user_id = ? 
+		RETURNING credits;`)
+        .run(user_id, amount);
 }
 export default {
     getCostOfModel,
     getCreditsOfUser,
     getCreditLogOfUser,
-    createFinLog,
+    createFinLog: createFinLog,
     addCredits,
     deductCredits,
 };

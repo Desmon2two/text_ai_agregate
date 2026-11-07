@@ -7,7 +7,7 @@ import { Job, Worker } from "bullmq";
 import queueService, { connection } from "./queueService.js";
 import jobUseCase from "../jobFeature/jobUseCase.js";
 import localAiService from "../aiFeature/aiServices/localAiService.js";
-import { setupTestDB, teardownTestDB, } from "../../tests/helpers/testDatabase.js";
+import { connectDB, teardownTestDB, } from "../../tests/helpers/testDatabase.js";
 import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
 import jobService from "../jobFeature/jobService.js";
 import attemptService from "../jobFeature/attemptService.js";
@@ -15,7 +15,7 @@ import { NotFoundError } from "../errors/applicationErrors.js";
 const worker = new Worker("dispatchQueue", async (bullJob) => {
     let dbClient;
     nonSecretVariables.getProjectState() === "test"
-        ? (dbClient = await setupTestDB())
+        ? (dbClient = await connectDB())
         : (dbClient = await setupProdDB());
     worker.on("error", (error) => {
         console.error("BullMQ worker error:", error);
@@ -53,7 +53,7 @@ const worker = new Worker("dispatchQueue", async (bullJob) => {
 const recoveryWorker = new Worker("reoveryQueue", async (bullJob) => {
     let dbClient;
     nonSecretVariables.getProjectState() === "test"
-        ? (dbClient = await setupTestDB())
+        ? (dbClient = await connectDB())
         : (dbClient = await setupProdDB());
     worker.on("error", (error) => {
         console.error("BullMQ worker error:", error);

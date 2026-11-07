@@ -2,19 +2,19 @@ import finRepository from "../../src/FinancesFeature/finRepository.js";
 import finUseCase from "../../src/FinancesFeature/finUseCase.js";
 import eventRepository from "../../src/jobFeature/eventRepository.js";
 import { createTestJob } from "../helpers/factoryFunctions.js";
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
   dbClient = await setupTestDB();
 }, 15000);
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+  await disconnectDB(dbClient);
 }, 15000);
 beforeEach(async () => {
-  await dbClient.query("BEGIN");
+  await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.query("ROLLBACK");
+  await dbClient.exec("ROLLBACK");
 });
 
 describe("Testing financial use case", () => {
@@ -48,7 +48,7 @@ describe("Testing financial use case", () => {
     ).rejects.toThrow("Can't process incomplete job");
   });
   it("Should calculate the difference", async () => {
-    const job = await dbClient.query(
+    const job = await dbClient.exec(
       `INSERT INTO jobs
       (user_id, state, type, estimated_cost, actual_cost)
        VALUES (
@@ -71,7 +71,7 @@ describe("Testing financial use case", () => {
       dbClient,
       test_user_id,
     );
-    const job = await dbClient.query(
+    const job = await dbClient.exec(
       `INSERT INTO jobs
       (user_id, state, type, estimated_cost, actual_cost)
        VALUES (
@@ -95,7 +95,7 @@ describe("Testing financial use case", () => {
       dbClient,
       test_user_id,
     );
-    const job = await dbClient.query(
+    const job = await dbClient.exec(
       `INSERT INTO jobs
       (user_id, state, type, estimated_cost, actual_cost)
        VALUES (
@@ -115,7 +115,7 @@ describe("Testing financial use case", () => {
     expect(res).toBe(awaited);
   }, 60000);
   it("Should create financial events", async () => {
-    const job = await dbClient.query(
+    const job = await dbClient.exec(
       `INSERT INTO jobs
       (user_id, state, type, estimated_cost, actual_cost)
        VALUES (

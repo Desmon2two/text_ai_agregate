@@ -7,14 +7,14 @@ async function claimRecovery(
   attempt_id: string,
   leasedUntil: Date,
 ) {
-  const result = recoveryRepository.claimAttemptForRecovery(
+  const link = recoveryRepository.claimAttemptForRecovery(
     dbClient,
     attempt_id,
     recoveryWorkerId,
     leasedUntil,
   );
-  if (result === null) throw new Error("Attempt was not claimed for recovery");
-  return result;
+  if (link === null) throw new Error("Attempt was not claimed for recovery");
+  return link;
 }
 export default {
   claimRecovery,

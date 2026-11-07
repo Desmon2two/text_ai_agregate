@@ -97,12 +97,12 @@ async function patchUserEmail(
   if (user.email === email) throw new UnauthorizedError("Email is the same");
   const existingUser = await getCurrentUser(dbClient, null, email);
   if (existingUser) throw new UnauthorizedError("Email already in use");
-  const result = await userRepository.changeUserEmail(
+  const link = await userRepository.changeUserEmail(
     dbClient,
     user.user_id,
     email,
   );
-  if (!result) throw new Error("Something went wrong, please try again");
+  if (!link) throw new Error("Something went wrong, please try again");
   return;
 }
 async function refreshAccessToken(dbClient: Client, token: string) {

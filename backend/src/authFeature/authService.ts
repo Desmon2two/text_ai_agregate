@@ -9,10 +9,10 @@ function generateAccessToken(user_id: string) {
 
 function verifyAccessToken(token: string) {
   try {
-    const result = jwt.verify(token, process.env.JWT_SECRET);
-    if (result.type !== "access")
+    const link = jwt.verify(token, process.env.JWT_SECRET);
+    if (link.type !== "access")
       throw new UnauthorizedError("Invalid authorization");
-    return result;
+    return link;
   } catch (error) {
     if (error.name === "TokenExpiredError")
       throw new UnauthorizedError("Access allowance expired");
@@ -29,10 +29,10 @@ function generateRefreshToken(user_id: string) {
 }
 function verifyRefreshToken(token: string) {
   try {
-    const result = jwt.verify(token, process.env.JWT_SECRET);
-    if (result.type !== "refresh")
+    const link = jwt.verify(token, process.env.JWT_SECRET);
+    if (link.type !== "refresh")
       throw new UnauthorizedError("Invalid authorization");
-    return result;
+    return link;
   } catch (error) {
     if (error.name === "TokenExpiredError")
       throw new UnauthorizedError("Please log in");

@@ -6,7 +6,7 @@ async function scanAttemptsForRecovery(dbClient) {
     OR (state = 'CREATED' AND updated_at < datetime() - INTERVAL '5 seconds')
     `);
     link.close();
-    return result.rows;
+    return link.rows;
 }
 async function scanJobsForRecovery(dbClient) {
     const link = await dbClient.prepare(`
@@ -15,7 +15,7 @@ async function scanJobsForRecovery(dbClient) {
     OR (state = 'QUEUED' AND updated_at < datetime() - INTERVAL '5 seconds')
     `);
     link.close();
-    return result.rows;
+    return link.rows;
 }
 async function claimAttemptForRecovery(dbClient, attemptId, recoveryWorkerId, leaseUntil) {
     const link = await dbClient.prepare(`
@@ -30,9 +30,9 @@ async function claimAttemptForRecovery(dbClient, attemptId, recoveryWorkerId, le
     link.run(2, recoveryWorkerId);
     link.run(3, leaseUntil);
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
 }
 async function claimJobForRecovery(dbClient, jobId, recoveryWorkerId, recoveryLeaseUntil) {
     const link = await dbClient.prepare(`
@@ -47,9 +47,9 @@ async function claimJobForRecovery(dbClient, jobId, recoveryWorkerId, recoveryLe
     link.run(2, recoveryWorkerId);
     link.run(3, recoveryLeaseUntil);
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
 }
 async function releaseAttemptRecovery(dbClient, attemptId, recoveryWorkerId) {
     const link = await dbClient.prepare(`
@@ -63,9 +63,9 @@ async function releaseAttemptRecovery(dbClient, attemptId, recoveryWorkerId) {
     link.run(1, attemptId);
     link.run(2, recoveryWorkerId);
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
 }
 async function releaseJobRecovery(dbClient, jobId, recoveryWorkerId) {
     const link = await dbClient.prepare(`
@@ -79,9 +79,9 @@ async function releaseJobRecovery(dbClient, jobId, recoveryWorkerId) {
     link.run(1, jobId);
     link.run(2, recoveryWorkerId);
     link.close();
-    if (!result.rows[0])
+    if (!link.rows[0])
         return null;
-    return result.rows[0];
+    return link.rows[0];
 }
 export default {
     scanAttemptsForRecovery,

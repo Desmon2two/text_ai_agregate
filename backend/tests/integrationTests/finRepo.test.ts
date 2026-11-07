@@ -1,18 +1,18 @@
 import finRepository from "../../src/FinancesFeature/finRepository.js";
 
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+  await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-  await dbClient.query("BEGIN");
+  await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.query("ROLLBACK");
+  await dbClient.exec("ROLLBACK");
 });
 describe("Testing financial repository", () => {
   const user_id = "c9593f4e-142f-4bff-9c45-5fabb90f45f9";
@@ -51,9 +51,9 @@ describe("Testing financial repository", () => {
   });
   it("Should support external atomic transactions wrapper", async () => {
     const currCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
-    await dbClient.query("BEGIN");
+    await dbClient.exec("BEGIN");
     await finRepository.addCredits(dbClient, user_id, 63);
-    await dbClient.query("ROLLBACK");
+    await dbClient.exec("ROLLBACK");
     const resCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
 
     expect(currCredits).toBe(resCredits);

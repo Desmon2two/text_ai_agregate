@@ -11,7 +11,7 @@ async function scanAttemptsForRecovery(
     OR (state = 'CREATED' AND updated_at < datetime() - INTERVAL '5 seconds')
     `);
 link.close()
-  return result.rows;
+  return link.rows;
 }
 async function scanJobsForRecovery(dbClient: Client): Promise<Job[] | null> {
   const link = await dbClient.prepare(`
@@ -20,7 +20,7 @@ async function scanJobsForRecovery(dbClient: Client): Promise<Job[] | null> {
     OR (state = 'QUEUED' AND updated_at < datetime() - INTERVAL '5 seconds')
     `);
 link.close()
-  return result.rows;
+  return link.rows;
 }
 async function claimAttemptForRecovery(
   dbClient: Client,
@@ -41,8 +41,8 @@ link.run(1, attemptId)
 link.run(2, recoveryWorkerId)
 link.run(3, leaseUntil)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function claimJobForRecovery(
   dbClient: Client,
@@ -63,8 +63,8 @@ link.run(1, jobId)
 link.run(2, recoveryWorkerId)
 link.run(3, recoveryLeaseUntil)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function releaseAttemptRecovery(
   dbClient: Client,
@@ -83,8 +83,8 @@ async function releaseAttemptRecovery(
 link.run(1, attemptId)
 link.run(2, recoveryWorkerId)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function releaseJobRecovery(
   dbClient: Client,
@@ -103,8 +103,8 @@ async function releaseJobRecovery(
 link.run(1, jobId)
 link.run(2, recoveryWorkerId)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 
 export default {

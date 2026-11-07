@@ -1,18 +1,18 @@
 import eventRepository from "../../src/jobFeature/eventRepository.js";
 
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+  await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-  await dbClient.query("BEGIN");
+  await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.query("ROLLBACK");
+  await dbClient.exec("ROLLBACK");
 });
   const user_id = "c9593f4e-142f-4bff-9c45-5fabb90f45f9"
   const attempt_id = "172f33e9-85e4-46f0-aa25-723072f0a295"

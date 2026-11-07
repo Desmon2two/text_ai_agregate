@@ -14,8 +14,8 @@ async function getJobById(
     ;`);
 link.run(1, job_id)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function getJobsByUserId(
   dbClient: Client,
@@ -34,8 +34,8 @@ async function getJobsByUserId(
     ;`);
 link.run(1, user_id)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function getAttemptsOfJob(
   dbClient: Client,
@@ -49,8 +49,8 @@ async function getAttemptsOfJob(
     ;`);
 link.run(1, job_id)
 link.close()
-if (result.rows.length === 0) return null;
-  return result.rows;
+if (link.rows.length === 0) return null;
+  return link.rows;
 }
 async function getLastAttemptOfJob(
   dbClient: Client,
@@ -65,8 +65,8 @@ async function getLastAttemptOfJob(
     ;`);
 link.run(1, job_id)
 link.close()
-if (result.rows.length === 0) return null;
-  return result.rows[0];
+if (link.rows.length === 0) return null;
+  return link.rows[0];
 }
 async function createJob(
   dbClient: Client,
@@ -87,8 +87,8 @@ link.run(3, body)
 link.run(4, user_id)
 link.run(5, estimated_cost)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function deleteJob(
   dbClient: Client,
@@ -100,7 +100,7 @@ async function deleteJob(
     ;`);
 link.run(1, job_id)
 link.close()
-if (result.rowCount === 0) return 1;
+if (link.rowCount === 0) return 1;
   return 0;
 }
 async function changeJobState(
@@ -117,8 +117,8 @@ async function changeJobState(
 link.run(1, job_id)
 link.run(2, state)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function markAccepted(
   dbClient: Client,
@@ -135,8 +135,8 @@ link.run(1, job_id)
 link.run(2, "CREATED")
 link.run(3, "ACCEPTED")
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function markQueued(
   dbClient: Client,
@@ -153,8 +153,8 @@ link.run(1, job_id)
 link.run(2, "ACCEPTED")
 link.run(3, "QUEUED")
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function markProcessing(
   dbClient: Client,
@@ -171,8 +171,8 @@ link.run(1, job_id)
 link.run(2, "QUEUED")
 link.run(3, "PROCESSING")
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function markCompleted(
   dbClient: Client,
@@ -198,8 +198,8 @@ link.run(3, "COMPLETED")
 link.run(4, data)
 link.run(5, actual_cost)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function markFailed(
   dbClient: Client,
@@ -217,8 +217,8 @@ link.run(1, job_id)
 link.run(2, "FAILED")
 link.run(3, error)
 link.close()
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 export default {
   getJobById,

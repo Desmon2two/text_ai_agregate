@@ -7,10 +7,10 @@ function generateAccessToken(user_id) {
 }
 function verifyAccessToken(token) {
     try {
-        const result = jwt.verify(token, process.env.JWT_SECRET);
-        if (result.type !== "access")
+        const link = jwt.verify(token, process.env.JWT_SECRET);
+        if (link.type !== "access")
             throw new UnauthorizedError("Invalid authorization");
-        return result;
+        return link;
     }
     catch (error) {
         if (error.name === "TokenExpiredError")
@@ -27,10 +27,10 @@ function generateRefreshToken(user_id) {
 }
 function verifyRefreshToken(token) {
     try {
-        const result = jwt.verify(token, process.env.JWT_SECRET);
-        if (result.type !== "refresh")
+        const link = jwt.verify(token, process.env.JWT_SECRET);
+        if (link.type !== "refresh")
             throw new UnauthorizedError("Invalid authorization");
-        return result;
+        return link;
     }
     catch (error) {
         if (error.name === "TokenExpiredError")

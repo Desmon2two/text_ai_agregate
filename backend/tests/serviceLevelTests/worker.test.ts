@@ -1,4 +1,4 @@
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 import queueService from "../../src/queue/queueService.js";
 import { worker } from "../../src/queue/worker.js";
 import { QueueEvents } from "bullmq";
@@ -15,7 +15,7 @@ beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+  await disconnectDB(dbClient);
   await queueService.dispatchQueue.obliterate({ force: true });
   await queueService.recoveryQueue.obliterate({ force: true });
   await worker.close();

@@ -8,8 +8,8 @@ async function getEventById(dbClient: Client, event_id: string): Promise<EventTy
 );
 link.run(1, event_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createJobAcceptedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
   const link = await dbClient.prepare(
@@ -20,8 +20,8 @@ async function createJobAcceptedEvent(dbClient: Client, job_id: string): Promise
   );
   link.run(1, job_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createJobQueuedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
   const link = await dbClient.prepare(
@@ -32,8 +32,8 @@ async function createJobQueuedEvent(dbClient: Client, job_id: string): Promise<E
   );
   link.run(1, job_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createJobProcessingEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
   const link = await dbClient.prepare(
@@ -44,8 +44,8 @@ async function createJobProcessingEvent(dbClient: Client, job_id: string): Promi
   );
   link.run(1, job_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createJobProcessedFromIntermediateStateEvent(
   dbClient: Client,
@@ -59,8 +59,8 @@ async function createJobProcessedFromIntermediateStateEvent(
   );
   link.run(1, job_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createWorkerStartedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
   const link = await dbClient.prepare(
@@ -71,8 +71,8 @@ async function createWorkerStartedEvent(dbClient: Client, job_id: string): Promi
   );
   link.run(1, job_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createAttemptCreatedEvent(
   dbClient: Client,
@@ -88,8 +88,8 @@ async function createAttemptCreatedEvent(
   link.run(1, attempt_id)
   link.run(2, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createSendingRequestEvent(dbClient: Client, attempt_id: string): Promise<EventType | null> {
   const link = await dbClient.prepare(
@@ -100,8 +100,8 @@ async function createSendingRequestEvent(dbClient: Client, attempt_id: string): 
   );
   link.run(1, attempt_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 // async function createWaitingForResponseEvent(
 //   dbClient: Client,
@@ -117,8 +117,8 @@ if (!result.rows[0]) return null;
 //     link.run(1, attempt_id)
 //   );
 //   link.close();
-// if (!result.rows[0]) return null;
-//   return result.rows[0];
+// if (!link.rows[0]) return null;
+//   return link.rows[0];
 // }
 async function createResponseReceivedEvent(
   dbClient: Client,
@@ -132,8 +132,8 @@ async function createResponseReceivedEvent(
   );
   link.run(1, attempt_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createResponseValidatedEvent(
   dbClient: Client,
@@ -147,8 +147,8 @@ async function createResponseValidatedEvent(
   );
   link.run(1, attempt_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createAttemptCompletedEvent(
   dbClient: Client,
@@ -162,8 +162,8 @@ async function createAttemptCompletedEvent(
   );
   link.run(1, attempt_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createJobCompletedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
   const link = await dbClient.prepare(
@@ -174,8 +174,8 @@ async function createJobCompletedEvent(dbClient: Client, job_id: string): Promis
   );
   link.run(1, job_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createAttemptFailedEvent(
   dbClient: Client,
@@ -191,8 +191,8 @@ async function createAttemptFailedEvent(
   link.run(1, attempt_id)
   link.run(2, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createJobFailedEvent(
   dbClient: Client,
@@ -208,8 +208,8 @@ async function createJobFailedEvent(
   link.run(1, job_id)
   link.run(2, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createRetryCreatedEvent(
   dbClient: Client,
@@ -227,8 +227,8 @@ async function createRetryCreatedEvent(
   link.run(2, attempt_id)
   link.run(3, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createRecoveryStartedEvent(
   dbClient: Client,
@@ -246,8 +246,8 @@ async function createRecoveryStartedEvent(
   link.run(2, job_id)
   link.run(3, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createRecoveryAbandonedEvent(
   dbClient: Client,
@@ -265,8 +265,8 @@ async function createRecoveryAbandonedEvent(
   link.run(2, job_id)
   link.run(3, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createCreditsAddedEvent(
   dbClient: Client,
@@ -282,8 +282,8 @@ async function createCreditsAddedEvent(
   link.run(1, user_id)
   link.run(2, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createCreditsDeductedEvent(
   dbClient: Client,
@@ -299,8 +299,8 @@ async function createCreditsDeductedEvent(
     link.run(1, user_id)
   link.run(2, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createRecoveryCompletedEvent(
   dbClient: Client,
@@ -318,8 +318,8 @@ async function createRecoveryCompletedEvent(
   link.run(2, job_id)
   link.run(3, metadata)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function deleteEvent(
   dbClient: Client,
@@ -330,7 +330,7 @@ async function deleteEvent(
   );
   link.run(1, event_id)
   link.close()
-  return result.rowCount;
+  return link.rowCount;
 }
 
 export default {

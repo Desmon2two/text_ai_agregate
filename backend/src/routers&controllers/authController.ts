@@ -6,14 +6,14 @@ import userUseCase from "../userFeature/userUseCase.js";
 async function registerUser(req, res, next) {
   try {
     const { email, password, username } = req.body;
-    const result = await userService.registerUser(
+    const link = await userService.registerUser(
       dbClient,
       email,
       password,
       username,
     );
     const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("accessToken", result.accessToken, {
+    res.cookie("accessToken", link.accessToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
@@ -26,14 +26,14 @@ async function registerUser(req, res, next) {
 async function loginUser(req, res, next) {
   try {
     const { email, password } = req.body;
-    const result = await userService.loginUser(dbClient, email, password);
+    const link = await userService.loginUser(dbClient, email, password);
     const isProduction = process.env.NODE_ENV === "production";
-    res.cookie("accessToken", result.accessToken, {
+    res.cookie("accessToken", link.accessToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
     });
-    res.cookie("refreshToken", result.refreshToken, {
+    res.cookie("refreshToken", link.refreshToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax",
@@ -84,8 +84,8 @@ async function deleteUser(req, res, next) {
 async function getCurrentUser(req, res, next) {
   try {
     const { userId, email } = req.user;
-    const result = await userService.getCurrentUser(dbClient, userId, email);
-    res.status(200).json(result);
+    const link = await userService.getCurrentUser(dbClient, userId, email);
+    res.status(200).json(link);
   } catch (error) {
     next(error);
   }
@@ -93,8 +93,8 @@ async function getCurrentUser(req, res, next) {
 async function getCreditsOfCurrentUser(req, res, next) {
   try {
     const { user_id } = req.user;
-    const result = await finService.getCreditsOfUser(dbClient, user_id);
-    res.status(200).json(result);
+    const link = await finService.getCreditsOfUser(dbClient, user_id);
+    res.status(200).json(link);
   } catch (error) {
     next(error);
   }
@@ -102,8 +102,8 @@ async function getCreditsOfCurrentUser(req, res, next) {
 async function getFinHistoryOfUser(req, res, next) {
   try {
     const { user_id } = req.user;
-    const result = await finService.getFinancialLogOfUser(dbClient, user_id);
-    res.status(200).json(result);
+    const link = await finService.getFinancialLogOfUser(dbClient, user_id);
+    res.status(200).json(link);
   } catch (error) {
     next(error);
   }
@@ -111,8 +111,8 @@ async function getFinHistoryOfUser(req, res, next) {
 async function getAllJobsOfUser(req, res, next) {
   try {
     const { user_id } = req.user;
-    const result = await userUseCase.getAllJobsOfUser(dbClient, user_id);
-    res.status(200).json(result);
+    const link = await userUseCase.getAllJobsOfUser(dbClient, user_id);
+    res.status(200).json(link);
   } catch (error) {
     next(error);
   }
@@ -121,8 +121,8 @@ async function getAllJobsOfUser(req, res, next) {
 // 	try {
 // 		const { userId } = req.user;
 // 		const userData = req.body;
-// 		const result = await userService.(dbClient, userId, userData);
-// 		res.status(200).json(result);
+// 		const link = await userService.(dbClient, userId, userData);
+// 		res.status(200).json(link);
 // 	} catch (error) {
 // 		next(error);
 // 	}

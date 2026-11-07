@@ -9,8 +9,8 @@ async function getUserById(
     ;`)
   link.run(1, user_id)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function getUserByEmail(
   dbClient: Client,
@@ -22,8 +22,8 @@ async function getUserByEmail(
     ;`)
   link.run(1, email)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function createUser(
   dbClient: Client,
@@ -40,8 +40,8 @@ async function createUser(
   link.run(2, email)
 link.run(3, passwordHash)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function changeUserDisplayData(
   dbClient: Client,
@@ -58,8 +58,8 @@ async function changeUserDisplayData(
 link.run(1, user_id)
 link.run(2, username)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function changeUserPassword(
   dbClient: Client,
@@ -76,8 +76,8 @@ async function changeUserPassword(
 link.run(1, user_id)
 link.run(2, passwordHash)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function changeUserEmail(
   dbClient: Client,
@@ -94,15 +94,15 @@ async function changeUserEmail(
 link.run(1, user_id)
 link.run(2, email)
   link.close();
-if (!result.rows[0]) return null;
-  return result.rows[0];
+if (!link.rows[0]) return null;
+  return link.rows[0];
 }
 async function deleteUser(dbClient: Client, user_id: string): Promise<0 | 1> {
   const link = await dbClient.prepare(
     `DELETE FROM users WHERE user_id = ?
     ;`)
   link.run(1, user_id)
-  return result.rowCount;
+  return link.rowCount;
 }
 export default {
   getUserById,

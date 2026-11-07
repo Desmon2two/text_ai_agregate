@@ -1,19 +1,19 @@
 import { createTestUser } from "../helpers/factoryFunctions.js";
 import userService from "../../src/userFeature/userService.js";
 
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+  await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-  await dbClient.query("BEGIN");
+  await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.query("ROLLBACK");
+  await dbClient.exec("ROLLBACK");
 });
 
 describe("Testing user service", () => {

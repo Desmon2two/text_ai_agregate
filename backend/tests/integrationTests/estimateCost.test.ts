@@ -1,17 +1,17 @@
 import finService from "../../src/FinancesFeature/finService.js"
-import { setupTestDB, teardownTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
   dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await teardownTestDB(dbClient);
+  await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-  await dbClient.query("BEGIN");
+  await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.query("ROLLBACK");
+  await dbClient.exec("ROLLBACK");
 });
 describe("Testing estimation on cost of job", () => {
   it("Should not accept invalid values", async () => {

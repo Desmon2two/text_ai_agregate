@@ -1,15 +1,17 @@
 import sqlite from "node:sqlite"
 import dbTables from "../database/dbTables.js";
-let dbClient;
-async function connectDB(
+async function setupTestDB(
 ) {
-	dbClient = new sqlite.DatabaseSync('./src/database/DB.sqlite')
+	const dbClient = new sqlite.DatabaseSync('./src/database/DB.sqlite')
 	console.log(dbClient.prepare('SELECT sqlite_version() AS version').get());
 	await dbTables.createRequiredTables(dbClient)
 	console.log("Database connected")
+	return dbClient
 };
 async function disconnectDB(dbClient) {
-	await dbClient.end()
+	await dbClient.close()
 	console.log("Database disconnected")
 }
-export { connectDB, disconnectDB, dbClient };
+export { setupTestDB, disconnectDB};
+
+

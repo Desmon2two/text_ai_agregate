@@ -31,12 +31,12 @@ async function markAccepted(dbClient: Client, job_id: string) {
     throw new ForbiddenError(
       "Job not in 'CREATED' state to transition to 'ACCEPTED' state",
     );
-  const result = await jobRepository.markAccepted(dbClient, job_id);
-  if (result === null) {
+  const link = await jobRepository.markAccepted(dbClient, job_id);
+  if (link === null) {
     throw new Error("Job was not marked accepted");
   }
   await eventRepository.createJobAcceptedEvent(dbClient, job_id);
-  return result.job_id;
+  return link.job_id;
 }
 async function markQueued(dbClient: Client, job_id: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
@@ -44,12 +44,12 @@ async function markQueued(dbClient: Client, job_id: string) {
     throw new ForbiddenError(
       "Job not in 'ACCEPTED' state to transition to 'QUEUED' state",
     );
-  const result = await jobRepository.markQueued(dbClient, job_id);
-  if (result === null) {
+  const link = await jobRepository.markQueued(dbClient, job_id);
+  if (link === null) {
     throw new Error("Job was not marked queued");
   }
   await eventRepository.createJobQueuedEvent(dbClient, job_id);
-  return result.job_id;
+  return link.job_id;
 }
 async function markProcessing(dbClient: Client, job_id: string) {
   const job = await jobRepository.getJobById(dbClient, job_id);
@@ -57,12 +57,12 @@ async function markProcessing(dbClient: Client, job_id: string) {
     throw new ForbiddenError(
       "Job not in 'QUEUED' state to transition to 'PROCESSING' state",
     );
-  const result = await jobRepository.markProcessing(dbClient, job_id);
-  if (result === null) {
+  const link = await jobRepository.markProcessing(dbClient, job_id);
+  if (link === null) {
     throw new Error("Job was not marked processing");
   }
   await eventRepository.createJobProcessingEvent(dbClient, job_id);
-  return result.job_id;
+  return link.job_id;
 }
 async function completeJob(
   dbClient: Client,

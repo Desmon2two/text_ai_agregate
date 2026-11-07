@@ -62,8 +62,8 @@ async function patchUserEmail(dbClient, user_id, password, email) {
     const existingUser = await getCurrentUser(dbClient, null, email);
     if (existingUser)
         throw new UnauthorizedError("Email already in use");
-    const result = await userRepository.changeUserEmail(dbClient, user.user_id, email);
-    if (!result)
+    const link = await userRepository.changeUserEmail(dbClient, user.user_id, email);
+    if (!link)
         throw new Error("Something went wrong, please try again");
     return;
 }
