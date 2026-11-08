@@ -1,83 +1,66 @@
 async function getUserById(dbClient, user_id) {
     const link = await dbClient.prepare(`SELECT * FROM users
-    WHERE user_id = ?
-    ;`);
-    link.run(1, user_id);
-    link.close();
-    if (!link.rows[0])
+    WHERE user_id = ?1
+    ;`).get(user_id);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function getUserByEmail(dbClient, email) {
     const link = await dbClient.prepare(`SELECT * FROM users
-    WHERE email = ?
-    ;`);
-    link.run(1, email);
-    link.close();
-    if (!link.rows[0])
+    WHERE email = ?1
+    ;`).get(email);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function createUser(dbClient, username, email, passwordHash) {
     const link = await dbClient.prepare(`INSERT INTO users(username, email, password) 
-    VALUES (?, ?, ?)
+    VALUES (?1, ?2, ?3)
     RETURNING *
-    ;`);
-    link.run(1, username);
-    link.run(2, email);
-    link.run(3, passwordHash);
-    link.close();
-    if (!link.rows[0])
+    ;`).get(username, email, passwordHash);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function changeUserDisplayData(dbClient, user_id, username) {
-    const link = await dbClient.prepare(`
-  UPDATE users 
-  SET username= ?,
-  WHERE user_id = ?
+    const link = await dbClient.prepare(`UPDATE users 
+  SET username= ?1,
+  WHERE user_id = ?2
   RETURNING *
-  ;`);
-    link.run(1, user_id);
-    link.run(2, username);
-    link.close();
-    if (!link.rows[0])
+  ;`).get(username, user_id);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function changeUserPassword(dbClient, user_id, passwordHash) {
     const link = await dbClient.prepare(`
   UPDATE users 
-  SET password= ?,
-  WHERE user_id = ?
+  SET password= ?1,
+  WHERE user_id = ?2
   RETURNING *
-  ;`);
-    link.run(1, user_id);
-    link.run(2, passwordHash);
-    link.close();
-    if (!link.rows[0])
+  ;`).get(passwordHash, user_id);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function changeUserEmail(dbClient, user_id, email) {
     const link = await dbClient.prepare(`
   UPDATE users 
-  SET email= ?,
-  WHERE user_id = ?
+  SET email= ?1,
+  WHERE user_id = ?2
   RETURNING *
-  ;`);
-    link.run(1, user_id);
-    link.run(2, email);
-    link.close();
-    if (!link.rows[0])
+  ;`).get(email, user_id);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function deleteUser(dbClient, user_id) {
-    const link = await dbClient.prepare(`DELETE FROM users WHERE user_id = ?
-    ;`);
-    link.run(1, user_id);
-    return link.rowCount;
+    const link = await dbClient.prepare(`DELETE FROM users WHERE user_id = ?1
+    ;`).get(user_id);
+    if (link.changes === 0)
+        return 1;
+    return 0;
 }
 export default {
     getUserById,

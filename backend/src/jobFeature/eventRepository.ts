@@ -1,107 +1,81 @@
 import type { EventType } from "./types/EventType";
 async function getEventById(dbClient: Client, event_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `
-  SELECT * FROM events
-  WHERE event_id = ?
-  ;`
-);
-link.run(1, event_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`SELECT * FROM events
+  WHERE event_id = ?`
+	).get(event_id);
+	if (!link) return null;
+	return link;
 }
 async function createJobAcceptedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id) 
     VALUES ('JOB_ACCEPTED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(job_id);
+	if (!link) return null;
+	return link;
 }
 async function createJobQueuedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id) 
     VALUES ('JOB_QUEUED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(job_id);
+	if (!link) return null;
+	return link;
 }
 async function createJobProcessingEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id) 
     VALUES ('JOB_PROCESSING', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(job_id);
+	if (!link) return null;
+	return link;
 }
 async function createJobProcessedFromIntermediateStateEvent(
-  dbClient: Client,
-  job_id: string,
+	dbClient: Client,
+	job_id: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id) 
     VALUES ('JOB_PROCESSING_FROM_INTERMEDIATE_STATE', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(job_id);
+	if (!link) return null;
+	return link;
 }
 async function createWorkerStartedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id) 
     VALUES ('WORKER_STARTED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(job_id);
+	if (!link) return null;
+	return link;
 }
 async function createAttemptCreatedEvent(
-  dbClient: Client,
-  attempt_id: string,
-  metadata: { origin: string },
+	dbClient: Client,
+	attempt_id: string,
+	metadata: { origin: string },
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id, metadata) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id, JSON.stringify(metadata)) 
     VALUES ('ATTEMPT_CREATED', ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id)
-  link.run(2, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(attempt_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createSendingRequestEvent(dbClient: Client, attempt_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id) 
     VALUES ('SENDING_REQUEST', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`
+	).get(attempt_id);
+	if (!link) return null;
+	return link;
 }
 // async function createWaitingForResponseEvent(
 //   dbClient: Client,
@@ -109,251 +83,190 @@ if (!link.rows[0]) return null;
 //   metadata: { providerJobId: string },
 // ): Promise<EventType | null> {
 //   const link = await dbClient.prepare(
-//     `INSERT INTO events(name, attempt_id, metadata) 
+//     `INSERT INTO events(name, attempt_id, JSON.stringify(metadata)) 
 //     VALUES ('WAITING_FOR_RESPONSE', $1, $2)
 //     RETURNING *
 //     `,
-// link.run(2, metadata),
+// link.run(2, JSON.stringify(metadata)),
 //     link.run(1, attempt_id)
 //   );
 //   link.close();
-// if (!link.rows[0]) return null;
-//   return link.rows[0];
+// if (!link) return null;
+//   return link;
 // }
 async function createResponseReceivedEvent(
-  dbClient: Client,
-  attempt_id: string,
+	dbClient: Client,
+	attempt_id: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id) 
     VALUES ('RESPONSE_RECEIVED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`).get(attempt_id);
+	if (!link) return null;
+	return link;
 }
 async function createResponseValidatedEvent(
-  dbClient: Client,
-  attempt_id: string,
+	dbClient: Client,
+	attempt_id: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id) 
     VALUES ('RESPONSE_VALIDATED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`).get(attempt_id);
+	if (!link) return null;
+	return link;
 }
 async function createAttemptCompletedEvent(
-  dbClient: Client,
-  attempt_id: string,
+	dbClient: Client,
+	attempt_id: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id) 
     VALUES ('ATTEMPT_COMPLETED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`).get(attempt_id);
+	if (!link) return null;
+	return link;
 }
 async function createJobCompletedEvent(dbClient: Client, job_id: string): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id) 
-    VALUES ('JOB_COMPLETED', ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id) 
+    VALUES ('JOB_COMPLETED', ?1)
+    RETURNING *`).get(job_id);
+	if (!link) return null;
+	return link;
 }
 async function createAttemptFailedEvent(
-  dbClient: Client,
-  attempt_id: string,
-  metadata: { error: unknown },
+	dbClient: Client,
+	attempt_id: string,
+	metadata: { error: unknown },
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id, metadata) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id, JSON.stringify(metadata)) 
     VALUES ('ATTEMPT_FAILED', ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id)
-  link.run(2, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`).get(attempt_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createJobFailedEvent(
-  dbClient: Client,
-  job_id: string,
-  metadata: { error: unknown },
+	dbClient: Client,
+	job_id: string,
+	metadata: { error: unknown },
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id, metadata) 
-    VALUES ('JOB_FAILED', ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, job_id)
-  link.run(2, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id, JSON.stringify(metadata)) 
+    VALUES ('JOB_FAILED', ?1, ?2)
+    RETURNING *`).get(job_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createRetryCreatedEvent(
-  dbClient: Client,
-  job_id: string,
-  attempt_id: string,
-  metadata: { previousAttemptId: string },
+	dbClient: Client,
+	job_id: string,
+	attempt_id: string,
+	metadata: { previousAttemptId: string },
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, job_id, attempt_id, metadata) 
-    VALUES ('RETRY_CREATED', ?, ?, ?)
-    RETURNING *
-    ;`
-  );
-    link.run(1, job_id)
-  link.run(2, attempt_id)
-  link.run(3, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, job_id, attempt_id, JSON.stringify(metadata)) 
+    VALUES ('RETRY_CREATED', ?1, ?2, ?3)
+    RETURNING *`).get(job_id, attempt_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createRecoveryStartedEvent(
-  dbClient: Client,
-  job_id: string,
-  metadata: { reason: string },
-  attempt_id?: string,
+	dbClient: Client,
+	job_id: string,
+	metadata: { reason: string },
+	attempt_id?: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id, job_id, metadata) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id, job_id, JSON.stringify(metadata)) 
     VALUES ('RECOVERY_STARTED', ?, ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id || null)
-  link.run(2, job_id)
-  link.run(3, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`).get(attempt_id, job_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createRecoveryAbandonedEvent(
-  dbClient: Client,
-  job_id: string,
-  metadata: { reason: string },
-  attempt_id?: string,
+	dbClient: Client,
+	job_id: string,
+	metadata: { reason: string },
+	attempt_id?: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id, job_id, metadata) 
-    VALUES ('RECOVERY_ABANDONED', ?, ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id || null)
-  link.run(2, job_id)
-  link.run(3, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id, job_id, JSON.stringify(metadata)) 
+    VALUES ('RECOVERY_ABANDONED', ?1, ?2, ?3)
+    RETURNING *`).get(attempt_id, job_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createCreditsAddedEvent(
-  dbClient: Client,
-  user_id: string,
-  metadata: { reason: string; amount: number },
+	dbClient: Client,
+	user_id: string,
+	metadata: { reason: string; amount: number },
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, user_id, metadata) 
-    VALUES ('CREDITS_ADDED', ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, user_id)
-  link.run(2, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, user_id, JSON.stringify(metadata)) 
+    VALUES ('CREDITS_ADDED', ?1, ?2)
+    RETURNING *`).get(user_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createCreditsDeductedEvent(
-  dbClient: Client,
-  user_id: string,
-  metadata: { reason: string; amount: number },
+	dbClient: Client,
+	user_id: string,
+	metadata: { reason: string; amount: number },
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, user_id, metadata) 
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, user_id, JSON.stringify(metadata)) 
     VALUES ('CREDITS_DEDUCTED', ?, ?)
-    RETURNING *
-    ;`
-  );
-    link.run(1, user_id)
-  link.run(2, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+    RETURNING *`).get(user_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function createRecoveryCompletedEvent(
-  dbClient: Client,
-  job_id: string,
-  metadata: { reason: string },
-  attempt_id?: string,
+	dbClient: Client,
+	job_id: string,
+	metadata: { reason: string },
+	attempt_id?: string,
 ): Promise<EventType | null> {
-  const link = await dbClient.prepare(
-    `INSERT INTO events(name, attempt_id, job_id, metadata) 
-    VALUES ('RECOVERY_COMPLETED', ?, ?, ?)
-    RETURNING *
-    ;`
-  );
-  link.run(1, attempt_id || null)
-  link.run(2, job_id)
-  link.run(3, metadata)
-  link.close();
-if (!link.rows[0]) return null;
-  return link.rows[0];
+	const link = await dbClient.prepare(
+		`INSERT INTO events(name, attempt_id, job_id, JSON.stringify(metadata)) 
+    VALUES ('RECOVERY_COMPLETED', ?1, ?2, ?3)
+    RETURNING *`).get(attempt_id, job_id, JSON.stringify(metadata));
+	if (!link) return null;
+	return link;
 }
 async function deleteEvent(
-  dbClient: Client,
-  event_id: string,
-): Promise<PostgreSQLResponse> {
-  const link = await dbClient.prepare(
- $1   `DELETE FROM events WHERE event_id = ?;`
-  );
-  link.run(1, event_id)
-  link.close()
-  return link.rowCount;
+	dbClient: Client,
+	event_id: string,
+): Promise<0 | 1> {
+	const link = await dbClient.prepare(
+		`DELETE FROM events WHERE event_id = ?;`
+	).get(event_id);
+	if (!link) return 1
+	return 0;
 }
 
 export default {
-  getEventById,
-  createJobAcceptedEvent,
-  createJobQueuedEvent,
-  createJobProcessingEvent,
-  createJobProcessedFromIntermediateStateEvent,
-  createWorkerStartedEvent,
-  createAttemptCreatedEvent,
-  createSendingRequestEvent,
-  // createWaitingForResponseEvent,
-  createResponseReceivedEvent,
-  createResponseValidatedEvent,
-  createAttemptCompletedEvent,
-  createJobCompletedEvent,
-  createAttemptFailedEvent,
-  createJobFailedEvent,
-  createRetryCreatedEvent,
-  createRecoveryStartedEvent,
-  createRecoveryAbandonedEvent,
-  createRecoveryCompletedEvent,
-  deleteEvent,
-  createCreditsAddedEvent,
-  createCreditsDeductedEvent,
+	getEventById,
+	createJobAcceptedEvent,
+	createJobQueuedEvent,
+	createJobProcessingEvent,
+	createJobProcessedFromIntermediateStateEvent,
+	createWorkerStartedEvent,
+	createAttemptCreatedEvent,
+	createSendingRequestEvent,
+	// createWaitingForResponseEvent,
+	createResponseReceivedEvent,
+	createResponseValidatedEvent,
+	createAttemptCompletedEvent,
+	createJobCompletedEvent,
+	createAttemptFailedEvent,
+	createJobFailedEvent,
+	createRetryCreatedEvent,
+	createRecoveryStartedEvent,
+	createRecoveryAbandonedEvent,
+	createRecoveryCompletedEvent,
+	deleteEvent,
+	createCreditsAddedEvent,
+	createCreditsDeductedEvent,
 };

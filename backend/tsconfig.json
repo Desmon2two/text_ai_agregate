@@ -10,7 +10,7 @@
     "target": "es2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "types": ["node"],
+    "types": ["node", "jest"],
     "esModuleInterop": true,
     // For nodejs:
     "lib": ["esnext"],
@@ -43,6 +43,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts", "src/**/types/*", "**Type.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "exclude": ["node_modules"]
 }

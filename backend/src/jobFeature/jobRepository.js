@@ -1,37 +1,28 @@
 import { ForbiddenError } from "../errors/applicationErrors.js";
 async function getJobById(dbClient, job_id) {
-    const link = await dbClient.prepare(`
-    SELECT * FROM jobs 
-    WHERE job_id = ?
-    ;`);
-    link.run(1, job_id);
-    link.close();
-    if (!link.rows[0])
+    const link = await dbClient.prepare(`SELECT * FROM jobs 
+    WHERE job_id = ?1`).get(job_id);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function getJobsByUserId(dbClient, user_id) {
-    const link = await dbClient.prepare(`
-    SELECT users.user_id, jobs.job_id, jobs.state, jobs.data 
+    const link = await dbClient.prepare(`SELECT users.user_id, jobs.job_id, jobs.state, jobs.data 
      FROM users
      JOIN jobs
      ON users.user_id  = jobs.user_id
-    WHERE user_id = ?
-    ;`);
-    link.run(1, user_id);
-    link.close();
-    if (!link.rows[0])
+    WHERE user_id = ?1
+    ;`).get(user_id);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function getAttemptsOfJob(dbClient, job_id) {
     const link = await dbClient.prepare(`
     SELECT * FROM attempts 
-    WHERE job_id = ?
+    WHERE job_id = ?1
     ORDER BY attempt_number DESC
-    ;`);
-    link.run(1, job_id);
-    link.close();
+    ;`).get(job_id);
     if (link.rows.length === 0)
         return null;
     return link.rows;
@@ -42,95 +33,71 @@ async function getLastAttemptOfJob(dbClient, job_id) {
     WHERE job_id = ?
     ORDER BY attempt_number DESC
     LIMIT 1
-    ;`);
-    link.run(1, job_id);
-    link.close();
+    ;`).get(job_id);
     if (link.rows.length === 0)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function createJob(dbClient, user_id, type, body, estimated_cost) {
     const link = await dbClient.prepare(`
-    INSERT INTO jobs (state, type, body, user_id, estimated_cost)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO jobs (state, type, JSON.stringify(body), user_id, estimated_cost)
+    VALUES (?1, ?2, ?3, ?4, ?5)
     RETURNING *
-    ;`);
-    link.run(1, "CREATED");
-    link.run(2, type);
-    link.run(3, body);
-    link.run(4, user_id);
-    link.run(5, estimated_cost);
-    link.close();
-    if (!link.rows[0])
+    ;`).get('CREATED', type, JSON.stringify(body), user_id, estimated_cost);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
- || 1 > {
-    const: link = await dbClient.prepare(`
+async function deleteJob(dbClient, job_id) {
+    const link = await dbClient.prepare(`
     DELETE FROM jobs WHERE job_id = ?
-    ;`),
-    link, : .run(1, job_id),
-    link, : .close(),
-    if(link) { }, : .rowCount === 0, return: 1,
-    return: 0
-};
+    `).get(job_id);
+    if (link === 0)
+        return 1;
+    return 0;
+}
 async function changeJobState(dbClient, job_id, state) {
     const link = await dbClient.prepare(`
   UPDATE jobs
-  SET state = ?
-  WHERE job_id = ?
-  ;`);
-    link.run(1, job_id);
-    link.run(2, state);
-    link.close();
-    if (!link.rows[0])
+  SET state = ?2
+  WHERE job_id = ?1
+  ;`).get(job_id, state);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function markAccepted(dbClient, job_id) {
     const link = await dbClient.prepare(`UPDATE jobs
-    SET state = ?, updated_at = NOW()
-    WHERE job_id = ?
-    AND state = ?
+    SET state = ?3, updated_at = datetime('now')
+    WHERE job_id = ?1
+    AND state = ?2
     RETURNING *
-    ;`);
-    link.run(1, job_id);
-    link.run(2, "CREATED");
-    link.run(3, "ACCEPTED");
-    link.close();
-    if (!link.rows[0])
+    ;`).get(job_id, 'CREATED', 'ACCEPTED');
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function markQueued(dbClient, job_id) {
     const link = await dbClient.prepare(`UPDATE jobs
-    SET state = ?, updated_at = NOW()
-    WHERE job_id = ?
-    AND state = ?
+    SET state = ?3, updated_at = datetime('now')
+    WHERE job_id = ?1
+    AND state = ?2
     RETURNING *
-    ;`);
-    link.run(1, job_id);
-    link.run(2, "ACCEPTED");
-    link.run(3, "QUEUED");
-    link.close();
-    if (!link.rows[0])
+    ;`).get(job_id, 'ACCEPTED', 'QUEUED');
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function markProcessing(dbClient, job_id) {
     const link = await dbClient.prepare(`UPDATE jobs
-    SET state = ?, updated_at = datetime()
-    WHERE job_id = ?
-    AND state = ?
+    SET state = ?3, updated_at = datetime()
+    WHERE job_id = ?1
+    AND state = ?2
     RETURNING *
-    ;`);
-    link.run(1, job_id);
-    link.run(2, "QUEUED");
-    link.run(3, "PROCESSING");
-    link.close();
-    if (!link.rows[0])
+    ;`).get(job_id, 'QUEUED', 'PROCESSING');
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function markCompleted(dbClient, job_id, validatedData, actual_cost) {
     if (!validatedData || validatedData === null)
@@ -139,35 +106,24 @@ async function markCompleted(dbClient, job_id, validatedData, actual_cost) {
         throw new ForbiddenError("Actual cost can't be empty");
     const data = JSON.stringify(validatedData);
     const link = await dbClient.prepare(`UPDATE jobs
-    SET state = ?, data = ?, actual_cost = ?, updated_at = NOW(), completed_at = NOW()
-    WHERE job_id = ?
-    AND state = ?
+    SET state = ?3, data = ?4, actual_cost = ?5, updated_at = datetime('now'), completed_at = datetime('now')
+    WHERE job_id = ?1
+    AND state = ?2
     RETURNING *
-    ;`);
-    link.run(1, job_id);
-    link.run(2, "PROCESSING");
-    link.run(3, "COMPLETED");
-    link.run(4, data);
-    link.run(5, actual_cost);
-    link.close();
-    if (!link.rows[0])
+    ;`).get(job_id, 'PROCESSING', 'COMPLETED', JSON.stringify(data), actual_cost);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 async function markFailed(dbClient, job_id, error) {
     const link = await dbClient.prepare(`UPDATE jobs
-    SET state = ?, error = ?, updated_at = NOW()
-    WHERE job_id = ?
+    SET state = ?2, error = ?3, updated_at = datetime('now')
+    WHERE job_id = ?1
     AND state = ('CREATED', 'ACCEPTED', 'QUEUED', 'PROCESSING')
-    RETURNING *
-    ;`);
-    link.run(1, job_id);
-    link.run(2, "FAILED");
-    link.run(3, error);
-    link.close();
-    if (!link.rows[0])
+    RETURNING *`).get(job_id, "FAILED", error);
+    if (!link)
         return null;
-    return link.rows[0];
+    return link;
 }
 export default {
     getJobById,

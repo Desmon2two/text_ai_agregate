@@ -3,7 +3,7 @@ import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";
 import type { Client } from "pg";
 import { ForbiddenError, NotFoundError } from "../errors/applicationErrors.js";
-import { JobStateTypes } from "./types/JobStateTypes.js";
+import type { JobStateTypes } from "./types/JobStateTypes.js";
 
 async function createJob(
   dbClient: Client,

@@ -3,7 +3,6 @@ import { estimateInputAndOutputTokens } from "../infrastructure/utils/tokensEsti
 import eventRepository from "../jobFeature/eventRepository.js";
 import userRepository from "../userFeature/userRepository.js";
 import finRepository from "./finRepository.js";
-import { FinLog } from "./types/FinLogType.js";
 async function estimateCost(dbClient, prompt, job_type, model) {
     if (!prompt || !job_type || !model) {
         throw new ValidationError("Invalid input: should not be null or undefined or empty");

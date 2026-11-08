@@ -3,7 +3,7 @@ import { estimateInputAndOutputTokens } from "../infrastructure/utils/tokensEsti
 import eventRepository from "../jobFeature/eventRepository.js";
 import userRepository from "../userFeature/userRepository.js";
 import finRepository from "./finRepository.js";
-import { FinLog } from "./types/FinLogType.js";
+import type { FinLog } from "./types/FinLogType.js";
 
 async function estimateCost(
 	dbClient: Client,

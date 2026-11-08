@@ -1,16 +1,13 @@
-import { FinLog } from "./types/FinLogType";
+import type { FinLog } from "./types/FinLogType.ts";
 
-async function getCostOfModel(dbClient: Client, model: string) {
+async function getCostOfModel(dbClient: Client, model: string): Promise<number | null> {
 	const link = await dbClient.prepare(
 		`
     SELECT * FROM models 
     WHERE model = ? 
-    ;`
-	);
-	link.run(1, model)
-	link.close()
-	if (!link.rows[0]) return null;
-	return link.rows[0]);
+    ;`).get(model);
+	if (!link) return null;
+	return link
 }
 async function getCreditsOfUser(
 	dbClient: Client,
@@ -18,9 +15,8 @@ async function getCreditsOfUser(
 ): Promise<number | null> {
 	const link = await dbClient.prepare(
 		`SELECT credits FROM users WHERE user_id = ?
-	;`);
-	link.run(1, user_id)
-	link.close()
+	;`).get(user_id);
+	if (!link) return null
 	return link
 }
 async function getCreditLogOfUser(
@@ -31,11 +27,9 @@ async function getCreditLogOfUser(
 		`SELECT * FROM fin_logs 
     WHERE user_id = ?
     SORT DESC
-    ;`);
-	link.run(1, user_id)
-	link.close()
-	if (!link.rows[0]) return null;
-	return link.rows[0];
+    ;`).get(user_id)
+	if (!link) return null;
+	return link;
 }
 async function createFinLog(
 	dbClient: Client,
@@ -48,13 +42,9 @@ async function createFinLog(
     VALUES ($2, $3)
     WHERE user_id = $1
     RETURNING *
-    ;`);
-	link.run(1, user_id)
-	link.run(2, amount)
-	link.run(3, JSON.stringify(reason))
-	link.close()
-	if (!link.rows[0]) return null;
-	return link.rows[0]);
+    ;`).get(user_id, amount, JSON.stringify(reason));
+	if (!link) return null;
+	return link;
 }
 async function addCredits(
 	dbClient: Client,
@@ -64,27 +54,26 @@ async function addCredits(
 	const link = await dbClient.prepare(
 		`
     UPDATE users
-    SET credits = credits + ?
-    WHERE user_id = ?
+    SET credits = credits + ?2
+    WHERE user_id = ?1
     RETURNING credits
-    ;`
-	);
-	link.run(1, user_id)
-	link.run(2, amount)
-	link.close()
-	return link
+    ;`).get(user_id, amount);
+	if (!link) return null
+	return link.credits
 }
 async function deductCredits(
 	dbClient: Client,
 	user_id: string,
 	amount: number,
-): Promise<void> {
-	await dbClient.prepare(
+): Promise<number | null> {
+	const credits = await dbClient.prepare(
 		`UPDATE users
-		SET credits = credits - ? 
-		WHERE user_id = ? 
+		SET credits = credits - ?2
+		WHERE user_id = ?1 
 		RETURNING credits;`)
-		.run(user_id, amount)
+		.get(user_id, amount)
+	if (!credits) return null
+	return credits
 }
 export default {
 	getCostOfModel,

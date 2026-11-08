@@ -1,7 +1,6 @@
 import jobRepository from "./jobRepository.js";
 import eventRepository from "./eventRepository.js";
 import { ForbiddenError, NotFoundError } from "../errors/applicationErrors.js";
-import { JobStateTypes } from "./types/JobStateTypes.js";
 async function createJob(dbClient, user_id, type, body, estimated_cost, filesUrl) {
     const job = await jobRepository.createJob(dbClient, user_id, type, body, estimated_cost);
     if (job?.state !== "CREATED")

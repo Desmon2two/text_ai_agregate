@@ -1,8 +1,8 @@
 import { Queue } from "bullmq";
-import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables";
-import jobService from "../jobFeature/jobService";
+import { nonSecretVariables } from "../infrastructure/utils/nonSecretVariables.js";
+import jobService from "../jobFeature/jobService.js";
 export const connection = {
-	host: "0.0.0.0",
+	host: "127.0.0.1",
 	port: 6379,
 };
 
