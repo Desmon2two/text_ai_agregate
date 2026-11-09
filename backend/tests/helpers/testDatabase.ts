@@ -3,7 +3,7 @@ import dbTables from "../../src/database/dbTables.js";
 async function setupTestDB(
 ) {
 	const dbClient = new sqlite.DatabaseSync('./tests/helpers/testDB.sqlite')
-	console.log(dbClient.prepare('SELECT sqlite_version() aS version').run());
+	console.log(dbClient.prepare('SELECT sqlite_version() aS version').get().version);
 	await dbTables.createRequiredTables(dbClient)
 	console.log("Database connected")
 	return dbClient

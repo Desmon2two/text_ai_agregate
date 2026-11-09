@@ -42,7 +42,7 @@ async function changeUserDisplayData(
 ): Promise<User | null> {
 	const link = await dbClient.prepare(
 		`UPDATE users 
-  SET username= ?1,
+  SET username= ?1
   WHERE user_id = ?2
   RETURNING *
   ;`).get(username, user_id)
@@ -57,7 +57,7 @@ async function changeUserPassword(
 	const link = await dbClient.prepare(
 		`
   UPDATE users 
-  SET password= ?1,
+  SET password= ?1
   WHERE user_id = ?2
   RETURNING *
   ;`).get(passwordHash, user_id)
@@ -70,11 +70,10 @@ async function changeUserEmail(
 	email: string,
 ): Promise<User | null> {
 	const link = await dbClient.prepare(
-		`
-  UPDATE users 
-  SET email= ?1,
-  WHERE user_id = ?2
-  RETURNING *
+		`UPDATE users 
+		SET email= ?1
+		WHERE user_id = ?2
+		RETURNING *
   ;`).get(email, user_id)
 	if (!link) return null;
 	return link;

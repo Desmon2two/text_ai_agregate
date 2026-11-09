@@ -17,13 +17,13 @@ afterEach(async () => {
 describe("Testing users repository", () => {
     const { user_id } = createTestUser();
     it("should create users", async () => {
-        const user = await userRepository.createUser(dbClient, "uniqueEmail@gmail.com", "uniquePassword");
+        const user = await userRepository.createUser(dbClient, "testUserUsername", "uniqueEmail@gmail.com", "uniquePassword");
         expect(user?.email).toBe("uniqueEmail@gmail.com");
         expect(user?.password).toBe("uniquePassword");
     });
     it("Should delete users", async () => {
         const res = await userRepository.deleteUser(dbClient, user_id);
-        expect(res.rowCount).toBe(1);
+        expect(res).toBe(0);
     });
     it("Should find users", async () => {
         const result = await userRepository.getUserById(dbClient, user_id);

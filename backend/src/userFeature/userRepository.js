@@ -25,7 +25,7 @@ async function createUser(dbClient, username, email, passwordHash) {
 }
 async function changeUserDisplayData(dbClient, user_id, username) {
     const link = await dbClient.prepare(`UPDATE users 
-  SET username= ?1,
+  SET username= ?1
   WHERE user_id = ?2
   RETURNING *
   ;`).get(username, user_id);
@@ -36,7 +36,7 @@ async function changeUserDisplayData(dbClient, user_id, username) {
 async function changeUserPassword(dbClient, user_id, passwordHash) {
     const link = await dbClient.prepare(`
   UPDATE users 
-  SET password= ?1,
+  SET password= ?1
   WHERE user_id = ?2
   RETURNING *
   ;`).get(passwordHash, user_id);
@@ -45,11 +45,10 @@ async function changeUserPassword(dbClient, user_id, passwordHash) {
     return link;
 }
 async function changeUserEmail(dbClient, user_id, email) {
-    const link = await dbClient.prepare(`
-  UPDATE users 
-  SET email= ?1,
-  WHERE user_id = ?2
-  RETURNING *
+    const link = await dbClient.prepare(`UPDATE users 
+		SET email= ?1
+		WHERE user_id = ?2
+		RETURNING *
   ;`).get(email, user_id);
     if (!link)
         return null;

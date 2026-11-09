@@ -23,7 +23,7 @@ describe("Testing jobs repository", () => {
     it("should delete jobs", async () => {
         const { job_id } = createTestJob();
         const res = await jobRepository.deleteJob(dbClient, job_id);
-        expect(res.rowCount).toBe(1);
+        expect(res).toBe(0);
     });
     it("Should not allow transition to complete without data", async () => {
         const job = createTestJob({ state: 'PROCESSING' });

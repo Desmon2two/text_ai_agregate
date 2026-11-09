@@ -4,40 +4,40 @@ import { createTestJob } from "../helpers/factoryFunctions.js";
 import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
 beforeAll(async () => {
-  dbClient = await setupTestDB();
+	dbClient = await setupTestDB();
 });
 afterAll(async () => {
-  await disconnectDB(dbClient);
+	await disconnectDB(dbClient);
 });
 beforeEach(async () => {
-  await dbClient.exec("BEGIN");
+	await dbClient.exec("BEGIN");
 });
 afterEach(async () => {
-  await dbClient.exec("ROLLBACK");
+	await dbClient.exec("ROLLBACK");
 });
 
 describe("Testing jobs repository", () => {
-  it(" Should create jobs", async () => {
-    const {user_id, type, body, estimated_cost} = createTestJob()
-    const result = await jobRepository.createJob(dbClient, user_id, type, body, estimated_cost);
-    expect(result?.estimated_cost).toBe(estimated_cost);
-  });
-  it("should delete jobs", async () => {
-    const {job_id} = createTestJob()
-    const res = await jobRepository.deleteJob(dbClient, job_id);
-    expect(res.rowCount).toBe(1);
-  });
-  it("Should not allow transition to complete without data", async () => {
-    const job = createTestJob({state: 'PROCESSING'})
-    expect(
-      await jobRepository.markCompleted(dbClient, job.job_id, null, null)
-    ).rejects.toThrow()
-  });
-  it("Should not allow invalid state transitions", async () => {
-    const job = createTestJob({state: "COMPLETED"})
-    const testJob = await jobRepository.createJob(dbClient, job.user_id, job.type, job.body, job.estimated_cost)
-    expect(
-      await jobRepository.markCompleted(dbClient, testJob.job_id, job.data, job.actual_cost)
-    ).rejects.toThrow()
-  });
+	it(" Should create jobs", async () => {
+		const { user_id, type, body, estimated_cost } = createTestJob()
+		const result = await jobRepository.createJob(dbClient, user_id, type, body, estimated_cost);
+		expect(result?.estimated_cost).toBe(estimated_cost);
+	});
+	it("should delete jobs", async () => {
+		const { job_id } = createTestJob()
+		const res = await jobRepository.deleteJob(dbClient, job_id);
+		expect(res).toBe(0);
+	});
+	it("Should not allow transition to complete without data", async () => {
+		const job = createTestJob({ state: 'PROCESSING' })
+		expect(
+			await jobRepository.markCompleted(dbClient, job.job_id, null, null)
+		).rejects.toThrow()
+	});
+	it("Should not allow invalid state transitions", async () => {
+		const job = createTestJob({ state: "COMPLETED" })
+		const testJob = await jobRepository.createJob(dbClient, job.user_id, job.type, job.body, job.estimated_cost)
+		expect(
+			await jobRepository.markCompleted(dbClient, testJob.job_id, job.data, job.actual_cost)
+		).rejects.toThrow()
+	});
 });

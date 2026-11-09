@@ -1,8 +1,8 @@
 // a list of functions that create db tables, so they would be in one place.
 // connect with an actual db calls to create IF NOT EXISTS and patch everything through
 
-async function createRequiredTables(dbClient){
-await dbClient.exec(`CREATE TABLE IF NOT EXISTS users (
+async function createRequiredTables(dbClient) {
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL, 
     password TEXT NOT NULL,
@@ -11,7 +11,7 @@ await dbClient.exec(`CREATE TABLE IF NOT EXISTS users (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
     ) STRICT;`);
 
-await dbClient.exec(`CREATE TABLE IF NOT EXISTS jobs (
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS jobs (
 	user_id INTEGER REFERENCES users,
     job_id INTEGER PRIMARY KEY AUTOINCREMENT, 
 	state TEXT CHECK (
@@ -46,7 +46,7 @@ await dbClient.exec(`CREATE TABLE IF NOT EXISTS jobs (
     completed_at TEXT
 ) STRICT;`);
 
-await dbClient.exec(`CREATE TABLE IF NOT EXISTS attempts ( 
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS attempts ( 
     attempt_id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id INTEGER REFERENCES jobs,
     attempt_number INTEGER NOT NULL DEFAULT 1,
@@ -74,7 +74,7 @@ await dbClient.exec(`CREATE TABLE IF NOT EXISTS attempts (
     recovery_lease_until TEXT
 ) STRICT;`);
 
-await dbClient.exec(`CREATE TABLE IF NOT EXISTS events (
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS events (
   event_id INTEGER PRIMARY KEY AUTOINCREMENT, 
   attempt_id INTEGER REFERENCES attempts,
   job_id INTEGER REFERENCES jobs,
@@ -83,7 +83,7 @@ await dbClient.exec(`CREATE TABLE IF NOT EXISTS events (
   created_at TEXT DEFAULT (datetime('now'))
 ) STRICT;`);
 
-await dbClient.exec(`CREATE TABLE IF NOT EXISTS fin_logs (
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS fin_logs (
   user_id INTEGER REFERENCES users,
   fin_log_id INTEGER PRIMARY KEY AUTOINCREMENT,
   amount INTEGER NOT NULL,
@@ -91,13 +91,14 @@ await dbClient.exec(`CREATE TABLE IF NOT EXISTS fin_logs (
   created_at TEXT DEFAULT (datetime('now'))
 ) STRICT;`);
 
-await dbClient.exec(`CREATE TABLE IF NOT EXISTS models (
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS models (
 provider TEXT NOT NULL,
 model TEXT NOT NULL,
 input_price_for_1m_tokens INTEGER NOT NULL,
 output_price_for_1m_tokens INTEGER NOT NULL
 ) STRICT;`);
-}
-export default{
-    createRequiredTables,
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS log (
+	log_id INTEGER PRIMARY KEY,
+
+	)`);
 }

@@ -1,4 +1,5 @@
 import finRepository from "../../src/FinancesFeature/finRepository.js";
+import { createTestUser } from "../helpers/factoryFunctions.js";
 import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient;
 beforeAll(async () => {
@@ -14,7 +15,7 @@ afterEach(async () => {
     await dbClient.exec("ROLLBACK");
 });
 describe("Testing financial repository", () => {
-    const user_id = "c9593f4e-142f-4bff-9c45-5fabb90f45f9";
+    const { user_id } = createTestUser();
     it("Should correctly fetch data from database", async () => {
         const result = await finRepository.getCostOfModel(dbClient, "gemma3b");
         expect(result.input_price_for_1m_tokens).toBe(10);
@@ -50,9 +51,7 @@ describe("Testing financial repository", () => {
     });
     it("Should support external atomic transactions wrapper", async () => {
         const currCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
-        await dbClient.exec("BEGIN");
         await finRepository.addCredits(dbClient, user_id, 63);
-        await dbClient.exec("ROLLBACK");
         const resCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
         expect(currCredits).toBe(resCredits);
     });

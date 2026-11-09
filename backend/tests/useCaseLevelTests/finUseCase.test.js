@@ -1,15 +1,15 @@
 import finRepository from "../../src/FinancesFeature/finRepository.js";
 import finUseCase from "../../src/FinancesFeature/finUseCase.js";
 import eventRepository from "../../src/jobFeature/eventRepository.js";
-import { createTestJob } from "../helpers/factoryFunctions.js";
+import { createTestJob, createTestUser } from "../helpers/factoryFunctions.js";
 import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
 let dbClient;
 beforeAll(async () => {
     dbClient = await setupTestDB();
-}, 15000);
+});
 afterAll(async () => {
     await disconnectDB(dbClient);
-}, 15000);
+});
 beforeEach(async () => {
     await dbClient.exec("BEGIN");
 });
@@ -18,7 +18,7 @@ afterEach(async () => {
 });
 describe("Testing financial use case", () => {
     const { job_id } = createTestJob();
-    const test_user_id = "c9593f4e-142f-4bff-9c45-5fabb90f45f9";
+    const { user_id } = createTestUser();
     it("Should not accept invalid inputs", async () => {
         await expect(finUseCase.changeCreditsOnJobCompletion(dbClient, "TotalyNonExistantJobId")).rejects.toThrow();
     });
@@ -31,61 +31,45 @@ describe("Testing financial use case", () => {
         await expect(finUseCase.changeCreditsOnJobCompletion(dbClient, job_id)).rejects.toThrow("Can't process incomplete job");
     });
     it("Should calculate the difference", async () => {
-        const job = await dbClient.exec(`INSERT INTO jobs
-      (user_id, state, type, estimated_cost, actual_cost)
-       VALUES (
-      'c9593f4e-142f-4bff-9c45-5fabb90f45f9',
-      'COMPLETED',
-      'SUMMARY',
-      143,
-      200
-      ) RETURNING *`, []);
-        const res = await finUseCase.changeCreditsOnJobCompletion(dbClient, job.rows[0].job_id);
+        const job = dbClient.prepare(`INSERT INTO jobs
+			(user_id, state, type, estimated_cost, actual_cost)
+			VALUES (
+		   ?1, ?2, ?3, ?4, ?5
+      ) RETURNING *`).get(user_id, 'COMPLETED', 'SUMMARY', 143, 200);
+        const res = await finUseCase.changeCreditsOnJobCompletion(dbClient, job.job_id);
         expect(res?.difference).toBe(-57);
-    }, 60000);
+    });
     it("Should refund credits if the difference is positive", async () => {
-        const currCredits = await finRepository.getCreditsOfUser(dbClient, test_user_id);
-        const job = await dbClient.exec(`INSERT INTO jobs
-      (user_id, state, type, estimated_cost, actual_cost)
-       VALUES (
-      'c9593f4e-142f-4bff-9c45-5fabb90f45f9',
-      'COMPLETED',
-      'SUMMARY',
-      250,
-      221
-      ) RETURNING *`);
-        const { difference } = await finUseCase.changeCreditsOnJobCompletion(dbClient, job.rows[0].job_id);
-        const res = await finRepository.getCreditsOfUser(dbClient, test_user_id);
+        const currCredits = await finRepository.getCreditsOfUser(dbClient, user_id);
+        const job = dbClient.prepare(`INSERT INTO jobs
+			(user_id, state, type, estimated_cost, actual_cost)
+			VALUES (
+		   ?1, ?2, ?3, ?4, ?5
+      ) RETURNING *`).get(user_id, 'COMPLETED', 'SUMMARY', 143, 200);
+        const { difference } = await finUseCase.changeCreditsOnJobCompletion(dbClient, job.job_id);
+        const res = await finRepository.getCreditsOfUser(dbClient, user_id);
         const awaited = currCredits + difference;
         expect(res).toBe(awaited);
-    }, 60000);
+    });
     it("Should deduct credits if the difference is negative", async () => {
-        const credits = await finRepository.getCreditsOfUser(dbClient, test_user_id);
-        const job = await dbClient.exec(`INSERT INTO jobs
-      (user_id, state, type, estimated_cost, actual_cost)
-       VALUES (
-      'c9593f4e-142f-4bff-9c45-5fabb90f45f9',
-      'COMPLETED',
-      'SUMMARY',
-      200,
-      241
-      ) RETURNING *`);
-        const { difference } = await finUseCase.changeCreditsOnJobCompletion(dbClient, job.rows[0].job_id);
-        const res = await finRepository.getCreditsOfUser(dbClient, test_user_id);
+        const credits = await finRepository.getCreditsOfUser(dbClient, user_id);
+        const job = dbClient.prepare(`INSERT INTO jobs
+			(user_id, state, type, estimated_cost, actual_cost)
+			VALUES (
+		   ?1, ?2, ?3, ?4, ?5
+      ) RETURNING *`).get(user_id, 'COMPLETED', 'SUMMARY', 200, 241);
+        const { difference } = await finUseCase.changeCreditsOnJobCompletion(dbClient, job.job_id);
+        const res = await finRepository.getCreditsOfUser(dbClient, user_id);
         const awaited = credits - difference;
         expect(res).toBe(awaited);
-    }, 60000);
+    });
     it("Should create financial events", async () => {
-        const job = await dbClient.exec(`INSERT INTO jobs
-      (user_id, state, type, estimated_cost, actual_cost)
-       VALUES (
-      'c9593f4e-142f-4bff-9c45-5fabb90f45f9',
-      'COMPLETED',
-      'SUMMARY',
-      150,
-      149
-      ) RETURNING *`);
-        const { job_id } = job.rows[0];
+        const job = dbClient.prepare(`INSERT INTO jobs
+			(user_id, state, type, estimated_cost, actual_cost)
+			VALUES (
+		   ?1, ?2, ?3, ?4, ?5
+      ) RETURNING *`).get(user_id, 'COMPLETED', 'SUMMARY', 150, 149);
+        const { job_id } = job;
         const { event_id, difference } = await finUseCase.changeCreditsOnJobCompletion(dbClient, job_id);
         console.log(event_id);
         const event = await eventRepository.getEventById(dbClient, event_id);
