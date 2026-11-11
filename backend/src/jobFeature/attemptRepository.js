@@ -1,3 +1,4 @@
+import { dbTemplateDelete, dbTemplateInsert } from "../database/dbClient.js";
 import { ForbiddenError } from "../errors/applicationErrors.js";
 async function getAttemptById(dbClient, attempt_id) {
     const link = await dbClient.prepare(`SELECT * FROM attempts
@@ -8,20 +9,24 @@ async function getAttemptById(dbClient, attempt_id) {
     return link;
 }
 async function createAttempt(dbClient, job_id, attempt_number, provider, model) {
-    const link = await dbClient.prepare(`INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
-    VALUES (?, ?, ?, ?, ?)
-    RETURNING *
-    ;`).get("CREATED", Number(job_id), Number(attempt_number), provider, model);
-    if (!link)
-        return null;
-    return link;
+    console.log(provider.toString(), model.toString());
+    return await dbTemplateInsert(dbClient, 'attempts', ['state', 'job_id', 'attempt_number', 'provider', 'model'], ['CREATED', Number(job_id), Number(attempt_number), provider.toString(), model.toString()]);
+    //	const link = await dbClient.prepare(
+    //		`INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
+    //    VALUES (?, ?, ?, ?, ?)
+    //    RETURNING *
+    //    ;`).get("CREATED", Number(job_id), Number(attempt_number), provider, model)
+    //	if (!link) return null;
+    //	return link;
 }
 async function deleteAttempt(dbClient, attempt_id) {
-    const link = await dbClient.prepare(`DELETE FROM attempts WHERE attempt_id = ?
-    ;`).run(Number(attempt_id));
-    if (link.changes === 0)
-        return null;
-    return 1;
+    const result = await dbTemplateDelete(dbClient, 'attempts', 'attempt_id', attempt_id);
+    //	const link = await dbClient.prepare(
+    //		`DELETE FROM attempts WHERE attempt_id = ?
+    //    ;`).run(Number(attempt_id))
+    //	if (link.changes === 0) return null
+    //	return 1;
+    return result;
 }
 async function markSending(dbClient, attempt_id) {
     const link = await dbClient.prepare(`UPDATE attempts

@@ -1,8 +1,8 @@
 import finService from "../../src/FinancesFeature/finService.js"
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
-let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
+let dbClient: Awaited<ReturnType<typeof setupDB>>;
 beforeAll(async () => {
-  dbClient = await setupTestDB();
+  dbClient = await setupDB();
 });
 afterAll(async () => {
   await disconnectDB(dbClient);
@@ -41,7 +41,7 @@ describe("Testing estimation on cost of job", () => {
   it("should return a positive number", async () => {
     const prompt = "Hello, how are you?";
     const jobType = "code";
-    const model = "gemma3b";
+    const model = "gemma3:1b";
     const res = await finService.estimateCost(dbClient, prompt, jobType, model);
     expect(typeof res.fullPrice).toBe("number");
     expect(res.fullPrice).toBeGreaterThan(0);
@@ -53,7 +53,7 @@ describe("Testing estimation on cost of job", () => {
   it("estimated cost should depend on length of prompt, context, and model", async () => {
     const prompt1 = "Null";
     const jobType1 = "SUMMARY";
-    const model1 = "gemma3b";
+    const model1 = "gemma3:1b";
     const res1 = await finService.estimateCost(dbClient, prompt1, jobType1, model1);
     const prompt2 =
       "Some significantly longer prompt - like this one. What can you tell me about SQLite? Is it good? How much can you tell me?";

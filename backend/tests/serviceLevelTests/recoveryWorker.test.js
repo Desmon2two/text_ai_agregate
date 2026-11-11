@@ -1,7 +1,7 @@
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
 let dbClient;
 beforeAll(async () => {
-    dbClient = await setupTestDB();
+    dbClient = await setupDB();
 });
 afterAll(async () => {
     await disconnectDB(dbClient);

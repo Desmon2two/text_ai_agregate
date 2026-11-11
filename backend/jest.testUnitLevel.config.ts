@@ -4,10 +4,6 @@ const config: Config = {
   testEnvironment: "node",
   extensionsToTreatAsEsm: [".ts"],
   testMatch: ["<rootDir>/tests/unitLevelTests/*.test.ts"],
-  moduleNameMapper: {
-    "^(\\.{1,2}/.*)\\.js$": "$1",
-  },
-  testTimeout: 20000,
-};
+  };
 
 export default config;

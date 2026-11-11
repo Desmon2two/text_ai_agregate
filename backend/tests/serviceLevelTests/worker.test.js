@@ -1,4 +1,4 @@
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
 import queueService from "../../src/queue/queueService.js";
 import { worker } from "../../src/queue/worker.js";
 import { QueueEvents } from "bullmq";
@@ -9,7 +9,7 @@ import jobRepository from "../../src/jobFeature/jobRepository.js";
 import jobService from "../../src/jobFeature/jobService.js";
 let dbClient;
 beforeAll(async () => {
-    dbClient = await setupTestDB();
+    dbClient = await setupDB();
 });
 afterAll(async () => {
     await disconnectDB(dbClient);

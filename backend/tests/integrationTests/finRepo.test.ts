@@ -1,10 +1,10 @@
 import finRepository from "../../src/FinancesFeature/finRepository.js";
 import { createTestUser } from "../helpers/factoryFunctions.js";
 
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
-let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
+let dbClient: Awaited<ReturnType<typeof setupDB>>;
 beforeAll(async () => {
-	dbClient = await setupTestDB();
+	dbClient = await setupDB();
 });
 afterAll(async () => {
 	await disconnectDB(dbClient);
@@ -18,7 +18,7 @@ afterEach(async () => {
 describe("Testing financial repository", () => {
 	const { user_id } = createTestUser();
 	it("Should correctly fetch data from database", async () => {
-		const result = await finRepository.getCostOfModel(dbClient, "gemma3b");
+		const result = await finRepository.getCostOfModel(dbClient, "gemma3:1b");
 		expect(result.input_price_for_1m_tokens).toBe(10);
 		expect(result.output_price_for_1m_tokens).toBe(150);
 	});

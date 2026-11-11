@@ -1,3 +1,4 @@
+import { dbTemplateDelete, dbTemplateInsert } from "../database/dbClient.js";
 import { ForbiddenError } from "../errors/applicationErrors.js";
 import type { AttemptError } from "../errors/AttemptErrorType.js";
 import type { Attempt, CreateAttemptInput } from "./types/AttemptTypes.js";
@@ -19,24 +20,15 @@ async function createAttempt(
 	attempt_number: number,
 	provider: string,
 	model: string,
-): Promise<Attempt | null> {
-	const link = await dbClient.prepare(
-		`INSERT INTO attempts(state, job_id, attempt_number, provider, model) 
-    VALUES (?, ?, ?, ?, ?)
-    RETURNING *
-    ;`).get("CREATED", Number(job_id), Number(attempt_number), provider, model)
-	if (!link) return null;
-	return link;
+): Promise<0 | 1> {
+	return await dbTemplateInsert(dbClient, 'attempts', ['state', 'job_id', 'attempt_number', 'provider', 'model'], ['CREATED', Number(job_id), Number(attempt_number), provider.toString(), model.toString()])
 }
 async function deleteAttempt(
 	dbClient: Client,
 	attempt_id: string,
-): Promise<1 | null> {
-	const link = await dbClient.prepare(
-		`DELETE FROM attempts WHERE attempt_id = ?
-    ;`).run(Number(attempt_id))
-	if (link.changes === 0) return null
-	return 1;
+): Promise<1 | 0> {
+	const result = await dbTemplateDelete(dbClient, 'attempts', 'attempt_id', attempt_id)
+	return result
 }
 async function markSending(
 	dbClient: Client,

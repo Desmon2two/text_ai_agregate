@@ -2,10 +2,10 @@ import finRepository from "../../src/FinancesFeature/finRepository.js";
 import finUseCase from "../../src/FinancesFeature/finUseCase.js";
 import eventRepository from "../../src/jobFeature/eventRepository.js";
 import { createTestJob, createTestUser } from "../helpers/factoryFunctions.js";
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
 let dbClient;
 beforeAll(async () => {
-    dbClient = await setupTestDB();
+    dbClient = await setupDB();
 });
 afterAll(async () => {
     await disconnectDB(dbClient);

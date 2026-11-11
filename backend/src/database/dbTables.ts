@@ -1,7 +1,7 @@
 // a list of functions that create db tables, so they would be in one place.
 // connect with an actual db calls to create IF NOT EXISTS and patch everything through
 
-async function createRequiredTables(dbClient) {
+export default async function createRequiredTables(dbClient) {
 	await dbClient.exec(`CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL, 
@@ -75,12 +75,12 @@ async function createRequiredTables(dbClient) {
 ) STRICT;`);
 
 	await dbClient.exec(`CREATE TABLE IF NOT EXISTS events (
-  event_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-  attempt_id INTEGER REFERENCES attempts,
-  job_id INTEGER REFERENCES jobs,
-  name TEXT NOT NULL,
-  metadata TEXT,
-  created_at TEXT DEFAULT (datetime('now'))
+	event_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+	attempt_id INTEGER REFERENCES attempts,
+	job_id INTEGER REFERENCES jobs,
+	name TEXT NOT NULL,
+	metadata TEXT,
+	created_at TEXT DEFAULT (datetime('now'))
 ) STRICT;`);
 
 	await dbClient.exec(`CREATE TABLE IF NOT EXISTS fin_logs (
@@ -92,13 +92,22 @@ async function createRequiredTables(dbClient) {
 ) STRICT;`);
 
 	await dbClient.exec(`CREATE TABLE IF NOT EXISTS models (
-provider TEXT NOT NULL,
-model TEXT NOT NULL,
-input_price_for_1m_tokens INTEGER NOT NULL,
-output_price_for_1m_tokens INTEGER NOT NULL
+	provider TEXT NOT NULL,
+	model TEXT NOT NULL,
+	input_price_for_1m_tokens INTEGER NOT NULL,
+	output_price_for_1m_tokens INTEGER NOT NULL
 ) STRICT;`);
 	await dbClient.exec(`CREATE TABLE IF NOT EXISTS log (
 	log_id INTEGER PRIMARY KEY,
-
-	)`);
+	class TEXT NOT NULL,
+	name TEXT NOT NULL,
+	level TEXT NOT NULL,
+	metadata TEXT NOT NULL
+) STRICT`);
+	await dbClient.exec(`CREATE TABLE IF NOT EXISTS models(
+		provider TEXT NOT NULL,
+		model TEXT NOT NULL,
+		input_price_for_1m_tokens INTEGER NOT NULL,
+		output_price_for_1m_tokens INTEGER NOT NULL
+	) STRICT`);
 }

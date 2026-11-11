@@ -1,5 +1,5 @@
 import queueService from "../../src/queue/queueService.js";
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
 
 afterAll(async () => {
   await queueService.dispatchQueue.obliterate({ force: true });

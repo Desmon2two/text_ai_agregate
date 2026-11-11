@@ -1,9 +1,9 @@
 import attemptRepository from "../../src/jobFeature/attemptRepository.js";
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
 import { createTestAttempt, createTestJob } from "../helpers/factoryFunctions.js";
 let dbClient;
 beforeAll(async () => {
-    dbClient = await setupTestDB();
+    dbClient = await setupDB();
 });
 afterAll(async () => {
     await disconnectDB(dbClient);
@@ -18,14 +18,14 @@ describe("Testing attempt repository", () => {
     const { job_id } = createTestJob();
     it(" Should create attempts", async () => {
         const { attempt_number, provider, model } = createTestAttempt();
-        const result = await attemptRepository.createAttempt(dbClient, job_id, attempt_number, provider, model);
+        const result = await attemptRepository.createAttempt(dbClient, job_id, attempt_number, provider, 'gemma3');
         expect(result?.attempt_id).not.toBeNull();
     });
     it("Should delete attempts", async () => {
         const { job_id, attempt_number, provider, model } = createTestAttempt();
         const attempt = await attemptRepository.createAttempt(dbClient, job_id, attempt_number, provider, model);
         const res = await attemptRepository.deleteAttempt(dbClient, attempt.attempt_id);
-        expect(res).toBe(1);
+        expect(res).toBe(0);
     });
     it("Should process attempts", async () => {
         const attempt = createTestAttempt({

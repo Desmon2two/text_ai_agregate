@@ -1,10 +1,10 @@
 import { createTestUser } from "../helpers/factoryFunctions.js";
 import userRepository from "../../src/userFeature/userRepository.js";
 
-import { disconnectDB, setupTestDB } from "../helpers/testDatabase.js";
-let dbClient: Awaited<ReturnType<typeof setupTestDB>>;
+import { disconnectDB, setupDB } from "../../src/database/dbClient.js";
+let dbClient: Awaited<ReturnType<typeof setupDB>>;
 beforeAll(async () => {
-	dbClient = await setupTestDB();
+	dbClient = await setupDB();
 });
 afterAll(async () => {
 	await disconnectDB(dbClient);
