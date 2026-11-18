@@ -1,15 +1,23 @@
 import pytest
-from hypothesis import given, strategies as st
-from .requestValidation import validateRequest
+import json
+from hypothesis import assume, given, strategies as st
+from .requestValidation import validateRequestBodyAndReturnPrompt
 
 
-@given(insertable=st.integers() | st.text())
-def test_validates_provided_input(request, insertable):
+@given(insertable=(st.integers() | st.none() | st.booleans() | st.floats()))
+def test_does_not_allow_anything_othen_than_non_null_strings(request, insertable):
     # TODO
-    # UNDERSTAND OBJECTS IN PYTHON
     # UNDERSTAND MAGIC FUNCTIONS (__SMTH__)
-    # EXPOSE VALIDATION TO A TORRENT OF RANDOM AND UNUSUAL INPUTS FROM HYPOTHESIS
-    # LEARN HOW TO EFFECTIVELY USE HYPOTHESIS, AND TYPE CHECKING IN GENERAL IN TESTS
     with pytest.raises(Exception):
-        request.body = insertable
-        validateRequest(request)
+        request.body = f'{"prompt": "{insertable}"}'
+        validateRequestBodyAndReturnPrompt(request)
+
+
+@given(ins=st.text())
+def test_allows_only_non_null_strings(request, ins):
+    request.body = json.dumps({"prompt": ins})
+    if ins == '':
+        with pytest.raises(Exception):
+            validateRequestBodyAndReturnPrompt(request)
+    else:
+        assert validateRequestBodyAndReturnPrompt(request) == ins
