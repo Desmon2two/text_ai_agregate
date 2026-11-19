@@ -1,12 +1,11 @@
 from django.http.response import HttpResponse
-import json
+from .helpers_for_tests import promptJsonConstructor, assertNotNullAndIsOfType
 from .views import index
 import pytest
 
 
-@pytest.mark.skip
-def test_accepts_requests_returnes_responses(request):
-    request.body = json.dumps({"prompt": "This is a test. Write any word."})
+def test_controller_accepts_requests_returnes_responses(request):
+    request.body = promptJsonConstructor("Hello!")
     res = index(request)
-    assert type(
-        res) == HttpResponse and res.status_code == 200
+    assertNotNullAndIsOfType(res, HttpResponse)
+    assert res.status_code == 200
