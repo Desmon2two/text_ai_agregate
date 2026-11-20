@@ -1,15 +1,14 @@
-import ollama
-from multiprocessing import Process
+from ollama import AsyncClient
+import asyncio
 
 
 def sendRequestToLocalModel(prompt: str):
-    result = ollama.generate(model="gemma3:1b", prompt=prompt)
-    print(result['response'])
-    return result['response']
+    return asyncio.run(sendRequestToLocalModelAsync(prompt))
 
 
-def runMultipleRequestsAsynchronously(prompts: list[str]):
-    for prompt in prompts:
-        p = Process(target=sendRequestToLocalModel, args=(prompt,))
-        p.start()
-        p.join()
+async def sendRequestToLocalModelAsync(prompt: str):
+    message = {'role': 'user', 'content': f'{prompt}'}
+    result = await AsyncClient().chat(model="gemma3:1b", messages=[message])
+    response = result['message']['content']
+    print(response)
+    return response
